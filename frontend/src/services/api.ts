@@ -5,6 +5,14 @@ const API_BASE_URL =
   (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 
 const TOKEN_KEY = "smart_aama_access_token";
+const USER_INFO_KEY = "smart_aama_user_info";
+
+type UserInfo = {
+  id: string;
+  username: string;
+  full_name?: string | null;
+  role: string;
+};
 
 export const tokenStore = {
   get(): string | null {
@@ -15,6 +23,20 @@ export const tokenStore = {
   },
   clear() {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_INFO_KEY);
+  },
+};
+
+export const userStore = {
+  get(): UserInfo | null {
+    const data = localStorage.getItem(USER_INFO_KEY);
+    return data ? JSON.parse(data) : null;
+  },
+  set(user: UserInfo) {
+    localStorage.setItem(USER_INFO_KEY, JSON.stringify(user));
+  },
+  clear() {
+    localStorage.removeItem(USER_INFO_KEY);
   },
 };
 

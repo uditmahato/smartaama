@@ -28,15 +28,13 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<Login />} />
 
-        {/* Protected pages (with container) */}
+        {/* Protected pages */}
         <Route
           path="/dashboard"
           element={
-            <Container maxWidth="lg" sx={{ py: 3 }}>
-              <RequireAuth>
-                <Dashboard />
-              </RequireAuth>
-            </Container>
+            <RequireAuth>
+              <Dashboard />
+            </RequireAuth>
           }
         />
 

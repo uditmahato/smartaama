@@ -1,9 +1,13 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
   Container,
   Grid,
+  IconButton,
+  Menu,
+  MenuItem,
   Stack,
   Typography,
   Card,
@@ -11,83 +15,235 @@ import {
   Divider,
   Link,
 } from "@mui/material";
-import { tokenStore } from "../services/api";
+import { api, tokenStore, userStore } from "../services/api";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 export default function Home() {
   const navigate = useNavigate();
   const isLoggedIn = !!tokenStore.get();
+  const [userName, setUserName] = useState<string>("User");
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const menuOpen = Boolean(anchorEl);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadUserInfo();
+    }
+  }, [isLoggedIn]);
+
+  async function loadUserInfo() {
+    const cached = userStore.get();
+    if (cached) {
+      setUserName(cached.full_name || cached.username);
+      return;
+    }
+    try {
+      const resp = await api.get("/auth/me");
+      userStore.set(resp.data);
+      setUserName(resp.data.full_name || resp.data.username);
+    } catch (err) {
+      console.error("Failed to load user info", err);
+    }
+  }
+
+  async function loadUserInfo() {
+    const cached = userStore.get();
+    if (cached) {
+      setUserName(cached.full_name || cached.username);
+      return;
+    }
+    try {
+      const resp = await api.get("/auth/me");
+      userStore.set(resp.data);
+      setUserName(resp.data.full_name || resp.data.username);
+    } catch (err) {
+      console.error("Failed to load user info", err);
+    }
+  }
 
   const features = [
     {
       emoji: "👩‍⚕️",
       title: "Patient Management",
-      description: "Comprehensive patient registration and medical history tracking with real-time updates.",
+      description:
+        "Structured registration and longitudinal medical history tracking with reliable updates.",
     },
     {
       emoji: "📋",
       title: "Smart Referrals",
-      description: "Streamlined referral system for seamless inter-facility communication and patient care coordination.",
+      description:
+        "Coordinated referrals across facilities to support continuity of care and faster handoffs.",
     },
     {
       emoji: "📊",
       title: "Clinical Data",
-      description: "Structured clinical events and investigations with time-series data analysis capabilities.",
+      description:
+        "Standardized clinical events and investigations with time-series views for better decisions.",
     },
     {
       emoji: "🔒",
       title: "Secure & Compliant",
-      description: "Role-based access control and audit logs ensuring data security and regulatory compliance.",
+      description:
+        "Role-based access control and audit trails designed to protect sensitive patient data.",
     },
   ];
 
+  const BRAND = {
+    primary: "#4F46E5",
+    primary2: "#4338CA",
+    ink: "#0F172A",
+    muted: "rgba(255,255,255,0.85)",
+    border: "rgba(15, 23, 42, 0.10)",
+    paper: "#FFFFFF",
+    section: "#F7F8FB",
+  };
+
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      {/* Header/Navigation */}
+    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", bgcolor: BRAND.paper }}>
+      {/* Header / Navigation */}
       <Box
         sx={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.primary2} 100%)`,
           color: "white",
-          py: 3,
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+          py: 2,
+          boxShadow: "0 6px 24px rgba(15, 23, 42, 0.18)",
         }}
       >
         <Container maxWidth="lg">
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Box sx={{ fontSize: "2rem" }}>💗</Box>
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                SmartAama
-              </Typography>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Box sx={{ fontSize: 28, lineHeight: 1 }}>💗</Box>
+              <Stack spacing={0}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 800,
+                    letterSpacing: 0.2,
+                    lineHeight: 1.1,
+                  }}
+                >
+                  SmartAama
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ opacity: 0.9, letterSpacing: 0.6, textTransform: "uppercase" }}
+                >
+                  Maternal Care Platform
+                </Typography>
+              </Stack>
             </Stack>
-            <Stack direction="row" spacing={2}>
+
+            <Stack direction="row" spacing={1.5} alignItems="center">
               {isLoggedIn ? (
                 <>
                   <Button
                     color="inherit"
                     variant="text"
                     onClick={() => navigate("/dashboard")}
-                    sx={{ textTransform: "none", fontSize: 16 }}
+                    sx={{
+                      textTransform: "none",
+                      fontSize: 15,
+                      px: 1.5,
+                      borderRadius: 2,
+                      "&:hover": { background: "rgba(255,255,255,0.12)" },
+                    }}
                   >
                     Dashboard
                   </Button>
-                  <Button
-                    color="inherit"
-                    variant="outlined"
+
+                  <Box
+                    sx={{
+                      pl: 2,
+                      ml: 1,
+                      borderLeft: "1px solid rgba(255,255,255,0.25)",
+                      display: { xs: "none", sm: "block" },
+                    }}
+                  >
+                    <Button
+                      onClick={(e) => setAnchorEl(e.currentTarget)}
+                      endIcon={<ArrowDropDownIcon />}
+                      sx={{
+                        textTransform: "none",
+                        color: "white",
+                        borderRadius: 2,
+                        px: 1.5,
+                        py: 0.5,
+                        "&:hover": { background: "rgba(255,255,255,0.10)" },
+                      }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <AccountCircleIcon sx={{ fontSize: 22 }} />
+                        <Stack spacing={0} alignItems="flex-start">
+                          <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2, fontSize: 13 }}>
+                            {userName}
+                          </Typography>
+                          <Typography variant="caption" sx={{ opacity: 0.8, lineHeight: 1, fontSize: 10 }}>
+                            Logged in
+                          </Typography>
+                        </Stack>
+                      </Stack>
+                    </Button>
+
+                    <Menu
+                      anchorEl={anchorEl}
+                      open={menuOpen}
+                      onClose={() => setAnchorEl(null)}
+                      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                      transformOrigin={{ vertical: "top", horizontal: "right" }}
+                      slotProps={{
+                        paper: {
+                          sx: {
+                            mt: 1,
+                            minWidth: 180,
+                            borderRadius: 2,
+                            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                          },
+                        },
+                      }}
+                    >
+                      <MenuItem
+                        onClick={() => {
+                          setAnchorEl(null);
+                          tokenStore.clear();
+                          navigate("/login", { replace: true });
+                        }}
+                        sx={{ py: 1.5, px: 2 }}
+                      >
+                        <LogoutIcon sx={{ mr: 1.5, fontSize: 20, color: "text.secondary" }} />
+                        <Typography variant="body2">Logout</Typography>
+                      </MenuItem>
+                    </Menu>
+                  </Box>
+
+                  <IconButton
                     onClick={() => {
                       tokenStore.clear();
                       navigate("/login", { replace: true });
                     }}
-                    sx={{ textTransform: "none" }}
+                    sx={{
+                      display: { xs: "flex", sm: "none" },
+                      color: "white",
+                    }}
                   >
-                    Logout
-                  </Button>
+                    <LogoutIcon />
+                  </IconButton>
                 </>
               ) : (
                 <Button
                   color="inherit"
                   variant="outlined"
                   onClick={() => navigate("/admin")}
-                  sx={{ textTransform: "none" }}
+                  sx={{
+                    textTransform: "none",
+                    borderColor: "rgba(255,255,255,0.55)",
+                    borderRadius: 2,
+                    "&:hover": { borderColor: "rgba(255,255,255,0.8)", background: "rgba(255,255,255,0.08)" },
+                  }}
                 >
                   Login
                 </Button>
@@ -100,30 +256,51 @@ export default function Home() {
       {/* Hero Section */}
       <Box
         sx={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.primary2} 100%)`,
           color: "white",
-          py: { xs: 6, md: 10 },
+          py: { xs: 7, md: 10 },
         }}
       >
         <Container maxWidth="lg">
-          <Stack spacing={4} alignItems="center" textAlign="center">
-            <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }}>
-              Maternal Health Made Simple
+          <Stack spacing={3} alignItems="center" textAlign="center">
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 800,
+                letterSpacing: -0.4,
+                maxWidth: 900,
+                lineHeight: 1.12,
+              }}
+            >
+              Maternal Health Operations, Simplified
             </Typography>
-            <Typography variant="h6" sx={{ maxWidth: 600, opacity: 0.95, fontWeight: 300 }}>
-              SmartAama is a comprehensive maternal and antenatal care management system designed for primary health centers in Nepal. 
-              Streamline patient care, manage referrals, and track clinical data with ease.
+
+            <Typography
+              variant="h6"
+              sx={{
+                maxWidth: 760,
+                color: BRAND.muted,
+                fontWeight: 400,
+                lineHeight: 1.7,
+              }}
+            >
+              SmartAama supports primary health centers in Nepal with a unified system for patient management,
+              referrals, and clinical tracking—built for day-to-day clinical workflows.
             </Typography>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mt: 4 }}>
+
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ mt: 2 }}>
               {isLoggedIn ? (
                 <Button
                   variant="contained"
                   size="large"
                   sx={{
                     background: "white",
-                    color: "#667eea",
-                    fontWeight: 600,
-                    "&:hover": { background: "#f5f5f5" },
+                    color: BRAND.primary2,
+                    fontWeight: 700,
+                    textTransform: "none",
+                    borderRadius: 2,
+                    px: 3,
+                    "&:hover": { background: "rgba(255,255,255,0.92)" },
                   }}
                   onClick={() => navigate("/dashboard")}
                 >
@@ -136,46 +313,58 @@ export default function Home() {
                     size="large"
                     sx={{
                       background: "white",
-                      color: "#667eea",
-                      fontWeight: 600,
-                      "&:hover": { background: "#f5f5f5" },
+                      color: BRAND.primary2,
+                      fontWeight: 700,
+                      textTransform: "none",
+                      borderRadius: 2,
+                      px: 3,
+                      "&:hover": { background: "rgba(255,255,255,0.92)" },
                     }}
                     onClick={() => navigate("/admin")}
                   >
-                    Login to System
+                    Sign in
                   </Button>
+
                   <Button
                     variant="outlined"
                     size="large"
                     sx={{
-                      borderColor: "white",
+                      borderColor: "rgba(255,255,255,0.65)",
                       color: "white",
-                      fontWeight: 600,
-                      "&:hover": { background: "rgba(255, 255, 255, 0.1)" },
+                      fontWeight: 700,
+                      textTransform: "none",
+                      borderRadius: 2,
+                      px: 3,
+                      "&:hover": { background: "rgba(255, 255, 255, 0.10)", borderColor: "rgba(255,255,255,0.85)" },
                     }}
                     onClick={() => {
                       document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
                     }}
                   >
-                    Learn More
+                    View features
                   </Button>
                 </>
               )}
             </Stack>
+
+            <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.78)", mt: 2 }}>
+              Designed for reliability, usability, and data integrity in clinical environments.
+            </Typography>
           </Stack>
         </Container>
       </Box>
 
       {/* Features Section */}
-      <Box id="features" sx={{ py: 10, background: "#f8f9fa" }}>
+      <Box id="features" sx={{ py: { xs: 8, md: 10 }, background: BRAND.section }}>
         <Container maxWidth="lg">
-          <Stack spacing={6}>
-            <Stack spacing={2} textAlign="center">
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                Key Features
+          <Stack spacing={5}>
+            <Stack spacing={1.5} textAlign="center" alignItems="center">
+              <Typography variant="h4" sx={{ fontWeight: 800, color: BRAND.ink }}>
+                Core Capabilities
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 600, mx: "auto" }}>
-                Designed specifically for maternal health management with powerful tools for clinical care coordination
+              <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 720, lineHeight: 1.8 }}>
+                Purpose-built tools to help care teams register patients, document clinical progress, and coordinate referrals
+                with consistent, auditable records.
               </Typography>
             </Stack>
 
@@ -185,28 +374,42 @@ export default function Home() {
                   <Card
                     sx={{
                       height: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      textAlign: "center",
-                      p: 3,
-                      transition: "all 0.3s ease",
-                      border: "1px solid #e0e0e0",
+                      borderRadius: 3,
+                      border: `1px solid ${BRAND.border}`,
+                      boxShadow: "none",
+                      transition: "transform 160ms ease, box-shadow 160ms ease",
                       "&:hover": {
-                        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.12)",
-                        transform: "translateY(-4px)",
+                        transform: "translateY(-3px)",
+                        boxShadow: "0 10px 28px rgba(15, 23, 42, 0.12)",
                       },
                     }}
                   >
-                    <Box sx={{ fontSize: "3rem", mb: 2 }}>
-                      {feature.emoji}
-                    </Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                      {feature.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {feature.description}
-                    </Typography>
+                    <CardContent sx={{ p: 3 }}>
+                      <Stack spacing={1.5} alignItems="flex-start">
+                        <Box
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 2,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "rgba(79, 70, 229, 0.10)",
+                            fontSize: 22,
+                          }}
+                        >
+                          {feature.emoji}
+                        </Box>
+
+                        <Typography variant="h6" sx={{ fontWeight: 750, color: BRAND.ink }}>
+                          {feature.title}
+                        </Typography>
+
+                        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>
+                          {feature.description}
+                        </Typography>
+                      </Stack>
+                    </CardContent>
                   </Card>
                 </Grid>
               ))}
@@ -216,71 +419,91 @@ export default function Home() {
       </Box>
 
       {/* About Section */}
-      <Box sx={{ py: 10 }}>
+      <Box sx={{ py: { xs: 8, md: 10 } }}>
         <Container maxWidth="lg">
           <Grid container spacing={6} alignItems="center">
             <Grid item xs={12} md={6}>
-              <Stack spacing={3}>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              <Stack spacing={2.5}>
+                <Typography variant="h4" sx={{ fontWeight: 800, color: BRAND.ink }}>
                   About SmartAama
                 </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8 }}>
-                  SmartAama is specifically designed to support maternal and antenatal care delivery in Nepal's primary health centers. 
-                  Our system helps healthcare providers manage patient information, track clinical progress, coordinate referrals, 
-                  and make informed decisions through integrated data visualization.
+
+                <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.9 }}>
+                  SmartAama supports maternal and antenatal care delivery in Nepal’s primary health centers by consolidating
+                  patient information, clinical documentation, and referral coordination into a single workflow.
                 </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8 }}>
-                  Built with input from healthcare professionals, SmartAama prioritizes ease of use, data accuracy, and clinical best practices 
-                  to improve maternal health outcomes in underserved communities.
+
+                <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.9 }}>
+                  Developed with input from healthcare professionals, the platform emphasizes usability, accurate recordkeeping,
+                  and alignment with clinical best practices to improve care quality and outcomes.
                 </Typography>
-                <Stack direction="row" spacing={3} sx={{ mt: 2 }}>
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#667eea" }}>
-                      Real-time
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Live patient data sync
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#667eea" }}>
-                      Secure
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      HIPAA compliant storage
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#667eea" }}>
-                      Scalable
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Works offline & online
-                    </Typography>
-                  </Box>
-                </Stack>
+
+                <Divider sx={{ opacity: 0.6 }} />
+
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <Stack spacing={0.5}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800, color: BRAND.primary2 }}>
+                        Real-time
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Reliable patient record updates
+                      </Typography>
+                    </Stack>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Stack spacing={0.5}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800, color: BRAND.primary2 }}>
+                        Secure
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Access control and audit visibility
+                      </Typography>
+                    </Stack>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Stack spacing={0.5}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800, color: BRAND.primary2 }}>
+                        Scalable
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Operates across facility contexts
+                      </Typography>
+                    </Stack>
+                  </Grid>
+                </Grid>
               </Stack>
             </Grid>
+
             <Grid item xs={12} md={6}>
               <Box
                 sx={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                   borderRadius: 3,
-                  p: 4,
+                  p: { xs: 3.5, md: 4.5 },
                   color: "white",
-                  textAlign: "center",
+                  background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.primary2} 100%)`,
+                  boxShadow: "0 14px 40px rgba(15, 23, 42, 0.18)",
                 }}
               >
-                <Box sx={{ fontSize: 80, mb: 2 }}>💕</Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-                  Supporting Maternal Health
-                </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.9, mb: 3 }}>
-                  Empowering healthcare workers with technology to deliver better maternal care
-                </Typography>
-                <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                  "Every mother matters. Every life counts."
-                </Typography>
+                <Stack spacing={2.2} textAlign="left">
+                  <Typography variant="overline" sx={{ opacity: 0.85, letterSpacing: 1 }}>
+                    Clinical mission
+                  </Typography>
+
+                  <Typography variant="h5" sx={{ fontWeight: 850, lineHeight: 1.25 }}>
+                    Enabling better maternal care through dependable workflows
+                  </Typography>
+
+                  <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.85)", lineHeight: 1.9 }}>
+                    Built for care teams that need clarity, consistency, and accountability—without increasing administrative burden.
+                  </Typography>
+
+                  <Divider sx={{ opacity: 0.25 }} />
+
+                  <Typography variant="caption" sx={{ opacity: 0.85 }}>
+                    Every mother matters. Every life counts.
+                  </Typography>
+                </Stack>
               </Box>
             </Grid>
           </Grid>
@@ -288,24 +511,24 @@ export default function Home() {
       </Box>
 
       {/* Contact Section */}
-      <Box sx={{ py: 10, background: "#f8f9fa" }}>
+      <Box sx={{ py: { xs: 8, md: 10 }, background: BRAND.section }}>
         <Container maxWidth="lg">
-          <Stack spacing={6}>
-            <Stack spacing={2} textAlign="center">
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                Contact Us
+          <Stack spacing={5}>
+            <Stack spacing={1.5} textAlign="center">
+              <Typography variant="h4" sx={{ fontWeight: 800, color: BRAND.ink }}>
+                Contact
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Questions? We're here to help. Reach out to our team.
+                For support, onboarding, or deployment inquiries, reach our team.
               </Typography>
             </Stack>
 
-            <Grid container spacing={4} justifyContent="center">
+            <Grid container spacing={3} justifyContent="center">
               <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{ height: "100%", border: "1px solid #e0e0e0" }}>
-                  <CardContent sx={{ textAlign: "center" }}>
-                    <Box sx={{ fontSize: 32, mb: 2 }}>📍</Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                <Card sx={{ height: "100%", borderRadius: 3, border: `1px solid ${BRAND.border}`, boxShadow: "none" }}>
+                  <CardContent sx={{ textAlign: "center", p: 3 }}>
+                    <Box sx={{ fontSize: 28, mb: 1.5 }}>📍</Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 750, color: BRAND.ink, mb: 0.5 }}>
                       Address
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -316,10 +539,10 @@ export default function Home() {
               </Grid>
 
               <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{ height: "100%", border: "1px solid #e0e0e0" }}>
-                  <CardContent sx={{ textAlign: "center" }}>
-                    <Box sx={{ fontSize: 32, mb: 2 }}>📞</Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                <Card sx={{ height: "100%", borderRadius: 3, border: `1px solid ${BRAND.border}`, boxShadow: "none" }}>
+                  <CardContent sx={{ textAlign: "center", p: 3 }}>
+                    <Box sx={{ fontSize: 28, mb: 1.5 }}>📞</Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 750, color: BRAND.ink, mb: 0.5 }}>
                       Phone
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -330,17 +553,18 @@ export default function Home() {
               </Grid>
 
               <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{ height: "100%", border: "1px solid #e0e0e0" }}>
-                  <CardContent sx={{ textAlign: "center" }}>
-                    <Box sx={{ fontSize: 32, mb: 2 }}>📧</Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                <Card sx={{ height: "100%", borderRadius: 3, border: `1px solid ${BRAND.border}`, boxShadow: "none" }}>
+                  <CardContent sx={{ textAlign: "center", p: 3 }}>
+                    <Box sx={{ fontSize: 28, mb: 1.5 }}>📧</Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 750, color: BRAND.ink, mb: 0.5 }}>
                       Email
                     </Typography>
                     <Link
                       href="mailto:info@smartaama.com"
                       sx={{
-                        color: "#667eea",
+                        color: BRAND.primary2,
                         textDecoration: "none",
+                        fontWeight: 600,
                         "&:hover": { textDecoration: "underline" },
                       }}
                     >
@@ -355,19 +579,11 @@ export default function Home() {
       </Box>
 
       {/* Footer */}
-      <Box
-        sx={{
-          background: "#2c3e50",
-          color: "white",
-          py: 4,
-          mt: "auto",
-          textAlign: "center",
-        }}
-      >
+      <Box sx={{ background: "#0B1220", color: "white", py: 4, mt: "auto", textAlign: "center" }}>
         <Container maxWidth="lg">
-          <Divider sx={{ mb: 3, opacity: 0.2 }} />
+          <Divider sx={{ mb: 3, opacity: 0.18 }} />
           <Typography variant="body2" sx={{ opacity: 0.8 }}>
-            &copy; 2026 SmartAama. All rights reserved. | Dedicated to improving maternal health in Nepal.
+            © 2026 SmartAama. All rights reserved. Dedicated to improving maternal health in Nepal.
           </Typography>
         </Container>
       </Box>

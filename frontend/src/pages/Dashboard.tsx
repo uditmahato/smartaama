@@ -11,14 +11,18 @@ import {
   CircularProgress,
   Container,
   Grid,
+  IconButton,
+  Menu,
   MenuItem,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import { api, tokenStore } from "../services/api";
+import { api, tokenStore, userStore } from "../services/api";
 import SearchIcon from "@mui/icons-material/Search";
 import LogoutIcon from "@mui/icons-material/Logout";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
 type ReferralOut = {
   id: string;
@@ -40,6 +44,9 @@ export default function Dashboard() {
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("User");
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const menuOpen = Boolean(anchorEl);
 
   const [statusFilter, setStatusFilter] = useState<ReferralOut["status"] | "">("submitted");
   const [fromFacility, setFromFacility] = useState("");
@@ -70,94 +77,220 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadReferrals();
+    loadUserInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
-  const getStatusColor = (status: string) => {
+  async function loadUserInfo() {
+    const cached = userStore.get();
+    if (cached) {
+      setUserName(cached.full_name || cached.username);
+      return;
+    }
+    try {
+      const resp = await api.get("/auth/me");
+      userStore.set(resp.data);
+      setUserName(resp.data.full_name || resp.data.username);
+    } catch (err) {
+      console.error("Failed to load user info", err);
+    }
+  }
+
+  const getStatusChip = (status: ReferralOut["status"]) => {
+    // Keep colors conservative and semantically consistent
     switch (status) {
       case "submitted":
-        return "warning";
+        return { color: "warning", label: "Submitted" };
       case "received":
-        return "success";
+        return { color: "success", label: "Received" };
       case "closed":
-        return "default";
+        return { color: "default", label: "Closed" };
       case "cancelled":
-        return "error";
+        return { color: "error", label: "Cancelled" };
       default:
-        return "info";
+        return { color: "info", label: "Draft" };
     }
   };
 
+  const resetFilters = () => {
+    setStatusFilter("submitted");
+    setFromFacility("");
+    setToFacility("");
+  };
+
   return (
-    <Box sx={{ minHeight: "100vh", background: "#f8f9fa", py: 4 }}>
-      <Container maxWidth="lg">
-        <Stack spacing={4}>
-          {/* Header */}
-          <Box sx={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", borderRadius: 2, p: 4, color: "white" }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-              <Stack spacing={1}>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                  Dashboard
-                </Typography>
-                <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                  Manage referrals and patient care workflows
-                </Typography>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#F6F7FB", py: { xs: 2, md: 3 }, px: { xs: 0.5, sm: 1, md: 1.5 } }}>
+      <Stack spacing={3}>
+          {/* Top Bar */}
+          <Card
+            sx={{
+              borderRadius: 3,
+              border: "1px solid rgba(15, 23, 42, 0.10)",
+              boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
+              overflow: "hidden",
+            }}
+          >
+            <Box
+              sx={{
+                px: { xs: 2.5, md: 3.5 },
+                py: { xs: 2.5, md: 3 },
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "white",
+              }}
+            >
+              <Stack
+                direction={{ xs: "column", md: "row" }}
+                spacing={{ xs: 2, md: 3 }}
+                justifyContent="space-between"
+                alignItems={{ xs: "flex-start", md: "center" }}
+              >
+                <Stack spacing={0.5}>
+                  <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.2 }}>
+                    Dashboard
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.9, lineHeight: 1.7 }}>
+                    Referrals overview and patient workflow access.
+                  </Typography>
+                </Stack>
+
+                <Stack
+                  direction="row"
+                  spacing={1.25}
+                  sx={{ width: { xs: "100%", md: "auto" } }}
+                  justifyContent={{ xs: "space-between", md: "flex-end" }}
+                  alignItems="center"
+                >
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate("/patients?create=true")}
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 700,
+                      borderRadius: 2,
+                      background: "rgba(255,255,255,0.95)",
+                      color: "#4C51BF",
+                      "&:hover": { background: "white" },
+                      flex: { xs: 1, md: "unset" },
+                      px: 2.25,
+                    }}
+                  >
+                    Add patient
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    startIcon={<SearchIcon />}
+                    onClick={() => navigate("/patients")}
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 700,
+                      borderRadius: 2,
+                      borderColor: "rgba(255,255,255,0.65)",
+                      color: "white",
+                      "&:hover": { borderColor: "rgba(255,255,255,0.95)", background: "rgba(255,255,255,0.10)" },
+                      flex: { xs: 1, md: "unset" },
+                      px: 2.25,
+                    }}
+                  >
+                    Patients
+                  </Button>
+
+                  <Box
+                    sx={{
+                      ml: { xs: 0, md: 2 },
+                      pl: { xs: 0, md: 2 },
+                      borderLeft: { xs: "none", md: "1px solid rgba(255,255,255,0.2)" },
+                      display: { xs: "none", sm: "block" },
+                    }}
+                  >
+                    <Button
+                      onClick={(e) => setAnchorEl(e.currentTarget)}
+                      endIcon={<ArrowDropDownIcon />}
+                      sx={{
+                        textTransform: "none",
+                        color: "white",
+                        borderRadius: 2,
+                        px: 1.5,
+                        py: 0.75,
+                        "&:hover": { background: "rgba(255,255,255,0.10)" },
+                      }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <AccountCircleIcon sx={{ fontSize: 24 }} />
+                        <Stack spacing={0} alignItems="flex-start">
+                          <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2, fontSize: 13 }}>
+                            {userName}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.75)", lineHeight: 1, fontSize: 10 }}>
+                            Healthcare Provider
+                          </Typography>
+                        </Stack>
+                      </Stack>
+                    </Button>
+
+                    <Menu
+                      anchorEl={anchorEl}
+                      open={menuOpen}
+                      onClose={() => setAnchorEl(null)}
+                      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                      transformOrigin={{ vertical: "top", horizontal: "right" }}
+                      slotProps={{
+                        paper: {
+                          sx: {
+                            mt: 1,
+                            minWidth: 180,
+                            borderRadius: 2,
+                            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                          },
+                        },
+                      }}
+                    >
+                      <MenuItem
+                        onClick={() => {
+                          setAnchorEl(null);
+                          tokenStore.clear();
+                          navigate("/login", { replace: true });
+                        }}
+                        sx={{ py: 1.5, px: 2 }}
+                      >
+                        <LogoutIcon sx={{ mr: 1.5, fontSize: 20, color: "text.secondary" }} />
+                        <Typography variant="body2">Logout</Typography>
+                      </MenuItem>
+                    </Menu>
+                  </Box>
+
+                  <IconButton
+                    onClick={() => {
+                      tokenStore.clear();
+                      navigate("/login", { replace: true });
+                    }}
+                    sx={{
+                      display: { xs: "flex", sm: "none" },
+                      color: "white",
+                    }}
+                  >
+                    <LogoutIcon />
+                  </IconButton>
+                </Stack>
               </Stack>
+            </Box>
 
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ width: { xs: "100%", sm: "auto" } }}>
-                <Button
-                  variant="contained"
-                  sx={{
-                    background: "white",
-                    color: "#667eea",
-                    fontWeight: 600,
-                    "&:hover": { background: "#f5f5f5" },
-                  }}
-                  onClick={() => navigate("/patients?create=true")}
-                >
-                  👤 Add Patient
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<SearchIcon />}
-                  sx={{
-                    borderColor: "white",
-                    color: "white",
-                    fontWeight: 600,
-                    "&:hover": { background: "rgba(255, 255, 255, 0.1)" },
-                  }}
-                  onClick={() => navigate("/patients")}
-                >
-                  Search
-                </Button>
-                <Button
-                  variant="text"
-                  startIcon={<LogoutIcon />}
-                  sx={{
-                    color: "white",
-                    fontWeight: 600,
-                    "&:hover": { background: "rgba(255, 255, 255, 0.1)" },
-                  }}
-                  onClick={() => {
-                    tokenStore.clear();
-                    navigate("/login", { replace: true });
-                  }}
-                >
-                  Logout
-                </Button>
-              </Stack>
-            </Stack>
-          </Box>
+            {/* Filters */}
+            <CardContent sx={{ p: { xs: 2.5, md: 3.5 }, bgcolor: "white" }}>
+              <Stack spacing={2}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+                    Referrals
+                  </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    {busy && <CircularProgress size={18} />}
+                    <Typography variant="caption" color="text.secondary">
+                      Showing {referrals.length}
+                    </Typography>
+                  </Stack>
+                </Stack>
 
-          {/* Filters Card */}
-          <Card sx={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)" }}>
-            <CardContent>
-              <Stack spacing={3}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  📋 Referrals Inbox
-                </Typography>
-
-                <Grid container spacing={2}>
+                <Grid container spacing={2} alignItems="center">
                   <Grid item xs={12} sm={6} md={3}>
                     <TextField
                       select
@@ -175,49 +308,59 @@ export default function Dashboard() {
                       <MenuItem value="cancelled">Cancelled</MenuItem>
                     </TextField>
                   </Grid>
+
                   <Grid item xs={12} sm={6} md={3}>
                     <TextField
-                      label="From Facility"
+                      label="From facility"
                       value={fromFacility}
                       onChange={(e) => setFromFacility(e.target.value)}
                       fullWidth
                       size="small"
-                      placeholder="Filter by facility"
                     />
                   </Grid>
+
                   <Grid item xs={12} sm={6} md={3}>
                     <TextField
-                      label="To Facility"
+                      label="To facility"
                       value={toFacility}
                       onChange={(e) => setToFacility(e.target.value)}
                       fullWidth
                       size="small"
-                      placeholder="Filter by facility"
                     />
                   </Grid>
-                  <Grid item xs={12} sm={6} md={3} sx={{ display: "flex", gap: 1 }}>
-                    <Button
-                      variant="contained"
-                      onClick={loadReferrals}
-                      disabled={busy}
-                      fullWidth
-                      sx={{
-                        background: "#667eea",
-                        "&:hover": { background: "#5568d3" },
-                      }}
-                    >
-                      {busy ? <CircularProgress size={20} /> : "Refresh"}
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => {
-                        setStatusFilter("submitted");
-                        setFromFacility("");
-                        setToFacility("");
-                      }}
-                    >
-                      Reset
-                    </Button>
+
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        variant="contained"
+                        onClick={loadReferrals}
+                        disabled={busy}
+                        fullWidth
+                        sx={{
+                          textTransform: "none",
+                          fontWeight: 700,
+                          borderRadius: 2,
+                          background: "#4F46E5",
+                          "&:hover": { background: "#4338CA" },
+                        }}
+                      >
+                        {busy ? <CircularProgress size={20} /> : "Refresh"}
+                      </Button>
+
+                      <Button
+                        variant="outlined"
+                        onClick={resetFilters}
+                        disabled={busy}
+                        sx={{
+                          textTransform: "none",
+                          fontWeight: 700,
+                          borderRadius: 2,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Reset
+                      </Button>
+                    </Stack>
                   </Grid>
                 </Grid>
               </Stack>
@@ -226,81 +369,104 @@ export default function Dashboard() {
 
           {error && <Alert severity="error">{error}</Alert>}
 
-          {/* Results Section */}
-          <Card sx={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)" }}>
-            <CardContent>
-              <Stack spacing={3}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Results ({referrals.length})
+          {/* Results */}
+          <Card
+            sx={{
+              borderRadius: 3,
+              border: "1px solid rgba(15, 23, 42, 0.10)",
+              boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+              <Stack spacing={2}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+                    Inbox
                   </Typography>
-                  {busy && <CircularProgress size={24} />}
-                </Box>
+                  <Typography variant="caption" color="text.secondary">
+                    {statusFilter ? `Status: ${statusFilter}` : "All statuses"}
+                  </Typography>
+                </Stack>
 
                 {referrals.length === 0 && !busy ? (
-                  <Box
-                    sx={{
-                      textAlign: "center",
-                      py: 6,
-                      color: "text.secondary",
-                    }}
-                  >
-                    <Typography variant="body1">No referrals match the current filters.</Typography>
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      Create a new referral or adjust your filter criteria.
+                  <Box sx={{ py: 6, textAlign: "center" }}>
+                    <Typography variant="body1" sx={{ fontWeight: 700, color: "#0F172A" }}>
+                      No referrals found
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      Adjust filters or refresh to load the latest referrals.
                     </Typography>
                   </Box>
                 ) : (
-                  <Stack spacing={2}>
-                    {referrals.map((referral) => (
-                      <Card
-                        key={referral.id}
-                        variant="outlined"
-                        sx={{
-                          cursor: "pointer",
-                          transition: "all 0.2s ease",
-                          border: "1px solid #e0e0e0",
-                          "&:hover": {
-                            boxShadow: "0 4px 12px rgba(102, 126, 234, 0.15)",
-                            borderColor: "#667eea",
-                            transform: "translateY(-2px)",
-                          },
-                        }}
-                        onClick={() => navigate(`/patients/${referral.patient_id}`)}
-                      >
-                        <CardContent>
-                          <Stack direction="row" justifyContent="space-between" alignItems="start" spacing={2}>
-                            <Stack spacing={1} sx={{ flex: 1 }}>
-                              <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
-                                <Typography variant="h6" sx={{ fontWeight: 600, flex: 1, minWidth: 300 }}>
+                  <Stack spacing={1.25}>
+                    {referrals.map((referral) => {
+                      const chip = getStatusChip(referral.status);
+                      return (
+                        <Card
+                          key={referral.id}
+                          variant="outlined"
+                          onClick={() => navigate(`/patients/${referral.patient_id}`)}
+                          sx={{
+                            borderRadius: 2.5,
+                            borderColor: "rgba(15, 23, 42, 0.12)",
+                            cursor: "pointer",
+                            transition: "box-shadow 160ms ease, transform 160ms ease, border-color 160ms ease",
+                            "&:hover": {
+                              borderColor: "rgba(79, 70, 229, 0.45)",
+                              boxShadow: "0 10px 22px rgba(15, 23, 42, 0.08)",
+                              transform: "translateY(-1px)",
+                            },
+                          }}
+                        >
+                          <CardContent sx={{ p: 2.25 }}>
+                            <Stack
+                              direction={{ xs: "column", sm: "row" }}
+                              spacing={1.25}
+                              justifyContent="space-between"
+                              alignItems={{ xs: "flex-start", sm: "center" }}
+                            >
+                              <Stack spacing={0.6} sx={{ minWidth: 0 }}>
+                                <Typography
+                                  variant="subtitle1"
+                                  sx={{
+                                    fontWeight: 800,
+                                    color: "#0F172A",
+                                    lineHeight: 1.35,
+                                  }}
+                                >
                                   {referral.from_facility} → {referral.to_facility}
                                 </Typography>
-                                <Chip
-                                  label={referral.status.toUpperCase()}
-                                  size="small"
-                                  color={getStatusColor(referral.status) as any}
-                                  variant="outlined"
-                                />
+
+                                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
+                                  {referral.reason}
+                                </Typography>
+
+                                <Typography variant="caption" color="text.secondary">
+                                  Created {new Date(referral.created_at).toLocaleDateString()}
+                                  {referral.submitted_at
+                                    ? ` • Submitted ${new Date(referral.submitted_at).toLocaleDateString()}`
+                                    : ""}
+                                </Typography>
                               </Stack>
-                              <Typography variant="body2" color="text.secondary">
-                                <strong>Reason:</strong> {referral.reason}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                Created: {new Date(referral.created_at).toLocaleDateString()}
-                                {referral.submitted_at && ` • Submitted: ${new Date(referral.submitted_at).toLocaleDateString()}`}
-                              </Typography>
+
+                              <Chip
+                                label={chip.label}
+                                size="small"
+                                color={chip.color as any}
+                                variant="outlined"
+                                sx={{ fontWeight: 700 }}
+                              />
                             </Stack>
-                          </Stack>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </Stack>
                 )}
               </Stack>
             </CardContent>
           </Card>
         </Stack>
-      </Container>
     </Box>
   );
 }
