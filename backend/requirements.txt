@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+alembic
+pydantic
+python-jose
+passlib[bcrypt]
+python-dotenv
+langchain
+qdrant-client
+sentence-transformers
+celery
+redis

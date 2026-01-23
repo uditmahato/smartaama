@@ -1,0 +1,12 @@
+{
+  "name": "smart-aama-ui",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "axios": "^1.6.0",
+    "@mui/material": "^5.0.0",
+    "react-router-dom": "^6.0.0"
+  }
+}
