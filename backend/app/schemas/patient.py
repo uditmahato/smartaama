@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -17,7 +17,7 @@ class PatientBase(BaseModel):
     middle_name: Optional[str] = Field(default=None, max_length=120)
     last_name: str = Field(..., min_length=1, max_length=120)
 
-    date_of_birth: Optional[date] = None
+    age_in_years: Optional[int] = Field(default=None, ge=0, le=150)
     sex: Optional[str] = Field(default=None, max_length=32)
 
     phone_number: Optional[str] = Field(default=None, max_length=32)
@@ -69,6 +69,7 @@ class PatientUpdate(PatientBase):
 
 class PatientOut(BaseModel):
     id: UUID
+    patient_id: str
     facility_mrn: Optional[str] = None
     national_id: Optional[str] = None
 
@@ -76,7 +77,7 @@ class PatientOut(BaseModel):
     middle_name: Optional[str] = None
     last_name: str
 
-    date_of_birth: Optional[date] = None
+    age_in_years: Optional[int] = None
     sex: Optional[str] = None
 
     phone_number: Optional[str] = None
@@ -103,6 +104,6 @@ class PatientSearchParams(BaseModel):
     national_id: Optional[str] = None
     phone_number: Optional[str] = None
     district: Optional[str] = None
-    date_of_birth: Optional[date] = None
+    age_in_years: Optional[int] = None
     limit: int = Field(default=25, ge=1, le=100)
     offset: int = Field(default=0, ge=0)

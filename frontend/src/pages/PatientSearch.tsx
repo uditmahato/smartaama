@@ -6,24 +6,29 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
   CircularProgress,
   Divider,
+  FormControlLabel,
   Grid,
+  MenuItem,
+  Select,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../services/api";
 
 type PatientOut = {
   id: string;
+  patient_id: string;
   facility_mrn?: string | null;
   national_id?: string | null;
   first_name: string;
   middle_name?: string | null;
   last_name: string;
-  date_of_birth?: string | null;
+  age_in_years?: number | null;
   sex?: string | null;
   phone_number?: string | null;
   district?: string | null;
@@ -36,7 +41,7 @@ type PatientCreate = {
   first_name: string;
   middle_name?: string | null;
   last_name: string;
-  date_of_birth?: string | null;
+  age_in_years?: number | null;
   sex?: string | null;
   phone_number?: string | null;
   district?: string | null;
@@ -44,20 +49,32 @@ type PatientCreate = {
   ward?: string | null;
   province?: string | null;
   address_line?: string | null;
+  // Patient particulars fields
+  occupation?: string | null;
+  education_level?: string | null;
+  marital_status?: string | null;
+  duration_of_marriage?: number | null;
+  smoking_use?: boolean;
+  alcohol_use?: boolean;
+  intoxicant_use?: boolean;
 };
 
 export default function PatientSearch() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [patients, setPatients] = useState<PatientOut[]>([]);
-
-  const [creating, setCreating] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [creating, setCreating] = useState(searchParams.get("create") === "true");
   const [newPatient, setNewPatient] = useState<PatientCreate>({
     first_name: "",
     last_name: "",
+    smoking_use: false,
+    alcohol_use: false,
+    intoxicant_use: false,
   });
 
   const canCreate = useMemo(() => {
@@ -67,6 +84,7 @@ export default function PatientSearch() {
   async function search() {
     setBusy(true);
     setError(null);
+    setHasSearched(true);
     try {
       const resp = await api.get<PatientOut[]>("/patients", { params: { q: q.trim(), limit: 50 } });
       setPatients(resp.data);
@@ -96,8 +114,7 @@ export default function PatientSearch() {
   }
 
   useEffect(() => {
-    // initial list (recent)
-    search();
+    // Don't auto-search on page load
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -135,7 +152,8 @@ export default function PatientSearch() {
 
           {creating && (
             <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle1">Register New Patient</Typography>
+              <Typography variant="subtitle1" gutterBottom>Register New Patient</Typography>
+              <Typography variant="caption" color="text.secondary">Basic Demographics</Typography>
               <Grid container spacing={2} sx={{ mt: 0.5 }}>
                 <Grid item xs={12} sm={4}>
                   <TextField
@@ -148,6 +166,14 @@ export default function PatientSearch() {
                 </Grid>
                 <Grid item xs={12} sm={4}>
                   <TextField
+                    label="Middle name"
+                    value={newPatient.middle_name ?? ""}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, middle_name: e.target.value }))}
+                    fullWidth
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <TextField
                     label="Last name"
                     value={newPatient.last_name}
                     onChange={(e) => setNewPatient((p) => ({ ...p, last_name: e.target.value }))}
@@ -155,7 +181,31 @@ export default function PatientSearch() {
                     fullWidth
                   />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    label="Age (years)"
+                    type="number"
+                    value={newPatient.age_in_years ?? ""}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, age_in_years: e.target.value ? parseInt(e.target.value) : undefined }))}
+                    fullWidth
+                    inputProps={{ min: 0, max: 150 }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    select
+                    label="Sex"
+                    value={newPatient.sex ?? ""}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, sex: e.target.value }))}
+                    fullWidth
+                  >
+                    <MenuItem value="">-</MenuItem>
+                    <MenuItem value="Female">Female</MenuItem>
+                    <MenuItem value="Male">Male</MenuItem>
+                    <MenuItem value="Other">Other</MenuItem>
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} sm={3}>
                   <TextField
                     label="Phone"
                     value={newPatient.phone_number ?? ""}
@@ -163,7 +213,7 @@ export default function PatientSearch() {
                     fullWidth
                   />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={3}>
                   <TextField
                     label="Facility MRN"
                     value={newPatient.facility_mrn ?? ""}
@@ -171,15 +221,127 @@ export default function PatientSearch() {
                     fullWidth
                   />
                 </Grid>
+                
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">Patient Particulars</Typography>
+                </Grid>
                 <Grid item xs={12} sm={4}>
                   <TextField
-                    label="National ID"
-                    value={newPatient.national_id ?? ""}
-                    onChange={(e) => setNewPatient((p) => ({ ...p, national_id: e.target.value }))}
+                    label="Occupation"
+                    value={newPatient.occupation ?? ""}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, occupation: e.target.value }))}
                     fullWidth
                   />
                 </Grid>
                 <Grid item xs={12} sm={4}>
+                  <TextField
+                    select
+                    label="Education Level"
+                    value={newPatient.education_level ?? ""}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, education_level: e.target.value }))}
+                    fullWidth
+                  >
+                    <MenuItem value="">-</MenuItem>
+                    <MenuItem value="None">None</MenuItem>
+                    <MenuItem value="Primary">Primary</MenuItem>
+                    <MenuItem value="Secondary">Secondary</MenuItem>
+                    <MenuItem value="Higher Secondary">Higher Secondary</MenuItem>
+                    <MenuItem value="Bachelor">Bachelor</MenuItem>
+                    <MenuItem value="Master">Master</MenuItem>
+                    <MenuItem value="Other">Other</MenuItem>
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    select
+                    label="Marital Status"
+                    value={newPatient.marital_status ?? ""}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, marital_status: e.target.value }))}
+                    fullWidth
+                  >
+                    <MenuItem value="">-</MenuItem>
+                    <MenuItem value="Single">Single</MenuItem>
+                    <MenuItem value="Married">Married</MenuItem>
+                    <MenuItem value="Divorced">Divorced</MenuItem>
+                    <MenuItem value="Widowed">Widowed</MenuItem>
+                  </TextField>
+                </Grid>
+                {newPatient.marital_status === "Married" && (
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      label="Duration of Marriage (years)"
+                      type="number"
+                      value={newPatient.duration_of_marriage ?? ""}
+                      onChange={(e) => setNewPatient((p) => ({ ...p, duration_of_marriage: parseInt(e.target.value) || null }))}
+                      fullWidth
+                    />
+                  </Grid>
+                )}
+                
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">Lifestyle</Typography>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={newPatient.smoking_use ?? false}
+                      onChange={(e) => setNewPatient((p) => ({ ...p, smoking_use: e.target.checked }))}
+                    />
+                    {" "}Smoking Use
+                  </label>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={newPatient.alcohol_use ?? false}
+                      onChange={(e) => setNewPatient((p) => ({ ...p, alcohol_use: e.target.checked }))}
+                    />
+                    {" "}Alcohol Use
+                  </label>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={newPatient.intoxicant_use ?? false}
+                      onChange={(e) => setNewPatient((p) => ({ ...p, intoxicant_use: e.target.checked }))}
+                    />
+                    {" "}Intoxicant Use
+                  </label>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">Address</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Address Line"
+                    value={newPatient.address_line ?? ""}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, address_line: e.target.value }))}
+                    fullWidth
+                    multiline
+                    rows={2}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    label="Ward"
+                    value={newPatient.ward ?? ""}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, ward: e.target.value }))}
+                    fullWidth
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    label="Municipality"
+                    value={newPatient.municipality ?? ""}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, municipality: e.target.value }))}
+                    fullWidth
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
                   <TextField
                     label="District"
                     value={newPatient.district ?? ""}
@@ -187,10 +349,18 @@ export default function PatientSearch() {
                     fullWidth
                   />
                 </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    label="Province"
+                    value={newPatient.province ?? ""}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, province: e.target.value }))}
+                    fullWidth
+                  />
+                </Grid>
 
                 <Grid item xs={12}>
                   <Button variant="contained" disabled={busy || !canCreate} onClick={createPatient}>
-                    {busy ? <CircularProgress size={20} /> : "Create"}
+                    {busy ? <CircularProgress size={20} /> : "Create Patient"}
                   </Button>
                 </Grid>
               </Grid>
@@ -219,6 +389,9 @@ export default function PatientSearch() {
                   <CardContent>
                     <Typography variant="subtitle1">
                       {p.first_name} {p.middle_name ?? ""} {p.last_name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Patient ID: {p.patient_id} | Age: {p.age_in_years ?? "-"} years
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       MRN: {p.facility_mrn ?? "-"} | Phone: {p.phone_number ?? "-"} | District:{" "}

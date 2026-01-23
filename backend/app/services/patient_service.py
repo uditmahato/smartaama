@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.audit_log import AuditLog
@@ -16,14 +17,30 @@ from app.schemas.patient import PatientCreate, PatientSearchParams, PatientUpdat
 
 class PatientService:
     @staticmethod
+    def _generate_patient_id(db: Session) -> str:
+        """Generate a unique patient ID in format PAT-YYYY-NNNNN"""
+        current_year = datetime.now().year
+        
+        # Count existing patients created this year
+        count = db.execute(
+            select(func.count(Patient.id)).where(
+                func.extract('year', Patient.created_at) == current_year
+            )
+        ).scalar() or 0
+        
+        seq_num = count + 1
+        return f"PAT-{current_year}-{seq_num:05d}"
+
+    @staticmethod
     def create_patient(db: Session, *, payload: PatientCreate, actor: User, ip: Optional[str] = None, user_agent: Optional[str] = None) -> Patient:
         patient = Patient(
+            patient_id=PatientService._generate_patient_id(db),
             facility_mrn=payload.facility_mrn,
             national_id=payload.national_id,
             first_name=payload.first_name,
             middle_name=payload.middle_name,
             last_name=payload.last_name,
-            date_of_birth=payload.date_of_birth,
+            age_in_years=payload.age_in_years,
             sex=payload.sex,
             phone_number=payload.phone_number,
             address_line=payload.address_line,
@@ -44,6 +61,7 @@ class PatientService:
                 ip_address=ip,
                 user_agent=user_agent,
                 details={
+                    "patient_id": patient.patient_id,
                     "facility_mrn": patient.facility_mrn,
                     "national_id": patient.national_id,
                 },
@@ -78,7 +96,7 @@ class PatientService:
             "first_name": patient.first_name,
             "middle_name": patient.middle_name,
             "last_name": patient.last_name,
-            "date_of_birth": patient.date_of_birth.isoformat() if patient.date_of_birth else None,
+            "age_in_years": patient.age_in_years,
             "sex": patient.sex,
             "phone_number": patient.phone_number,
             "address_line": patient.address_line,
@@ -100,7 +118,7 @@ class PatientService:
             "first_name": patient.first_name,
             "middle_name": patient.middle_name,
             "last_name": patient.last_name,
-            "date_of_birth": patient.date_of_birth.isoformat() if patient.date_of_birth else None,
+            "age_in_years": patient.age_in_years,
             "sex": patient.sex,
             "phone_number": patient.phone_number,
             "address_line": patient.address_line,
@@ -157,6 +175,7 @@ class PatientService:
                     Patient.facility_mrn.ilike(f"%{q}%"),
                     Patient.national_id.ilike(f"%{q}%"),
                     Patient.phone_number.ilike(f"%{q}%"),
+                    Patient.patient_id.ilike(f"%{q}%"),
                 )
             )
 

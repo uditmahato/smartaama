@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date
 from typing import List, Optional
 
-from sqlalchemy import Date, Index, String, Text
+from sqlalchemy import Integer, Index, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,6 +22,9 @@ class Patient(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     __tablename__ = "patients"
 
+    # Auto-generated patient ID (e.g., PAT-2025-00001)
+    patient_id: Mapped[str] = mapped_column(String(20), nullable=False, unique=True, index=True)
+
     # Facility-scoped MRN / registration number (optional but common in PHCs)
     facility_mrn: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
 
@@ -34,7 +36,7 @@ class Patient(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     middle_name: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     last_name: Mapped[str] = mapped_column(String(120), nullable=False)
 
-    date_of_birth: Mapped[Optional[date]] = mapped_column(Date, nullable=True, index=True)
+    age_in_years: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
     # Sex is typically female for maternal system, but do not hard-code; keep explicit
     sex: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
 
@@ -67,7 +69,7 @@ class Patient(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     __table_args__ = (
         # Composite search optimizations
-        Index("ix_patients_name_dob", "last_name", "first_name", "date_of_birth"),
+        Index("ix_patients_name_age", "last_name", "first_name", "age_in_years"),
         Index("ix_patients_facility_mrn_uniqueish", "facility_mrn"),
         Index("ix_patients_national_id_uniqueish", "national_id"),
     )
