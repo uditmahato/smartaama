@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import PatientSearch from "./pages/PatientSearch";
 import PatientProfile from "./pages/PatientProfile";
 import PatientEdit from "./pages/PatientEdit";
+import PatientCreate from "./pages/PatientCreate";
 import UpdateRecord from "./pages/UpdateRecord";
 import Referral from "./pages/Referral";
 import { tokenStore } from "./services/api";
@@ -45,6 +46,17 @@ export default function App() {
             <Container maxWidth="lg" sx={{ py: 3 }}>
               <RequireAuth>
                 <PatientSearch />
+              </RequireAuth>
+            </Container>
+          }
+        />
+
+        <Route
+          path="/patients/new"
+          element={
+            <Container maxWidth="lg" sx={{ py: 3 }}>
+              <RequireAuth>
+                <PatientCreate />
               </RequireAuth>
             </Container>
           }

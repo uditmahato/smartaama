@@ -48,7 +48,7 @@ export default function Dashboard() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
 
-  const [statusFilter, setStatusFilter] = useState<ReferralOut["status"] | "">("submitted");
+  const [statusFilter, setStatusFilter] = useState<ReferralOut["status"] | "admitted" | "to_here" | "from_here" | "">("");
   const [fromFacility, setFromFacility] = useState("");
   const [toFacility, setToFacility] = useState("");
 
@@ -56,7 +56,20 @@ export default function Dashboard() {
 
   const params = useMemo(() => {
     const p: Record<string, any> = { limit: 50, offset: 0 };
-    if (statusFilter) p.status = statusFilter;
+    if (statusFilter) {
+      if (statusFilter === "admitted") {
+        // Map "Admitted Case" to received for now (backend has no separate admitted status)
+        p.status = "received";
+      } else if (statusFilter === "closed") {
+        p.status = "closed";
+      } else if (statusFilter === "from_here") {
+        // Outgoing referrals: submitted from this facility
+        p.status = "submitted";
+      } else if (statusFilter === "to_here") {
+        // Incoming referrals: received at this facility
+        p.status = "received";
+      }
+    }
     if (fromFacility.trim()) p.from_facility = fromFacility.trim();
     if (toFacility.trim()) p.to_facility = toFacility.trim();
     return p;
@@ -113,7 +126,7 @@ export default function Dashboard() {
   };
 
   const resetFilters = () => {
-    setStatusFilter("submitted");
+    setStatusFilter("");
     setFromFacility("");
     setToFacility("");
   };
@@ -162,7 +175,7 @@ export default function Dashboard() {
                 >
                   <Button
                     variant="contained"
-                    onClick={() => navigate("/patients?create=true")}
+                    onClick={() => navigate("/patients/new")}
                     sx={{
                       textTransform: "none",
                       fontWeight: 700,
@@ -301,11 +314,10 @@ export default function Dashboard() {
                       size="small"
                     >
                       <MenuItem value="">All</MenuItem>
-                      <MenuItem value="draft">Draft</MenuItem>
-                      <MenuItem value="submitted">Submitted</MenuItem>
-                      <MenuItem value="received">Received</MenuItem>
-                      <MenuItem value="closed">Closed</MenuItem>
-                      <MenuItem value="cancelled">Cancelled</MenuItem>
+                      <MenuItem value="to_here">Referred to Here</MenuItem>
+                      <MenuItem value="from_here">Referred from Here</MenuItem>
+                      <MenuItem value="admitted">Admitted Case</MenuItem>
+                      <MenuItem value="closed">Closed Case</MenuItem>
                     </TextField>
                   </Grid>
 
@@ -384,7 +396,7 @@ export default function Dashboard() {
                     Inbox
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {statusFilter ? `Status: ${statusFilter}` : "All statuses"}
+                    {statusFilter ? `Status: ${statusFilter === "to_here" ? "Referred to Here" : statusFilter === "from_here" ? "Referred from Here" : statusFilter === "admitted" ? "Admitted Case" : "Closed Case"}` : "All statuses"}
                   </Typography>
                 </Stack>
 

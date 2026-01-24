@@ -17,6 +17,50 @@ from app.schemas.patient import PatientCreate, PatientSearchParams, PatientUpdat
 
 class PatientService:
     @staticmethod
+    def _abbr(value: Optional[str]) -> str:
+        """Return uppercased first three alphabetic characters; fallback to UNK."""
+        if not value:
+            return "UNK"
+        letters = "".join(ch for ch in value.upper() if ch.isalpha())
+        if not letters:
+            return "UNK"
+        # Pad with X to always have 3 characters for very short names
+        return (letters[:3]).ljust(3, "X")
+
+    @staticmethod
+    def _generate_facility_mrn(
+        db: Session,
+        province: Optional[str],
+        district: Optional[str],
+        municipality: Optional[str],
+    ) -> str:
+        """
+        Generate facility MRN with pattern:
+        {PROV3}-{DIST3}-{MUNI3}-PHC-{NNN}
+
+        Sequence is scoped per prefix to keep numbers compact per location.
+        """
+
+        prov_code = PatientService._abbr(province)
+        dist_code = PatientService._abbr(district)
+        muni_code = PatientService._abbr(municipality)
+        prefix = f"{prov_code}-{dist_code}-{muni_code}-PHC-"
+
+        existing = db.execute(
+            select(Patient.facility_mrn).where(Patient.facility_mrn.ilike(f"{prefix}%"))
+        ).scalars().all()
+
+        max_seq = 0
+        for mrn in existing:
+            if not mrn:
+                continue
+            suffix = mrn.replace(prefix, "", 1)
+            if suffix.isdigit():
+                max_seq = max(max_seq, int(suffix))
+
+        return f"{prefix}{max_seq + 1:03d}"
+
+    @staticmethod
     def _generate_patient_id(db: Session) -> str:
         """Generate a unique patient ID in format PAT-YYYY-NNNNN"""
         current_year = datetime.now().year
@@ -33,9 +77,16 @@ class PatientService:
 
     @staticmethod
     def create_patient(db: Session, *, payload: PatientCreate, actor: User, ip: Optional[str] = None, user_agent: Optional[str] = None) -> Patient:
+        auto_facility_mrn = PatientService._generate_facility_mrn(
+            db,
+            province=payload.province,
+            district=payload.district,
+            municipality=payload.municipality,
+        )
+
         patient = Patient(
             patient_id=PatientService._generate_patient_id(db),
-            facility_mrn=payload.facility_mrn,
+            facility_mrn=payload.facility_mrn or auto_facility_mrn,
             national_id=payload.national_id,
             first_name=payload.first_name,
             middle_name=payload.middle_name,
@@ -106,8 +157,8 @@ class PatientService:
             "province": patient.province,
         }
 
-        # Only set fields provided (exclude None)
-        data = payload.model_dump(exclude_unset=True)
+        # Only set fields provided (exclude None) and prevent MRN changes
+        data = payload.model_dump(exclude_unset=True, exclude={"facility_mrn", "patient_id"})
         for k, v in data.items():
             if v is not None:
                 setattr(patient, k, v)

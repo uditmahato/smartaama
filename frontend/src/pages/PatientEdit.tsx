@@ -271,8 +271,8 @@ const PatientEdit: React.FC = () => {
           Edit Patient Information
         </Typography>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Patient ID: {patient.patient_id}
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+          Patient ID / Facility MRN: {patient.facility_mrn || patient.patient_id}
         </Typography>
 
         {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
@@ -285,16 +285,6 @@ const PatientEdit: React.FC = () => {
               <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
                 Identifiers
               </Typography>
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Facility MRN"
-                name="facility_mrn"
-                value={formData.facility_mrn}
-                onChange={handleChange}
-              />
             </Grid>
             
             <Grid item xs={12} sm={6}>

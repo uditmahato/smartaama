@@ -306,8 +306,8 @@ export default function PatientProfile() {
                     </Typography>
                   </Grid>
                   <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="body2" color="text.secondary">MRN</Typography>
-                    <Typography variant="body1">{patient.facility_mrn || "Not assigned"}</Typography>
+                    <Typography variant="body2" color="text.secondary">Patient ID / Facility MRN</Typography>
+                    <Typography variant="body1">{patient.facility_mrn || patient.patient_id || "Not assigned"}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={6} md={4}>
                     <Typography variant="body2" color="text.secondary">Age</Typography>
