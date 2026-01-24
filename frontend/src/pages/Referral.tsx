@@ -588,11 +588,11 @@ export default function Referral() {
                     </Grid>
                   )}
 
-                  {isReceivingFacility && referral.clinician_note && (
+                  {referral.clinician_note && (
                     <>
                       <Divider sx={{ my: 2 }} />
                       <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#0F172A", mb: 2 }}>
-                        Updates Submitted
+                        {isReceivingFacility ? "Updates Submitted" : "Facility Updates"}
                       </Typography>
                       <Box sx={{ overflowX: "auto" }}>
                         <table style={{ width: "100%", borderCollapse: "collapse" }}>
