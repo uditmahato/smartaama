@@ -7,12 +7,13 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  Divider,
+  FormControlLabel,
   Grid,
   MenuItem,
   Stack,
   TextField,
   Typography,
+  Checkbox,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
@@ -136,22 +137,66 @@ export default function PatientCreate() {
   }
 
   return (
-    <Stack spacing={2}>
-      <Card>
-        <CardContent>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Typography variant="h5" sx={{ flex: 1 }}>
-              Create Patient
-            </Typography>
-            <Button variant="outlined" onClick={() => navigate("/patients")}>Back to Search</Button>
-          </Stack>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#F6F7FB", py: { xs: 2, md: 3 }, px: { xs: 0.5, sm: 1, md: 1.5 }, width: "100%", boxSizing: "border-box" }}>
+      <Stack spacing={3}>
+        {/* Top Bar */}
+        <Card
+          sx={{
+            borderRadius: 3,
+            border: "1px solid rgba(15, 23, 42, 0.10)",
+            boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              px: { xs: 2.5, md: 3.5 },
+              py: { xs: 2.5, md: 3 },
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+            }}
+          >
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              spacing={{ xs: 2, md: 3 }}
+              justifyContent="space-between"
+              alignItems={{ xs: "flex-start", md: "center" }}
+            >
+              <Stack spacing={0.5}>
+                <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.2 }}>
+                  Create New Patient
+                </Typography>
+                <Typography variant="body2" sx={{ opacity: 0.9, lineHeight: 1.7 }}>
+                  Register a new patient in the system with complete details.
+                </Typography>
+              </Stack>
 
-          <Divider sx={{ my: 2 }} />
+              <Stack direction="row" spacing={1.25} alignItems="center">
+                <Button
+                  variant="contained"
+                  onClick={() => navigate("/patients")}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    background: "rgba(255,255,255,0.25)",
+                    color: "white",
+                    "&:hover": { background: "rgba(255,255,255,0.35)" },
+                    px: 2.25,
+                  }}
+                >
+                  Back to Search
+                </Button>
+              </Stack>
+            </Stack>
+          </Box>
 
-          {error && <Alert severity="error">{error}</Alert>}
-          {success && <Alert severity="success">{success}</Alert>}
+          {/* Form */}
+          <CardContent sx={{ p: { xs: 2.5, md: 3.5 }, bgcolor: "white" }}>
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+            <Grid container spacing={2}>
             <Grid item xs={12} sm={4}>
               <TextField
                 label="First name"
@@ -266,34 +311,37 @@ export default function PatientCreate() {
             </Grid>
 
             <Grid item xs={12} sm={4}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={newPatient.smoking_use ?? false}
-                  onChange={(e) => setNewPatient((p) => ({ ...p, smoking_use: e.target.checked }))}
-                />
-                {" "}Smoking Use
-              </label>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={newPatient.smoking_use ?? false}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, smoking_use: e.target.checked }))}
+                  />
+                }
+                label="Smoking Use"
+              />
             </Grid>
             <Grid item xs={12} sm={4}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={newPatient.alcohol_use ?? false}
-                  onChange={(e) => setNewPatient((p) => ({ ...p, alcohol_use: e.target.checked }))}
-                />
-                {" "}Alcohol Use
-              </label>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={newPatient.alcohol_use ?? false}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, alcohol_use: e.target.checked }))}
+                  />
+                }
+                label="Alcohol Use"
+              />
             </Grid>
             <Grid item xs={12} sm={4}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={newPatient.intoxicant_use ?? false}
-                  onChange={(e) => setNewPatient((p) => ({ ...p, intoxicant_use: e.target.checked }))}
-                />
-                {" "}Intoxicant Use
-              </label>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={newPatient.intoxicant_use ?? false}
+                    onChange={(e) => setNewPatient((p) => ({ ...p, intoxicant_use: e.target.checked }))}
+                  />
+                }
+                label="Intoxicant Use"
+              />
             </Grid>
 
             <Grid item xs={12}>
@@ -397,17 +445,39 @@ export default function PatientCreate() {
 
             <Grid item xs={12}>
               <Stack direction="row" spacing={2}>
-                <Button variant="contained" onClick={createPatient} disabled={!canCreate || busy}>
+                <Button
+                  variant="contained"
+                  onClick={createPatient}
+                  disabled={!canCreate || busy}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    background: "#4F46E5",
+                    "&:hover": { background: "#4338CA" },
+                    px: 3,
+                  }}
+                >
                   {busy ? <CircularProgress size={20} /> : "Create Patient"}
                 </Button>
-                <Button variant="text" onClick={() => navigate("/patients")} disabled={busy}>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate("/patients")}
+                  disabled={busy}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 700,
+                    borderRadius: 2,
+                  }}
+                >
                   Cancel
                 </Button>
               </Stack>
             </Grid>
           </Grid>
-        </CardContent>
-      </Card>
-    </Stack>
+          </CardContent>
+        </Card>
+      </Stack>
+    </Box>
   );
 }

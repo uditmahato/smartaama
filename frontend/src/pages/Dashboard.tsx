@@ -9,7 +9,6 @@ import {
   CardContent,
   Chip,
   CircularProgress,
-  Container,
   Grid,
   IconButton,
   Menu,
@@ -132,7 +131,7 @@ export default function Dashboard() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F6F7FB", py: { xs: 2, md: 3 }, px: { xs: 0.5, sm: 1, md: 1.5 } }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#F6F7FB", py: { xs: 2, md: 3 }, px: { xs: 0.5, sm: 1, md: 1.5 }, width: "100%", boxSizing: "border-box" }}>
       <Stack spacing={3}>
           {/* Top Bar */}
           <Card

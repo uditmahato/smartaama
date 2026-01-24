@@ -1,6 +1,6 @@
 // frontend/src/App.tsx
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { CssBaseline, Container } from "@mui/material";
+import { CssBaseline } from "@mui/material";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -43,66 +43,54 @@ export default function App() {
         <Route
           path="/patients"
           element={
-            <Container maxWidth="lg" sx={{ py: 3 }}>
-              <RequireAuth>
-                <PatientSearch />
-              </RequireAuth>
-            </Container>
+            <RequireAuth>
+              <PatientSearch />
+            </RequireAuth>
           }
         />
 
         <Route
           path="/patients/new"
           element={
-            <Container maxWidth="lg" sx={{ py: 3 }}>
-              <RequireAuth>
-                <PatientCreate />
-              </RequireAuth>
-            </Container>
+            <RequireAuth>
+              <PatientCreate />
+            </RequireAuth>
           }
         />
 
         <Route
           path="/patients/:patientId/edit"
           element={
-            <Container maxWidth="lg" sx={{ py: 3 }}>
-              <RequireAuth>
-                <PatientEdit />
-              </RequireAuth>
-            </Container>
+            <RequireAuth>
+              <PatientEdit />
+            </RequireAuth>
           }
         />
 
         <Route
           path="/patients/:patientId/update"
           element={
-            <Container maxWidth="lg" sx={{ py: 3 }}>
-              <RequireAuth>
-                <UpdateRecord />
-              </RequireAuth>
-            </Container>
+            <RequireAuth>
+              <UpdateRecord />
+            </RequireAuth>
           }
         />
 
         <Route
           path="/patients/:patientId/referral"
           element={
-            <Container maxWidth="lg" sx={{ py: 3 }}>
-              <RequireAuth>
-                <Referral />
-              </RequireAuth>
-            </Container>
+            <RequireAuth>
+              <Referral />
+            </RequireAuth>
           }
         />
 
         <Route
           path="/patients/:patientId"
           element={
-            <Container maxWidth="lg" sx={{ py: 3 }}>
-              <RequireAuth>
-                <PatientProfile />
-              </RequireAuth>
-            </Container>
+            <RequireAuth>
+              <PatientProfile />
+            </RequireAuth>
           }
         />
 

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
+  Box,
   Button,
   Card,
   CardContent,
@@ -30,14 +31,20 @@ import { api } from "../services/api";
 type PatientOut = {
   id: string;
   facility_mrn?: string | null;
+  patient_id?: string | null;
   national_id?: string | null;
   first_name: string;
   middle_name?: string | null;
   last_name: string;
+  age_in_years?: number | null;
   date_of_birth?: string | null;
   sex?: string | null;
   phone_number?: string | null;
   district?: string | null;
+  province?: string | null;
+  municipality?: string | null;
+  ward?: string | null;
+  address_line?: string | null;
   created_at: string;
 };
 
@@ -92,7 +99,7 @@ function humanizeLabel(input: string): string {
     .join(" ");
 }
 
-export default function PatientProfile() {
+function PatientProfile() {
   const { patientId } = useParams();
   const navigate = useNavigate();
 
@@ -255,39 +262,116 @@ export default function PatientProfile() {
   }, [sortedEvents]);
 
   return (
-    <Stack spacing={2}>
-      <Card>
-        <CardContent>
-          <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center">
-            <div>
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>Patient Profile</Typography>
-              <Typography variant="body1" color="text.secondary">
-                Complete medical history and current health status
-              </Typography>
-            </div>
-            <Stack direction="row" spacing={1}>
-              <Button variant="outlined" onClick={() => navigate("/patients")}>
-                Back
-              </Button>
-              <Button variant="contained" onClick={() => navigate(`/patients/${patientId}/update`)}>
-                Update Record
-              </Button>
-              <Button variant="outlined" onClick={() => navigate(`/patients/${patientId}/referral`)}>
-                Refer
-              </Button>
-            </Stack>
-          </Stack>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#F6F7FB", py: { xs: 2, md: 3 }, px: { xs: 0.5, sm: 1, md: 1.5 }, width: "100%", boxSizing: "border-box" }}>
+      <Stack spacing={3}>
+        {/* Top Bar */}
+        {patient && (
+          <Card
+            sx={{
+              borderRadius: 3,
+              border: "1px solid rgba(15, 23, 42, 0.10)",
+              boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
+              overflow: "hidden",
+            }}
+          >
+            <Box
+              sx={{
+                px: { xs: 2.5, md: 3.5 },
+                py: { xs: 2.5, md: 3 },
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "white",
+              }}
+            >
+              <Stack
+                direction={{ xs: "column", md: "row" }}
+                spacing={{ xs: 2, md: 3 }}
+                justifyContent="space-between"
+                alignItems={{ xs: "flex-start", md: "center" }}
+              >
+                <Stack spacing={0.5}>
+                  <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.2 }}>
+                    {patient.first_name} {patient.middle_name ?? ""} {patient.last_name}
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.9, lineHeight: 1.7 }}>
+                    MRN: {patient.facility_mrn || patient.patient_id || "Not assigned"}
+                  </Typography>
+                </Stack>
 
-          <Divider sx={{ my: 2 }} />
+                <Stack direction="row" spacing={1.25} alignItems="center">
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate(`/patients/${patientId}/update`)}
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 700,
+                      borderRadius: 2,
+                      background: "rgba(255,255,255,0.95)",
+                      color: "#4C51BF",
+                      "&:hover": { background: "white" },
+                      px: 2.25,
+                    }}
+                  >
+                    Update Record
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate(`/patients/${patientId}/referral`)}
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 700,
+                      borderRadius: 2,
+                      background: "rgba(255,255,255,0.95)",
+                      color: "#4C51BF",
+                      "&:hover": { background: "white" },
+                      px: 2.25,
+                    }}
+                  >
+                    Refer Patient
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate("/patients")}
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 700,
+                      borderRadius: 2,
+                      background: "rgba(255,255,255,0.25)",
+                      color: "white",
+                      "&:hover": { background: "rgba(255,255,255,0.35)" },
+                      px: 2.25,
+                    }}
+                  >
+                    Back
+                  </Button>
+                </Stack>
+              </Stack>
+            </Box>
 
-          {error && <Alert severity="error">{error}</Alert>}
-          {busy && <CircularProgress />}
+            {error && (
+              <CardContent sx={{ p: { xs: 2.5, md: 3.5 }, bgcolor: "white" }}>
+                <Alert severity="error">{error}</Alert>
+              </CardContent>
+            )}
+          </Card>
+        )}
 
-          {patient && (
-            <Card variant="outlined">
-              <CardContent>
-                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>Personal Information</Typography>
+        {error && !patient && <Alert severity="error">{error}</Alert>}
+        {busy && !patient && <CircularProgress />}
+
+        {patient && (
+          <Card
+            sx={{
+              borderRadius: 3,
+              border: "1px solid rgba(15, 23, 42, 0.10)",
+              boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+              <Stack spacing={2}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+                    Personal Information
+                  </Typography>
                   <Tooltip title="Edit patient information" arrow>
                     <IconButton
                       size="small"
@@ -298,6 +382,7 @@ export default function PatientProfile() {
                     </IconButton>
                   </Tooltip>
                 </Stack>
+
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6} md={4}>
                     <Typography variant="body2" color="text.secondary">Full Name</Typography>
@@ -350,225 +435,255 @@ export default function PatientProfile() {
                     </Grid>
                   )}
                 </Grid>
-              </CardContent>
-            </Card>
-          )}
-        </CardContent>
-      </Card>
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
 
-      <Card>
-        <CardContent>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Button variant="outlined" onClick={() => setNotesDrawer(true)}>
-              View Notes ({events.filter((e) => e.note).length})
-            </Button>
-            <Button variant="outlined" onClick={() => setReferralsDrawer(true)}>
-              View Referral History ({events.filter((e) => e.referral_id).length})
-            </Button>
-          </Stack>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <div>
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>Clinical Summary</Typography>
-              <Typography variant="body1" color="text.secondary">
-                Latest recorded observations
-              </Typography>
-            </div>
-            <Stack direction="row" spacing={1}>
-              <Button 
-                variant="outlined" 
-                size="small"
-                onClick={() => toggleAllSections(true)}
-              >
-                Show All
-              </Button>
-              <Button 
-                variant="outlined" 
-                size="small"
-                onClick={() => toggleAllSections(false)}
-              >
-                Collapse All
-              </Button>
-            </Stack>
-          </Stack>
-
-          <Divider sx={{ my: 2 }} />
-
-          {summaryBySection.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              No clinical events recorded yet.
-            </Typography>
-          ) : (
+        <Card
+          sx={{
+            borderRadius: 3,
+            border: "1px solid rgba(15, 23, 42, 0.10)",
+            boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
             <Stack spacing={2}>
-              {summaryBySection.map((sec) => {
-                const isExpanded = expandedSections[sec.section] === true; // default collapsed
-                return (
-                  <Card key={sec.section} variant="outlined">
-                  <CardContent>
-                      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: isExpanded ? 2 : 0 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>{humanizeLabel(sec.section)}</Typography>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Chip
-                            label={`${sec.items.length} factors`}
-                            size="small"
-                            onClick={() => setSectionFilter(sec.section)}
-                            sx={{ cursor: "pointer" }}
-                          />
-                          <Tooltip title="Edit section" arrow>
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => navigate(`/patients/${patientId}/update?section=${sec.section}`)}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={isExpanded ? "Collapse" : "Expand"} arrow>
-                            <IconButton
-                              size="small"
-                              onClick={() => toggleSection(sec.section)}
-                            >
-                              {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </Stack>
-
-                    <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                    <Grid container spacing={1}>
-                      {sec.items.slice(0, 12).map(({ factor, ev, fieldLabel }) => (
-                        <Grid item xs={12} sm={6} md={4} key={`${sec.section}:${factor}`}>
-                          <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                            {fieldLabel}
-                          </Typography>
-                          <Typography variant="body1" sx={{ mb: 0.5, color: ev ? "text.primary" : "text.disabled" }}>
-                            {ev ? formatValue(ev.value) : "Not recorded"}
-                          </Typography>
-                          {ev && (
-                            <Typography variant="caption" color="text.secondary">
-                              Recorded: {new Date(ev.event_time).toLocaleString()}
-                            </Typography>
-                          )}
-                        </Grid>
-                      ))}
-                    </Grid>
-
-                    {sec.items.length > 12 && (
-                      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
-                        Showing first 12 factors. Use timeline filters to drill down.
-                      </Typography>
-                    )}
-                    </Collapse>
-                  </CardContent>
-                </Card>
-                );
-              })}
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+                Notes & Referrals
+              </Typography>
+              <Stack direction="row" spacing={2}>
+                <Button variant="outlined" onClick={() => setNotesDrawer(true)}>
+                  View Notes ({events.filter((e) => e.note).length})
+                </Button>
+                <Button variant="outlined" onClick={() => setReferralsDrawer(true)}>
+                  View Referral History ({events.filter((e) => e.referral_id).length})
+                </Button>
+              </Stack>
             </Stack>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardContent>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center" sx={{ mb: 2 }}>
-            <Typography variant="h6" sx={{ flex: 1, fontWeight: 600 }}>
-              Timeline ({filteredTimeline.length})
-            </Typography>
+        <Card
+          sx={{
+            borderRadius: 3,
+            border: "1px solid rgba(15, 23, 42, 0.10)",
+            boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+            <Stack spacing={2}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+                  Clinical Summary
+                </Typography>
+                <Stack direction="row" spacing={1}>
+                  <Button 
+                    variant="outlined" 
+                    size="small"
+                    onClick={() => toggleAllSections(true)}
+                  >
+                    Show All
+                  </Button>
+                  <Button 
+                    variant="outlined" 
+                    size="small"
+                    onClick={() => toggleAllSections(false)}
+                  >
+                    Collapse All
+                  </Button>
+                </Stack>
+              </Stack>
 
-            <TextField
-              select
-              label="Section"
-              value={sectionFilter}
-              onChange={(e) => setSectionFilter(e.target.value)}
-              sx={{ minWidth: 220 }}
-            >
-              <MenuItem value="">All sections</MenuItem>
-              {sections.map((s) => (
-                <MenuItem key={s} value={s}>
-                  {s}
-                </MenuItem>
-              ))}
-            </TextField>
+              {summaryBySection.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  No clinical events recorded yet.
+                </Typography>
+              ) : (
+                <Stack spacing={2}>
+                  {summaryBySection.map((sec) => {
+                    const isExpanded = expandedSections[sec.section] === true; // default collapsed
+                    return (
+                      <Card 
+                        key={sec.section} 
+                        sx={{
+                          border: "1px solid rgba(15, 23, 42, 0.08)",
+                          borderRadius: 2,
+                        }}
+                      >
+                        <CardContent>
+                          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: isExpanded ? 2 : 0 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 700 }}>{humanizeLabel(sec.section)}</Typography>
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Chip
+                                label={`${sec.items.length} factors`}
+                                size="small"
+                                onClick={() => setSectionFilter(sec.section)}
+                                sx={{ cursor: "pointer" }}
+                              />
+                              <Tooltip title="Edit section" arrow>
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => navigate(`/patients/${patientId}/update?section=${sec.section}`)}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title={isExpanded ? "Collapse" : "Expand"} arrow>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => toggleSection(sec.section)}
+                                >
+                                  {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
+                          </Stack>
 
-            <TextField
-              select
-              label="Factor"
-              value={factorFilter}
-              onChange={(e) => setFactorFilter(e.target.value)}
-              sx={{ minWidth: 220 }}
-            >
-              <MenuItem value="">All factors</MenuItem>
-              {factors.map((f) => (
-                <MenuItem key={f} value={f}>
-                  {f}
-                </MenuItem>
-              ))}
-            </TextField>
+                          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                            <Grid container spacing={1}>
+                              {sec.items.slice(0, 12).map(({ factor, ev, fieldLabel }) => (
+                                <Grid item xs={12} sm={6} md={4} key={`${sec.section}:${factor}`}>
+                                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                                    {fieldLabel}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ mb: 0.5, color: ev ? "text.primary" : "text.disabled" }}>
+                                    {ev ? formatValue(ev.value) : "Not recorded"}
+                                  </Typography>
+                                  {ev && (
+                                    <Typography variant="caption" color="text.secondary">
+                                      {new Date(ev.event_time).toLocaleString()}
+                                    </Typography>
+                                  )}
+                                </Grid>
+                              ))}
+                            </Grid>
 
-            <Button
-              variant="outlined"
-              onClick={() => {
-                setSectionFilter("");
-                setFactorFilter("");
-              }}
-            >
-              Clear
-            </Button>
-          </Stack>
+                            {sec.items.length > 12 && (
+                              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+                                Showing first 12 factors. Use timeline filters to drill down.
+                              </Typography>
+                            )}
+                          </Collapse>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </Stack>
+              )}
+            </Stack>
+          </CardContent>
+        </Card>
 
-          <Divider sx={{ my: 2 }} />
+        <Card
+          sx={{
+            borderRadius: 3,
+            border: "1px solid rgba(15, 23, 42, 0.10)",
+            boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+            <Stack spacing={2}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+                Timeline ({filteredTimeline.length})
+              </Typography>
 
-          {filteredTimeline.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              No events match the current filters.
-            </Typography>
-          ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Section</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Factor</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Event time</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Value</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredTimeline.map((ev) => (
-                  <TableRow key={ev.id} hover>
-                    <TableCell>{humanizeLabel(ev.section)}</TableCell>
-                    <TableCell>{humanizeLabel(ev.factor)}</TableCell>
-                    <TableCell>{new Date(ev.event_time).toLocaleString()}</TableCell>
-                    <TableCell>{formatValue(ev.value)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "flex-start", sm: "center" }}>
+                <TextField
+                  select
+                  label="Section"
+                  value={sectionFilter}
+                  onChange={(e) => setSectionFilter(e.target.value)}
+                  size="small"
+                  sx={{ minWidth: 200 }}
+                >
+                  <MenuItem value="">All sections</MenuItem>
+                  {sections.map((s) => (
+                    <MenuItem key={s} value={s}>
+                      {s}
+                    </MenuItem>
+                  ))}
+                </TextField>
 
-      <Drawer anchor="right" open={notesDrawer} onClose={() => setNotesDrawer(false)} sx={{ minWidth: 360 }}>
-        <Stack spacing={2} sx={{ p: 2, width: { xs: 320, sm: 420 } }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="h6">Notes</Typography>
-            <Button size="small" onClick={() => setNotesDrawer(false)}>
-              Close
-            </Button>
-          </Stack>
-          {notesList.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              No notes recorded.
-            </Typography>
-          ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Event time</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Section</TableCell>
+                <TextField
+                  select
+                  label="Factor"
+                  value={factorFilter}
+                  onChange={(e) => setFactorFilter(e.target.value)}
+                  size="small"
+                  sx={{ minWidth: 200 }}
+                >
+                  <MenuItem value="">All factors</MenuItem>
+                  {factors.map((f) => (
+                    <MenuItem key={f} value={f}>
+                      {f}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setSectionFilter("");
+                    setFactorFilter("");
+                  }}
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  Clear
+                </Button>
+              </Stack>
+
+              <Divider sx={{ my: 2 }} />
+
+              {filteredTimeline.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  No events match the current filters.
+                </Typography>
+              ) : (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Section</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Factor</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Event time</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Value</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredTimeline.map((ev) => (
+                      <TableRow key={ev.id} hover>
+                        <TableCell>{humanizeLabel(ev.section)}</TableCell>
+                        <TableCell>{humanizeLabel(ev.factor)}</TableCell>
+                        <TableCell>{new Date(ev.event_time).toLocaleString()}</TableCell>
+                        <TableCell>{formatValue(ev.value)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <Drawer anchor="right" open={notesDrawer} onClose={() => setNotesDrawer(false)} sx={{ minWidth: 360 }}>
+          <Stack spacing={2} sx={{ p: 2, width: { xs: 320, sm: 420 } }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="h6">Notes</Typography>
+              <Button size="small" onClick={() => setNotesDrawer(false)}>
+                Close
+              </Button>
+            </Stack>
+            {notesList.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                No notes recorded.
+              </Typography>
+            ) : (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Event time</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Section</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Factor</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Note</TableCell>
                 </TableRow>
@@ -624,6 +739,9 @@ export default function PatientProfile() {
           )}
         </Stack>
       </Drawer>
-    </Stack>
+      </Stack>
+    </Box>
   );
 }
+
+export default PatientProfile;
