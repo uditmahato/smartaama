@@ -1,0 +1,4045 @@
+{
+  "Koshi Province": {
+    "Taplejung": [
+      {
+        "local_level_name": "Aathrai Tribeni",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Maiwakhola",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Meringden",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Mikwakhola",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Phaktanglung",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Phungling",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Sidingba",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Sirijangha",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Yangwarak",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      }
+    ],
+    "Panchthar": [
+      {
+        "local_level_name": "Falelung",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Falgunanda",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Hilihang",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Kummayak",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Miklajung",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Phidim",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Tumbewa",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Yangwarak",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      }
+    ],
+    "Ilam": [
+      {
+        "local_level_name": "Chulachuli",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Deumai",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Fakphokthum",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Illam",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Mai",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Maijogmai",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Mangsebung",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Rong",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Sandakpur",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Suryodaya",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      }
+    ],
+    "Jhapa": [
+      {
+        "local_level_name": "Arjundhara",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Barhadashi",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Bhadrapur",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Birtamod",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Buddhashanti",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Damak",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Gauradhaha",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Gauriganj",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Haldibari",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Jhapa",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Kachankawal",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Kamal",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Kankai",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Mechinagar",
+        "local_level_type": "Nagarpalika",
+        "wards": 15
+      },
+      {
+        "local_level_name": "Shivasataxi",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      }
+    ],
+    "Morang": [
+      {
+        "local_level_name": "Belbari",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Biratnagar",
+        "local_level_type": "Mahanagarpalika",
+        "wards": 19
+      },
+      {
+        "local_level_name": "Budhiganga",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Dhanpalthan",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Gramthan",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Jahada",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Kanepokhari",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Katahari",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Kerabari",
+        "local_level_type": "Gaunpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Letang",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Miklajung",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Patahrishanishchare",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Rangeli",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Ratuwamai",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Sundarharaicha",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Sunwarshi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Uralabari",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      }
+    ],
+    "Sunsari": [
+      {
+        "local_level_name": "Barah",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Barju",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Bhokraha",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Dewanganj",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Dharan",
+        "local_level_type": "Upamahanagarpalika",
+        "wards": 20
+      },
+      {
+        "local_level_name": "Duhabi",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Gadhi",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Harinagara",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Inaruwa",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Itahari",
+        "local_level_type": "Upamahanagarpalika",
+        "wards": 20
+      },
+      {
+        "local_level_name": "Koshi",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Ramdhuni",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Koshi Tappu Wildlife Reserve",
+        "local_level_type": "Wildlife Reserve",
+        "wards": 0
+      }
+    ],
+    "Dhankuta": [
+      {
+        "local_level_name": "Chaubise",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Chhathar Jorpati",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Dhankuta",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Khalsa Chhintang Shahidbhumi",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Mahalaxmi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Pakhribas",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Sangurigadhi",
+        "local_level_type": "Gaunpalika",
+        "wards": 10
+      }
+    ],
+    "Terhathum": [
+      {
+        "local_level_name": "Aathrai",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Chhathar",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Laligurans",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Menchayam",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Myanglung",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Phedap",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      }
+    ],
+    "Sankhuwasabha": [
+      {
+        "local_level_name": "Bhotkhola",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Chainpur",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Chichila",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Dharmadevi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Khandbari",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Madi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Makalu",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Panchakhapan",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Sabhapokhari",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Silichong",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      }
+    ],
+    "Bhojpur": [
+      {
+        "local_level_name": "Aamchowk",
+        "local_level_type": "Gaunpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Arun",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Bhojpur",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Hatuwagadhi",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Pauwadungma",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Ramprasad Rai",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Salpasilichho",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Shadananda",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Tyamkemaiyung",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      }
+    ],
+    "Solukhumbu": [
+      {
+        "local_level_name": "Dudhkaushika",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Dudhkoshi",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Khumbupasanglahmu",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Likhupike",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Mahakulung",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Nechasalyan",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Solududhakunda",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Sotang",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      }
+    ],
+    "Okhaldhunga": [
+      {
+        "local_level_name": "Champadevi",
+        "local_level_type": "Gaunpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Chisankhugadhi",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Khijidemba",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Likhu",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Manebhanjyang",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Molung",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Siddhicharan",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Sunkoshi",
+        "local_level_type": "Gaunpalika",
+        "wards": 10
+      }
+    ],
+    "Khotang": [
+      {
+        "local_level_name": "Ainselukhark",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Barahapokhari",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Diprung",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Halesi Tuwachung",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Jantedhunga",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Kepilasagadhi",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Khotehang",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Lamidanda",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Rupakot Majhuwagadhi",
+        "local_level_type": "Nagarpalika",
+        "wards": 15
+      },
+      {
+        "local_level_name": "Sakela",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      }
+    ],
+    "Udayapur": [
+      {
+        "local_level_name": "Belaka",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Chaudandigadhi",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Katari",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Rautamai",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Sunkoshi",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Tapli",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Triyuga",
+        "local_level_type": "Nagarpalika",
+        "wards": 16
+      },
+      {
+        "local_level_name": "Udayapurgadhi",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Koshi Tappu Wildlife Reserve",
+        "local_level_type": "Wildlife Reserve",
+        "wards": 0
+      }
+    ]
+  },
+  "Madhesh Province": {
+    "Saptari": [
+      {
+        "local_level_name": "Agnisair Krishna Savaran",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Balan Bihul",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Belhi Chapena",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Bishnupur",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Bode Barsain",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Chhinnamasta",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Dakneshwori",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Hanumannagar Kankalini",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Kanchanrup",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Khadak",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Mahadeva",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Rajbiraj",
+        "local_level_type": "Nagarpalika",
+        "wards": 16
+      },
+      {
+        "local_level_name": "Rupani",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Saptakoshi",
+        "local_level_type": "Gaunpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Shambhunath",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Surunga",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Tilathi Koiladi",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Tirahut",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Koshi Tappu Wildlife Reserve",
+        "local_level_type": "Wildlife Reserve",
+        "wards": 0
+      }
+    ],
+    "Siraha": [
+      {
+        "local_level_name": "Arnama",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Aurahi",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Bariyarpatti",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Bhagawanpur",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Bishnupur",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Dhangadhimai",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Golbazar",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Kalyanpur",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Karjanha",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Lahan",
+        "local_level_type": "Nagarpalika",
+        "wards": 24
+      },
+      {
+        "local_level_name": "Laxmipur Patari",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Mirchaiya",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Naraha",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Nawarajpur",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Sakhuwanankarkatti",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Siraha",
+        "local_level_type": "Nagarpalika",
+        "wards": 22
+      },
+      {
+        "local_level_name": "Sukhipur",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      }
+    ],
+    "Dhanusha": [
+      {
+        "local_level_name": "Aaurahi",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Bateshwor",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Bideha",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Chhireshwornath",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Dhanauji",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Dhanusadham",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Ganeshman Charnath",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Hansapur",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Janaknandani",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Janakpur",
+        "local_level_type": "Upamahanagarpalika",
+        "wards": 25
+      },
+      {
+        "local_level_name": "Kamala",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Lakshminiya",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Mithila",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Mithila Bihari",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Mukhiyapatti Musarmiya",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Nagarain",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Sabaila",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Sahidnagar",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      }
+    ],
+    "Mahottari": [
+      {
+        "local_level_name": "Aurahi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Balwa",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Bardibas",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Bhangaha",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Ekdanra",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Gaushala",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Jaleswor",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Loharpatti",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Mahottari",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Manra Siswa",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Matihani",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Pipra",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Ramgopalpur",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Samsi",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Sonama",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      }
+    ],
+    "Sarlahi": [
+      {
+        "local_level_name": "Bagmati",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Balara",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Barahathawa",
+        "local_level_type": "Nagarpalika",
+        "wards": 18
+      },
+      {
+        "local_level_name": "Basbariya",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Bishnu",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Bramhapuri",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Chakraghatta",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Chandranagar",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Dhankaul",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Godaita",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Haripur",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Haripurwa",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Hariwan",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Ishworpur",
+        "local_level_type": "Nagarpalika",
+        "wards": 15
+      },
+      {
+        "local_level_name": "Kabilasi",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Kaudena",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Lalbandi",
+        "local_level_type": "Nagarpalika",
+        "wards": 17
+      },
+      {
+        "local_level_name": "Malangawa",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Parsa",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Ramnagar",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      }
+    ],
+    "Rautahat": [
+      {
+        "local_level_name": "Baudhimai",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Brindaban",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Chandrapur",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Dewahhi Gonahi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Durga Bhagwati",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Gadhimai",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Garuda",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Gaur",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Gujara",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Ishanath",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Katahariya",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Madhav Narayan",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Maulapur",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Paroha",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Phatuwa Bijayapur",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Rajdevi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Rajpur",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Yemunamai",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      }
+    ],
+    "Bara": [
+      {
+        "local_level_name": "Adarshkotwal",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Baragadhi",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Bishrampur",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Devtal",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Jitpur Simara",
+        "local_level_type": "Upamahanagarpalika",
+        "wards": 24
+      },
+      {
+        "local_level_name": "Kalaiya",
+        "local_level_type": "Upamahanagarpalika",
+        "wards": 27
+      },
+      {
+        "local_level_name": "Karaiyamai",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Kolhabi",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Mahagadhimai",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Nijgadh",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Pacharauta",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Parwanipur",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Pheta",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Prasauni",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Simraungadh",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Suwarna",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Parsa Wildlife Reserve",
+        "local_level_type": "Wildlife Reserve",
+        "wards": 0
+      }
+    ],
+    "Parsa": [
+      {
+        "local_level_name": "Bahudaramai",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Bindabasini",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Birgunj",
+        "local_level_type": "Mahanagarpalika",
+        "wards": 32
+      },
+      {
+        "local_level_name": "Chhipaharmai",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Dhobini",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Jagarnathpur",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Jirabhawani",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Kalikamai",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Pakahamainpur",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Parsagadhi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Paterwasugauli",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Pokhariya",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "SakhuwaPrasauni",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Thori",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Chitwan National Park",
+        "local_level_type": "National Park",
+        "wards": 0
+      }
+    ]
+  },
+  "Bagmati Province": {
+    "Sindhuli": [
+      {
+        "local_level_name": "Dudhouli",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Ghanglekh",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Golanjor",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Hariharpurgadhi",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Kamalamai",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Marin",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Phikkal",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Sunkoshi",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Tinpatan",
+        "local_level_type": "Gaunpalika",
+        "wards": 11
+      }
+    ],
+    "Ramechhap": [
+      {
+        "local_level_name": "Doramba",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Gokulganga",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Khadadevi",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Likhu",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Manthali",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Ramechhap",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Sunapati",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Umakunda",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      }
+    ],
+    "Dolakha": [
+      {
+        "local_level_name": "Baiteshwor",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Bhimeshwor",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Bigu",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Gaurishankar",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Jiri",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Kalinchok",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Melung",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Sailung",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Tamakoshi",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      }
+    ],
+    "Sindhupalchok": [
+      {
+        "local_level_name": "Balefi",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Barhabise",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Bhotekoshi",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Chautara SangachokGadhi",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Helambu",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Indrawati",
+        "local_level_type": "Gaunpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Jugal",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Lisangkhu Pakhar",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Melamchi",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Panchpokhari Thangpal",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Sunkoshi",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Tripurasundari",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      }
+    ],
+    "Kabhrepalanchok": [
+      {
+        "local_level_name": "Banepa",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Bethanchowk",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Bhumlu",
+        "local_level_type": "Gaunpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Chaurideurali",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Dhulikhel",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Khanikhola",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Mahabharat",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Mandandeupur",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Namobuddha",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Panauti",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Panchkhal",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Roshi",
+        "local_level_type": "Gaunpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Temal",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      }
+    ],
+    "Lalitpur": [
+      {
+        "local_level_name": "Bagmati",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Godawari",
+        "local_level_type": "Nagarpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Konjyosom",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Lalitpur",
+        "local_level_type": "Mahanagarpalika",
+        "wards": 29
+      },
+      {
+        "local_level_name": "Mahalaxmi",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Mahankal",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      }
+    ],
+    "Bhaktapur": [
+      {
+        "local_level_name": "Bhaktapur",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Changunarayan",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Madhyapur Thimi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Suryabinayak",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      }
+    ],
+    "Kathmandu": [
+      {
+        "local_level_name": "Budhanilakantha",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Chandragiri",
+        "local_level_type": "Nagarpalika",
+        "wards": 15
+      },
+      {
+        "local_level_name": "Dakshinkali",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Gokarneshwor",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Kageshwori Manahora",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Kathmandu",
+        "local_level_type": "Mahanagarpalika",
+        "wards": 32
+      },
+      {
+        "local_level_name": "Kirtipur",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Nagarjun",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Shankharapur",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Tarakeshwor",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Tokha",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      }
+    ],
+    "Nuwakot": [
+      {
+        "local_level_name": "Belkotgadhi",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Bidur",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Dupcheshwar",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Kakani",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Kispang",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Likhu",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Meghang",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Panchakanya",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Shivapuri",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Suryagadhi",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Tadi",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Tarkeshwar",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Shivapuri Watershed and Wildlife Reserve",
+        "local_level_type": "Watershed and Wildlife Reserve",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Langtang National Park",
+        "local_level_type": "National Park",
+        "wards": 0
+      }
+    ],
+    "Rasuwa": [
+      {
+        "local_level_name": "Gosaikunda",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Kalika",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Naukunda",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Parbati Kunda",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Uttargaya",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      }
+    ],
+    "Dhading": [
+      {
+        "local_level_name": "Benighat Rorang",
+        "local_level_type": "Gaunpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Dhunibesi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Gajuri",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Galchi",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Gangajamuna",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Jwalamukhi",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Khaniyabash",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Netrawati",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Nilakantha",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Rubi Valley",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Siddhalek",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Thakre",
+        "local_level_type": "Gaunpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Tripura Sundari",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      }
+    ],
+    "Makawanpur": [
+      {
+        "local_level_name": "Bagmati",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Bakaiya",
+        "local_level_type": "Gaunpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Bhimphedi",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Hetauda",
+        "local_level_type": "Upamahanagarpalika",
+        "wards": 19
+      },
+      {
+        "local_level_name": "Indrasarowar",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Kailash",
+        "local_level_type": "Gaunpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Makawanpurgadhi",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Manahari",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Raksirang",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Thaha",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Parsa Wildlife Reserve",
+        "local_level_type": "Wildlife Reserve",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Chitawan National Park",
+        "local_level_type": "National Park",
+        "wards": 0
+      }
+    ],
+    "Chitawan": [
+      {
+        "local_level_name": "Bharatpur",
+        "local_level_type": "Mahanagarpalika",
+        "wards": 29
+      },
+      {
+        "local_level_name": "Ichchhyakamana",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Kalika",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Khairahani",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Madi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Rapti",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Ratnanagar",
+        "local_level_type": "Nagarpalika",
+        "wards": 16
+      },
+      {
+        "local_level_name": "Chitawan National Park",
+        "local_level_type": "National Park",
+        "wards": 0
+      }
+    ]
+  },
+  "Gandaki Province": {
+    "Gorkha": [
+      {
+        "local_level_name": "Aarughat",
+        "local_level_type": "Gaunpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Ajirkot",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Bhimsen",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Chum Nubri",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Dharche",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Gandaki",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Gorkha",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Palungtar",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Sahid Lakhan",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Siranchok",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Sulikot",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      }
+    ],
+    "Lamjung": [
+      {
+        "local_level_name": "Besishahar",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Dordi",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Dudhpokhari",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Kwholasothar",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "MadhyaNepal",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Marsyangdi",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Rainas",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Sundarbazar",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      }
+    ],
+    "Tanahu": [
+      {
+        "local_level_name": "Anbukhaireni",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Bandipur",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Bhanu",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Bhimad",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Byas",
+        "local_level_type": "Nagarpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Devghat",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Ghiring",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Myagde",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Rhishing",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Shuklagandaki",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      }
+    ],
+    "Syangja": [
+      {
+        "local_level_name": "Aandhikhola",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Arjunchaupari",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Bhirkot",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Biruwa",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Chapakot",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Galyang",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Harinas",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Kaligandagi",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Phedikhola",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Putalibazar",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Waling",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      }
+    ],
+    "Kaski": [
+      {
+        "local_level_name": "Annapurna",
+        "local_level_type": "Gaunpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Machhapuchchhre",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Madi",
+        "local_level_type": "Gaunpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Pokhara Lekhnath",
+        "local_level_type": "Mahanagarpalika",
+        "wards": 33
+      },
+      {
+        "local_level_name": "Rupa",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      }
+    ],
+    "Manang": [
+      {
+        "local_level_name": "Chame",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Narphu",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Nashong",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Neshyang",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      }
+    ],
+    "Mustang": [
+      {
+        "local_level_name": "Barhagaun Muktikhsetra",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Dalome",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Gharapjhong",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Lomanthang",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Thasang",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      }
+    ],
+    "Myagdi": [
+      {
+        "local_level_name": "Annapurna",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Beni",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Dhaulagiri",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Malika",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Mangala",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Raghuganga",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Dhorpatan Hunting Reserve",
+        "local_level_type": "Hunting Reserve",
+        "wards": 0
+      }
+    ],
+    "Parbat": [
+      {
+        "local_level_name": "Bihadi",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Jaljala",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Kushma",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Mahashila",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Modi",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Painyu",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Phalebas",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      }
+    ],
+    "Baglung": [
+      {
+        "local_level_name": "Badigad",
+        "local_level_type": "Gaunpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Baglung",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Bareng",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Dhorpatan",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Galkot",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Jaimuni",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Kanthekhola",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Nisikhola",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Taman Khola",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Tara Khola",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Dhorpatan Hunting Reserve",
+        "local_level_type": "Hunting Reserve",
+        "wards": 0
+      }
+    ],
+    "Nawalparasi_E": [
+      {
+        "local_level_name": "Binayee Tribeni",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Bulingtar",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Bungdikali",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Devchuli",
+        "local_level_type": "Nagarpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Gaidakot",
+        "local_level_type": "Nagarpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Hupsekot",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Kawasoti",
+        "local_level_type": "Nagarpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Madhyabindu",
+        "local_level_type": "Nagarpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Chitawan National Park",
+        "local_level_type": "National Park",
+        "wards": 0
+      }
+    ]
+  },
+  "Lumbini Province": {
+    "Gulmi": [
+      {
+        "local_level_name": "Chandrakot",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Chatrakot",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Dhurkot",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Gulmidarbar",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Isma",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Kaligandaki",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Madane",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Malika",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Musikot",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Resunga",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Ruru",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Satyawati",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      }
+    ],
+    "Palpa": [
+      {
+        "local_level_name": "Bagnaskali",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Mathagadhi",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Nisdi",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Purbakhola",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Rainadevi Chhahara",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Rambha",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Rampur",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Ribdikot",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Tansen",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Tinau",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      }
+    ],
+    "Nawalparasi_W": [
+      {
+        "local_level_name": "Bardaghat",
+        "local_level_type": "Nagarpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Palhi Nandan",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Pratappur",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Ramgram",
+        "local_level_type": "Nagarpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Sarawal",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Sunwal",
+        "local_level_type": "Nagarpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Susta",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      }
+    ],
+    "Rupandehi": [
+      {
+        "local_level_name": "Butwal",
+        "local_level_type": "Upamahanagarpalika",
+        "wards": 19
+      },
+      {
+        "local_level_name": "Devdaha",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Gaidahawa",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Kanchan",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Kotahimai",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Lumbini Sanskritik",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Marchawari",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Mayadevi",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Omsatiya",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Rohini",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Sainamaina",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Sammarimai",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Siddharthanagar",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Siyari",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Sudhdhodhan",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Tillotama",
+        "local_level_type": "Nagarpalika",
+        "wards": 17
+      },
+      {
+        "local_level_name": "Lumbini Sanskritik Development Area",
+        "local_level_type": "Development Area",
+        "wards": 0
+      }
+    ],
+    "Kapilbastu": [
+      {
+        "local_level_name": "Banganga",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Bijayanagar",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Buddhabhumi",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Kapilbastu",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Krishnanagar",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Maharajgunj",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Mayadevi",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Shivaraj",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Suddhodhan",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Yashodhara",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      }
+    ],
+    "Arghakhanchi": [
+      {
+        "local_level_name": "Bhumekasthan",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Chhatradev",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Malarani",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Panini",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Sandhikharka",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Sitganga",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      }
+    ],
+    "Pyuthan": [
+      {
+        "local_level_name": "Ayirabati",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Gaumukhi",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Jhimruk",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Mallarani",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Mandavi",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Naubahini",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Pyuthan",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Sarumarani",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Sworgadwary",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      }
+    ],
+    "Rolpa": [
+      {
+        "local_level_name": "Duikholi",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Lungri",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Madi",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Rolpa",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Runtigadi",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Sukidaha",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Sunchhahari",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Suwarnabati",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Thawang",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Tribeni",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      }
+    ],
+    "Dang": [
+      {
+        "local_level_name": "Babai",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Banglachuli",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Dangisharan",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Gadhawa",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Ghorahi",
+        "local_level_type": "Upamahanagarpalika",
+        "wards": 19
+      },
+      {
+        "local_level_name": "Lamahi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Rajpur",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Rapti",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Shantinagar",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Tulsipur",
+        "local_level_type": "Upamahanagarpalika",
+        "wards": 19
+      }
+    ],
+    "Banke": [
+      {
+        "local_level_name": "Baijanath",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Duduwa",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Janki",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Khajura",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Kohalpur",
+        "local_level_type": "Nagarpalika",
+        "wards": 15
+      },
+      {
+        "local_level_name": "Narainapur",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Nepalgunj",
+        "local_level_type": "Upamahanagarpalika",
+        "wards": 23
+      },
+      {
+        "local_level_name": "Rapti Sonari",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      }
+    ],
+    "Bardiya": [
+      {
+        "local_level_name": "Badhaiyatal",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Bansagadhi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Bansagadhi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Barbardiya",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Geruwa",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Gulariya",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Madhuwan",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Rajapur",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Thakurbaba",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Bardiya National Park",
+        "local_level_type": "National Park",
+        "wards": 0
+      }
+    ],
+    "Rukum_E": [
+      {
+        "local_level_name": "Bhume",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Putha Uttarganga",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Sisne",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Dhorpatan Hunting Reserve",
+        "local_level_type": "Hunting Reserve",
+        "wards": 0
+      }
+    ]
+  },
+  "Karnali Province": {
+    "Rukum_W": [
+      {
+        "local_level_name": "Aathbiskot",
+        "local_level_type": "Nagarpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Banfikot",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Chaurjahari",
+        "local_level_type": "Nagarpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Musikot",
+        "local_level_type": "Nagarpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Sani Bheri",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      },
+      {
+        "local_level_name": "Tribeni",
+        "local_level_type": "Gaunpalika",
+        "wards": 0
+      }
+    ],
+    "Salyan": [
+      {
+        "local_level_name": "Bagchaur",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Bangad Kupinde",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Chhatreshwori",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Darma",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Dhorchaur",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Kalimati",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Kapurkot",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Kumakhmalika",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Sharada",
+        "local_level_type": "Nagarpalika",
+        "wards": 15
+      },
+      {
+        "local_level_name": "Tribeni",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      }
+    ],
+    "Surkhet": [
+      {
+        "local_level_name": "Barahtal",
+        "local_level_type": "Gaunpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Bheriganga",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Birendranagar",
+        "local_level_type": "Nagarpalika",
+        "wards": 16
+      },
+      {
+        "local_level_name": "Chaukune",
+        "local_level_type": "Gaunpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Chingad",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Gurbhakot",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Lekbeshi",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Panchpuri",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Simta",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      }
+    ],
+    "Dailekh": [
+      {
+        "local_level_name": "Aathabis",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Bhagawatimai",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Bhairabi",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Chamunda Bindrasaini",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Dullu",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Dungeshwor",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Gurans",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Mahabu",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Narayan",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Naumule",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Thantikandh",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      }
+    ],
+    "Jajarkot": [
+      {
+        "local_level_name": "Barekot",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Bheri",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Chhedagad",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      },
+      {
+        "local_level_name": "Junichande",
+        "local_level_type": "Gaunpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Kuse",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Shiwalaya",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Tribeni Nalagad",
+        "local_level_type": "Nagarpalika",
+        "wards": 13
+      }
+    ],
+    "Dolpa": [
+      {
+        "local_level_name": "Chharka Tangsong",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Dolpo Buddha",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Jagadulla",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Kaike",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Mudkechula",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Shey Phoksundo",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Thuli Bheri",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Tripurasundari",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      }
+    ],
+    "Jumla": [
+      {
+        "local_level_name": "Chandannath",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Guthichaur",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Hima",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Kanakasundari",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Patrasi",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Sinja",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Tatopani",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Tila",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      }
+    ],
+    "Kalikot": [
+      {
+        "local_level_name": "Kalika",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Khandachakra",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Mahawai",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Naraharinath",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Pachaljharana",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Palata",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Raskot",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Sanni Tribeni",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Tilagufa",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      }
+    ],
+    "Mugu": [
+      {
+        "local_level_name": "Chhayanath Rara",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Khatyad",
+        "local_level_type": "Gaunpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Mugum Karmarong",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Soru",
+        "local_level_type": "Gaunpalika",
+        "wards": 11
+      }
+    ],
+    "Humla": [
+      {
+        "local_level_name": "Adanchuli",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Chankheli",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Kharpunath",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Namkha",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Sarkegad",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Simkot",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Tanjakot",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      }
+    ]
+  },
+  "Sudurpashchim Province": {
+    "Bajura": [
+      {
+        "local_level_name": "Badimalika",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Budhiganga",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Budhinanda",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Chhededaha",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Gaumul",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Himali",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Pandav Gupha",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Swami Kartik",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Tribeni",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Khaptad National Park",
+        "local_level_type": "National Park",
+        "wards": 0
+      }
+    ],
+    "Bajhang": [
+      {
+        "local_level_name": "Bithadchir",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Bungal",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Chabispathivera",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Durgathali",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "JayaPrithivi",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Kanda",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Kedarseu",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Khaptadchhanna",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Masta",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Surma",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Talkot",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Thalara",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Khaptad National Park",
+        "local_level_type": "National Park",
+        "wards": 0
+      }
+    ],
+    "Achham": [
+      {
+        "local_level_name": "Bannigadhi Jayagadh",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Chaurpati",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Dhakari",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Kamalbazar",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Mangalsen",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Mellekh",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Panchadewal Binayak",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Ramaroshan",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Sanphebagar",
+        "local_level_type": "Nagarpalika",
+        "wards": 14
+      },
+      {
+        "local_level_name": "Turmakhad",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Khaptad National Park",
+        "local_level_type": "National Park",
+        "wards": 0
+      }
+    ],
+    "Doti": [
+      {
+        "local_level_name": "Adharsha",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Badikedar",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Bogtan",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Dipayal Silgadi",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Jorayal",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "K I Singh",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Purbichauki",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Sayal",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Shikhar",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Khaptad National Park",
+        "local_level_type": "National Park",
+        "wards": 0
+      }
+    ],
+    "Kailali": [
+      {
+        "local_level_name": "Bardagoriya",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Bhajani",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Chure",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Dhangadhi",
+        "local_level_type": "Upamahanagarpalika",
+        "wards": 19
+      },
+      {
+        "local_level_name": "Gauriganga",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Ghodaghodi",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Godawari",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Janaki",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Joshipur",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Kailari",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Lamkichuha",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Mohanyal",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Tikapur",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      }
+    ],
+    "Kanchanpur": [
+      {
+        "local_level_name": "Bedkot",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Belauri",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Beldandi",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Bhimdatta",
+        "local_level_type": "Nagarpalika",
+        "wards": 19
+      },
+      {
+        "local_level_name": "Krishnapur",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Laljhadi",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Mahakali",
+        "local_level_type": "Nagarpalika",
+        "wards": 19
+      },
+      {
+        "local_level_name": "Punarbas",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Shuklaphanta",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      },
+      {
+        "local_level_name": "Shuklaphanta National Park",
+        "local_level_type": "National Park",
+        "wards": 0
+      }
+    ],
+    "Dadeldhura": [
+      {
+        "local_level_name": "Ajaymeru",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Alital",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Amargadhi",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Bhageshwar",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Ganayapdhura",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Nawadurga",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Parashuram",
+        "local_level_type": "Nagarpalika",
+        "wards": 12
+      }
+    ],
+    "Baitadi": [
+      {
+        "local_level_name": "Dasharathchanda",
+        "local_level_type": "Nagarpalika",
+        "wards": 11
+      },
+      {
+        "local_level_name": "Dilasaini",
+        "local_level_type": "Gaunpalika",
+        "wards": 7
+      },
+      {
+        "local_level_name": "Dogadakedar",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Melauli",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Pancheshwar",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Patan",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Purchaudi",
+        "local_level_type": "Nagarpalika",
+        "wards": 10
+      },
+      {
+        "local_level_name": "Shivanath",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Sigas",
+        "local_level_type": "Gaunpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Surnaya",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      }
+    ],
+    "Darchula": [
+      {
+        "local_level_name": "Apihimal",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Byas",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Dunhu",
+        "local_level_type": "Gaunpalika",
+        "wards": 5
+      },
+      {
+        "local_level_name": "Lekam",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Mahakali",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      },
+      {
+        "local_level_name": "Malikaarjun",
+        "local_level_type": "Gaunpalika",
+        "wards": 8
+      },
+      {
+        "local_level_name": "Marma",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Naugad",
+        "local_level_type": "Gaunpalika",
+        "wards": 6
+      },
+      {
+        "local_level_name": "Shailyashikhar",
+        "local_level_type": "Nagarpalika",
+        "wards": 9
+      }
+    ]
+  }
+}

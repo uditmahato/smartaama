@@ -14,6 +14,12 @@ import {
 import { ArrowBack, Save } from '@mui/icons-material';
 import { api } from '../services/api';
 
+interface Municipality {
+  local_level_name: string;
+  local_level_type: string;
+  wards: number;
+}
+
 interface Patient {
   id: string;
   patient_id: string;
@@ -40,6 +46,12 @@ const PatientEdit: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  
+  const [provinces, setProvinces] = useState<string[]>([]);
+  const [districts, setDistricts] = useState<string[]>([]);
+  const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
+  const [wards, setWards] = useState<number>(0);
+  
   const [formData, setFormData] = useState({
     facility_mrn: '',
     national_id: '',
@@ -57,29 +69,87 @@ const PatientEdit: React.FC = () => {
   });
 
   useEffect(() => {
+    loadProvinces();
     loadPatient();
   }, [patientId]);
+
+  const loadProvinces = async () => {
+    try {
+      const response = await api.get('/locations/provinces');
+      setProvinces(response.data);
+    } catch (err) {
+      console.error('Failed to load provinces:', err);
+    }
+  };
+
+  const loadDistricts = async (province: string) => {
+    try {
+      const response = await api.get('/locations/districts', {
+        params: { province },
+      });
+      setDistricts(response.data);
+    } catch (err) {
+      console.error('Failed to load districts:', err);
+      setDistricts([]);
+    }
+  };
+
+  const loadMunicipalities = async (province: string, district: string) => {
+    try {
+      const response = await api.get('/locations/municipalities', {
+        params: { province, district },
+      });
+      setMunicipalities(response.data);
+    } catch (err) {
+      console.error('Failed to load municipalities:', err);
+      setMunicipalities([]);
+    }
+  };
+
+  const loadWards = async (province: string, district: string, municipality: string) => {
+    try {
+      const response = await api.get('/locations/wards', {
+        params: { province, district, municipality },
+      });
+      setWards(response.data);
+    } catch (err) {
+      console.error('Failed to load wards:', err);
+      setWards(0);
+    }
+  };
 
   const loadPatient = async () => {
     try {
       setLoading(true);
       const response = await api.get(`/patients/${patientId}`);
       setPatient(response.data);
+      const patientData = response.data;
       setFormData({
-        facility_mrn: response.data.facility_mrn || '',
-        national_id: response.data.national_id || '',
-        first_name: response.data.first_name || '',
-        middle_name: response.data.middle_name || '',
-        last_name: response.data.last_name || '',
-        age_in_years: response.data.age_in_years?.toString() || '',
-        sex: response.data.sex || '',
-        phone_number: response.data.phone_number || '',
-        address_line: response.data.address_line || '',
-        ward: response.data.ward || '',
-        municipality: response.data.municipality || '',
-        district: response.data.district || '',
-        province: response.data.province || '',
+        facility_mrn: patientData.facility_mrn || '',
+        national_id: patientData.national_id || '',
+        first_name: patientData.first_name || '',
+        middle_name: patientData.middle_name || '',
+        last_name: patientData.last_name || '',
+        age_in_years: patientData.age_in_years?.toString() || '',
+        sex: patientData.sex || '',
+        phone_number: patientData.phone_number || '',
+        address_line: patientData.address_line || '',
+        ward: patientData.ward || '',
+        municipality: patientData.municipality || '',
+        district: patientData.district || '',
+        province: patientData.province || '',
       });
+      
+      // Load cascading data if patient has province set
+      if (patientData.province) {
+        await loadDistricts(patientData.province);
+        if (patientData.district) {
+          await loadMunicipalities(patientData.province, patientData.district);
+          if (patientData.municipality) {
+            await loadWards(patientData.province, patientData.district, patientData.municipality);
+          }
+        }
+      }
     } catch (err: any) {
       setError('Failed to load patient information');
     } finally {
@@ -87,9 +157,27 @@ const PatientEdit: React.FC = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+    const { name, value } = e.target as any;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Handle cascading dropdowns
+    if (name === 'province' && value) {
+      loadDistricts(value as string);
+      setFormData((prev) => ({ ...prev, district: '', municipality: '', ward: '' }));
+      setDistricts([]);
+      setMunicipalities([]);
+      setWards(0);
+    } else if (name === 'district' && value && formData.province) {
+      loadMunicipalities(formData.province, value as string);
+      setFormData((prev) => ({ ...prev, municipality: '', ward: '' }));
+      setMunicipalities([]);
+      setWards(0);
+    } else if (name === 'municipality' && value && formData.province && formData.district) {
+      loadWards(formData.province, formData.district, value as string);
+      setFormData((prev) => ({ ...prev, ward: '' }));
+      setWards(0);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -313,41 +401,76 @@ const PatientEdit: React.FC = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                select
                 label="Province"
                 name="province"
                 value={formData.province}
                 onChange={handleChange}
-              />
+              >
+                <MenuItem value="">Select Province</MenuItem>
+                {provinces.map((prov) => (
+                  <MenuItem key={prov} value={prov}>
+                    {prov}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                select
                 label="District"
                 name="district"
                 value={formData.district}
                 onChange={handleChange}
-              />
+                disabled={!formData.province}
+              >
+                <MenuItem value="">Select District</MenuItem>
+                {districts.map((dist) => (
+                  <MenuItem key={dist} value={dist}>
+                    {dist}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                select
                 label="Metropolitan City / Sub Metropolitan City / Municipality"
                 name="municipality"
                 value={formData.municipality}
                 onChange={handleChange}
-              />
+                disabled={!formData.district}
+              >
+                <MenuItem value="">Select Municipality</MenuItem>
+                {municipalities.map((muni) => (
+                  <MenuItem key={muni.local_level_name} value={muni.local_level_name}>
+                    {muni.local_level_name} ({muni.local_level_type})
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                select
                 label="Ward"
                 name="ward"
                 value={formData.ward}
                 onChange={handleChange}
-              />
+                disabled={!formData.municipality || wards === 0}
+              >
+                <MenuItem value="">Select Ward</MenuItem>
+                {Array.from({ length: wards }, (_, i) => (
+                  <MenuItem key={i + 1} value={(i + 1).toString()}>
+                    Ward {i + 1}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             
             <Grid item xs={12}>
