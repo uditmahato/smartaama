@@ -147,7 +147,7 @@ class PatientService:
     @staticmethod
     def search_patients(db: Session, params: PatientSearchParams) -> List[Patient]:
         """
-        Supports common PHC lookup: MRN, national id, phone, district, DOB, and fuzzy name search.
+        Supports common PHC lookup: MRN, national id, phone, district, and fuzzy name search.
         """
         stmt = select(Patient)
 
@@ -161,8 +161,6 @@ class PatientService:
             filters.append(Patient.phone_number.ilike(f"%{params.phone_number}%"))
         if params.district:
             filters.append(Patient.district.ilike(f"%{params.district}%"))
-        if params.date_of_birth:
-            filters.append(Patient.date_of_birth == params.date_of_birth)
 
         if params.q:
             q = params.q.strip()

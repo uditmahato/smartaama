@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
@@ -85,7 +84,6 @@ def search_patients(
     national_id: Optional[str] = Query(default=None),
     phone_number: Optional[str] = Query(default=None),
     district: Optional[str] = Query(default=None),
-    date_of_birth: Optional[date] = Query(default=None),
     limit: int = Query(default=25, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
@@ -97,7 +95,6 @@ def search_patients(
         national_id=national_id,
         phone_number=phone_number,
         district=district,
-        date_of_birth=date_of_birth,
         limit=limit,
         offset=offset,
     )
