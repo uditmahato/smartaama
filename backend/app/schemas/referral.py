@@ -46,6 +46,7 @@ class ReferralBase(BaseModel):
 
 
 class ReferralCreate(ReferralBase):
+    status: Optional[ReferralStatus] = Field(default=None, description="Optional initial status (e.g., submitted for hospital referrals)")
     pass
 
 
@@ -69,6 +70,32 @@ class ReferralUpdate(BaseModel):
 
 class ReferralStatusUpdate(BaseModel):
     status: ReferralStatus
+    note: Optional[str] = Field(default=None, max_length=4000, description="Note about the status change")
+
+    @field_validator("note", mode="before")
+    @classmethod
+    def strip_text(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, str):
+            v = v.strip()
+            return v or None
+        return v
+
+
+class ReceivedFacilityStatusUpdate(BaseModel):
+    received_facility_status: ReferralStatus
+    note: Optional[str] = Field(default=None, max_length=4000, description="Note about the status change")
+
+    @field_validator("note", mode="before")
+    @classmethod
+    def strip_text(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, str):
+            v = v.strip()
+            return v or None
+        return v
 
 
 class ReferralOut(BaseModel):
@@ -81,6 +108,7 @@ class ReferralOut(BaseModel):
     to_facility: str
 
     status: ReferralStatus
+    received_facility_status: Optional[ReferralStatus] = None
 
     reason: str
     reason_codes: Optional[List[str]] = None

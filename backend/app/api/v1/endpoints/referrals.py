@@ -18,6 +18,7 @@ from app.schemas.referral import (
     ReferralQuery,
     ReferralStatusUpdate,
     ReferralUpdate,
+    ReceivedFacilityStatusUpdate,
 )
 from app.services.referral_service import ReferralService
 
@@ -105,6 +106,7 @@ def update_referral_status(
             db,
             referral=ref,
             new_status=payload.status,
+            note=payload.note,
             actor=current_user,
             ip=_client_ip(x_forwarded_for),
             user_agent=user_agent,
@@ -125,6 +127,41 @@ def list_referrals(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_any_authenticated),
 ) -> List[ReferralOut]:
+    # Filter referrals to only show those related to user's facility
+    user_facility = current_user.facility_name
+    
+    # If user has a facility, filter to show only referrals from or to their facility
+    if user_facility and not from_facility and not to_facility:
+        # Show referrals where user's facility is either sender or receiver
+        from_facility = user_facility
+        # Also need to query for to_facility separately
+        query1 = ReferralQuery(
+            patient_id=patient_id,
+            status=status_filter,
+            from_facility=user_facility,
+            to_facility=None,
+            limit=limit,
+            offset=offset,
+        )
+        query2 = ReferralQuery(
+            patient_id=patient_id,
+            status=status_filter,
+            from_facility=None,
+            to_facility=user_facility,
+            limit=limit,
+            offset=offset,
+        )
+        results1 = ReferralService.list_referrals(db, query1)
+        results2 = ReferralService.list_referrals(db, query2)
+        # Combine and deduplicate
+        seen_ids = set()
+        combined = []
+        for r in results1 + results2:
+            if r.id not in seen_ids:
+                seen_ids.add(r.id)
+                combined.append(r)
+        return sorted(combined, key=lambda x: x.created_at, reverse=True)[:limit]
+    
     query = ReferralQuery(
         patient_id=patient_id,
         status=status_filter,
@@ -134,3 +171,31 @@ def list_referrals(
         offset=offset,
     )
     return ReferralService.list_referrals(db, query)
+
+
+@router.post("/{referral_id}/received-status", response_model=ReferralOut)
+def update_received_facility_status(
+    referral_id: UUID,
+    payload: ReceivedFacilityStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_clinician_or_admin),
+    x_forwarded_for: Optional[str] = Header(default=None, alias="X-Forwarded-For"),
+    user_agent: Optional[str] = Header(default=None, alias="User-Agent"),
+) -> ReferralOut:
+    ref = ReferralService.get_referral(db, referral_id)
+    if not ref:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Referral not found")
+
+    try:
+        updated = ReferralService.update_received_facility_status(
+            db,
+            referral=ref,
+            new_status=payload.received_facility_status,
+            note=payload.note,
+            actor=current_user,
+            ip=_client_ip(x_forwarded_for),
+            user_agent=user_agent,
+        )
+        return updated
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

@@ -86,6 +86,15 @@ export default function App() {
         />
 
         <Route
+          path="/patients/:patientId/referral/:referralId"
+          element={
+            <RequireAuth>
+              <Referral />
+            </RequireAuth>
+          }
+        />
+
+        <Route
           path="/patients/:patientId"
           element={
             <RequireAuth>

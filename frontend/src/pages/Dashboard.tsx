@@ -158,15 +158,15 @@ export default function Dashboard() {
     // Keep colors conservative and semantically consistent
     switch (status) {
       case "submitted":
-        return { color: "warning", label: "Submitted" };
+        return { color: "warning", label: "Referred from Here" };
       case "received":
-        return { color: "success", label: "Received" };
+        return { color: "success", label: "Referred to Here" };
       case "closed":
-        return { color: "default", label: "Closed" };
+        return { color: "default", label: "Closed Case" };
       case "cancelled":
-        return { color: "error", label: "Cancelled" };
+        return { color: "success", label: "Admitted Case" };
       default:
-        return { color: "info", label: "Draft" };
+        return { color: "default", label: "Closed Case" };
     }
   };
 

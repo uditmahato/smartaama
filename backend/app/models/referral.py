@@ -58,6 +58,13 @@ class Referral(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         index=True,
     )
 
+    # Receiving facility's status/acknowledgment (read-only for referral creator, editable only by receiving facility)
+    received_facility_status: Mapped[Optional[ReferralStatus]] = mapped_column(
+        Enum(ReferralStatus, name="referral_status"),
+        nullable=True,
+        index=True,
+    )
+
     # Clinically explicit reason is mandatory for auditability
     reason: Mapped[str] = mapped_column(Text, nullable=False)
 

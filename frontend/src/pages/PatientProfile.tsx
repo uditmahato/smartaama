@@ -108,6 +108,9 @@ function PatientProfile() {
 
   const [patient, setPatient] = useState<PatientOut | null>(null);
   const [events, setEvents] = useState<ClinicalEventOut[]>([]);
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [userFacility, setUserFacility] = useState<string | null>(null);
+  const [canEdit, setCanEdit] = useState<boolean>(true); // Default to true, will be calculated
   const [schemas, setSchemas] = useState<Record<string, SectionSchema>>({});
   const [notesDrawer, setNotesDrawer] = useState<boolean>(false);
   const [referralsDrawer, setReferralsDrawer] = useState<boolean>(false);
@@ -134,6 +137,11 @@ function PatientProfile() {
     setBusy(true);
     setError(null);
     try {
+      // Load user facility info
+      const userResp = await api.get<any>("/auth/me");
+      const userFacilityName = userResp.data.facility_name;
+      setUserFacility(userFacilityName);
+      
       const p = await api.get<PatientOut>(`/patients/${patientId}`);
       setPatient(p.data);
 
@@ -141,6 +149,20 @@ function PatientProfile() {
         params: { patient_id: patientId, limit: 1000, offset: 0 },
       });
       setEvents(e.data);
+
+      // Load referrals for this patient
+      const r = await api.get<any[]>(`/referrals`, {
+        params: { patient_id: patientId, limit: 100 },
+      });
+      setReferrals(r.data);
+      
+      // Determine if user can edit: only if user is from the referring facility
+      // Check if there's any referral where this facility is the receiver (to_facility)
+      const isReceivingFacility = r.data.some((ref: any) => ref.to_facility === userFacilityName);
+      const isReferringFacility = r.data.some((ref: any) => ref.from_facility === userFacilityName);
+      
+      // Can edit only if they are the referring facility, or if no referrals exist
+      setCanEdit(!isReceivingFacility || isReferringFacility || r.data.length === 0);
 
       // Load schemas for sections
       const sectionsResponse = await api.get("/schema/sections?updates_only=true");
@@ -258,8 +280,8 @@ function PatientProfile() {
   }, [sortedEvents]);
 
   const referralList = useMemo(() => {
-    return sortedEvents.filter((ev) => ev.referral_id);
-  }, [sortedEvents]);
+    return referrals.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [referrals]);
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F6F7FB", py: { xs: 2, md: 3 }, px: { xs: 0.5, sm: 1, md: 1.5 }, width: "100%", boxSizing: "border-box" }}>
@@ -298,21 +320,23 @@ function PatientProfile() {
                 </Stack>
 
                 <Stack direction="row" spacing={1.25} alignItems="center">
-                  <Button
-                    variant="contained"
-                    onClick={() => navigate(`/patients/${patientId}/update`)}
-                    sx={{
-                      textTransform: "none",
-                      fontWeight: 700,
-                      borderRadius: 2,
-                      background: "rgba(255,255,255,0.95)",
-                      color: "#4C51BF",
-                      "&:hover": { background: "white" },
-                      px: 2.25,
-                    }}
-                  >
-                    Update Record
-                  </Button>
+                  {canEdit && (
+                    <Button
+                      variant="contained"
+                      onClick={() => navigate(`/patients/${patientId}/update`)}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 700,
+                        borderRadius: 2,
+                        background: "rgba(255,255,255,0.95)",
+                        color: "#4C51BF",
+                        "&:hover": { background: "white" },
+                        px: 2.25,
+                      }}
+                    >
+                      Update Record
+                    </Button>
+                  )}
                   <Button
                     variant="contained"
                     onClick={() => navigate(`/patients/${patientId}/referral`)}
@@ -352,6 +376,15 @@ function PatientProfile() {
                 <Alert severity="error">{error}</Alert>
               </CardContent>
             )}
+            
+            {!canEdit && patient && (
+              <CardContent sx={{ p: { xs: 2.5, md: 3.5 }, bgcolor: "white" }}>
+                <Alert severity="info" sx={{ borderRadius: 2 }}>
+                  <strong>Read-Only Access:</strong> You are viewing this patient's record as a receiving facility. 
+                  You can view all information and update referral status, but cannot edit patient vitals or medical records.
+                </Alert>
+              </CardContent>
+            )}
           </Card>
         )}
 
@@ -372,15 +405,17 @@ function PatientProfile() {
                   <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
                     Personal Information
                   </Typography>
-                  <Tooltip title="Edit patient information" arrow>
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => navigate(`/patients/${patientId}/edit`)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                  {canEdit && (
+                    <Tooltip title="Edit patient information" arrow>
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => navigate(`/patients/${patientId}/edit`)}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </Stack>
 
                 <Grid container spacing={2}>
@@ -457,7 +492,7 @@ function PatientProfile() {
                   View Notes ({events.filter((e) => e.note).length})
                 </Button>
                 <Button variant="outlined" onClick={() => setReferralsDrawer(true)}>
-                  View Referral History ({events.filter((e) => e.referral_id).length})
+                  View Referral History ({referrals.length})
                 </Button>
               </Stack>
             </Stack>
@@ -521,15 +556,17 @@ function PatientProfile() {
                                 onClick={() => setSectionFilter(sec.section)}
                                 sx={{ cursor: "pointer" }}
                               />
-                              <Tooltip title="Edit section" arrow>
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  onClick={() => navigate(`/patients/${patientId}/update?section=${sec.section}`)}
-                                >
-                                  <EditIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
+                              {canEdit && (
+                                <Tooltip title="Edit section" arrow>
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={() => navigate(`/patients/${patientId}/update?section=${sec.section}`)}
+                                  >
+                                    <EditIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
                               <Tooltip title={isExpanded ? "Collapse" : "Expand"} arrow>
                                 <IconButton
                                   size="small"
@@ -719,19 +756,33 @@ function PatientProfile() {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Event time</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Section</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Factor</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Referral ID</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Created</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>From</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>To</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {referralList.map((ev) => (
-                  <TableRow key={ev.id} hover>
-                    <TableCell>{new Date(ev.event_time).toLocaleString()}</TableCell>
-                    <TableCell>{humanizeLabel(ev.section)}</TableCell>
-                    <TableCell>{humanizeLabel(ev.factor)}</TableCell>
-                    <TableCell>{ev.referral_id}</TableCell>
+                {referralList.map((ref) => (
+                  <TableRow 
+                    key={ref.id} 
+                    hover 
+                    onClick={() => {
+                      navigate(`/patients/${patientId}/referral/${ref.id}`);
+                      setReferralsDrawer(false);
+                    }}
+                    sx={{ cursor: "pointer" }}
+                  >
+                    <TableCell>{new Date(ref.created_at).toLocaleString()}</TableCell>
+                    <TableCell>{ref.from_facility}</TableCell>
+                    <TableCell>{ref.to_facility}</TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={ref.status === 'submitted' ? 'Referred from Here' : ref.status === 'received' ? 'Referred to Here' : ref.status === 'closed' ? 'Closed Case' : ref.status === 'cancelled' ? 'Admitted Case' : 'Closed Case'} 
+                        size="small" 
+                        color={ref.status === 'submitted' ? 'warning' : ref.status === 'received' ? 'success' : ref.status === 'closed' ? 'default' : ref.status === 'cancelled' ? 'success' : 'default'}
+                      />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

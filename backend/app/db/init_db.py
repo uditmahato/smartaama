@@ -20,6 +20,7 @@ def init_db() -> None:
     """
     Base.metadata.create_all(bind=engine)
     _ensure_user_facility_columns()
+    _ensure_referral_received_status_column()
     _seed_facilities()
 
 
@@ -32,6 +33,18 @@ def _ensure_user_facility_columns() -> None:
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS facility_name VARCHAR(255)",
     ]
 
+    with engine.begin() as conn:
+        for statement in ddl:
+            conn.execute(text(statement))
+
+
+def _ensure_referral_received_status_column() -> None:
+    """Add received_facility_status column to referrals table if missing."""
+    
+    ddl = [
+        "ALTER TABLE referrals ADD COLUMN IF NOT EXISTS received_facility_status referral_status",
+    ]
+    
     with engine.begin() as conn:
         for statement in ddl:
             conn.execute(text(statement))

@@ -54,7 +54,7 @@ class ReferralService:
             created_by_user_id=actor.id,
             from_facility=payload.from_facility,
             to_facility=payload.to_facility,
-            status=ReferralStatus.DRAFT,
+            status=payload.status or ReferralStatus.SUBMITTED,
             reason=payload.reason,
             reason_codes=payload.reason_codes,
             ai_recommendation=payload.ai_recommendation,
@@ -137,6 +137,7 @@ class ReferralService:
         *,
         referral: Referral,
         new_status: ReferralStatus,
+        note: Optional[str] = None,
         actor: User,
         ip: Optional[str] = None,
         user_agent: Optional[str] = None,
@@ -147,6 +148,13 @@ class ReferralService:
             raise ValueError(f"Invalid status transition: {current.value} -> {new_status.value}")
 
         referral.status = new_status
+        
+        # Append note if provided
+        if note:
+            existing_note = referral.clinician_note or ""
+            timestamp = _utcnow().strftime("%Y-%m-%d %H:%M UTC")
+            new_note_entry = f"\n[{timestamp}] Status: {new_status.value}\n{note}"
+            referral.clinician_note = (existing_note + new_note_entry).strip()
 
         now = _utcnow()
         if new_status == ReferralStatus.SUBMITTED:
@@ -166,6 +174,52 @@ class ReferralService:
                 user_agent=user_agent,
                 details={
                     "from": current.value,
+                    "to": new_status.value,
+                    "patient_id": str(referral.patient_id),
+                    "from_facility": referral.from_facility,
+                    "to_facility": referral.to_facility,
+                },
+            )
+        )
+
+        db.commit()
+        db.refresh(referral)
+        return referral
+
+    @staticmethod
+    def update_received_facility_status(
+        db: Session,
+        *,
+        referral: Referral,
+        new_status: ReferralStatus,
+        note: Optional[str] = None,
+        actor: User,
+        ip: Optional[str] = None,
+        user_agent: Optional[str] = None,
+    ) -> Referral:
+        current = referral.received_facility_status
+        if current == new_status:
+            return referral
+
+        referral.received_facility_status = new_status
+        
+        # Append note if provided
+        if note:
+            existing_note = referral.clinician_note or ""
+            timestamp = _utcnow().strftime("%Y-%m-%d %H:%M UTC")
+            new_note_entry = f"\n[{timestamp}] Received facility status: {new_status.value}\n{note}"
+            referral.clinician_note = (existing_note + new_note_entry).strip()
+
+        db.add(
+            AuditLog(
+                actor_user_id=actor.id,
+                action="REFERRAL_RECEIVED_FACILITY_STATUS_UPDATE",
+                entity_type="referral",
+                entity_id=referral.id,
+                ip_address=ip,
+                user_agent=user_agent,
+                details={
+                    "from": current.value if current else None,
                     "to": new_status.value,
                     "patient_id": str(referral.patient_id),
                     "from_facility": referral.from_facility,

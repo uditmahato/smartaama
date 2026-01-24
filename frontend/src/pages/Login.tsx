@@ -65,7 +65,7 @@ export default function Login() {
 
   // Bootstrap panel (DEV-only usage)
   const [showBootstrap, setShowBootstrap] = useState(false);
-  const [bootstrapToken, setBootstrapToken] = useState("");
+  const [bootstrapToken, setBootstrapToken] = useState(import.meta.env.VITE_BOOTSTRAP_TOKEN || "");
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [adminFullName, setAdminFullName] = useState("");
