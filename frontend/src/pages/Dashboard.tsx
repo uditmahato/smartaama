@@ -38,18 +38,37 @@ type ReferralOut = {
   created_at: string;
 };
 
+type UserInfo = {
+  id: string;
+  username: string;
+  full_name?: string | null;
+  role: string;
+  facility_type?: string | null;
+  facility_id?: string | null;
+  facility_name?: string | null;
+};
+
+type FacilityOption = {
+  id: string;
+  name: string;
+  kind: "phc" | "hospital";
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("User");
+  const [facilityLabel, setFacilityLabel] = useState<string>("Healthcare Provider");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
 
   const [statusFilter, setStatusFilter] = useState<ReferralOut["status"] | "admitted" | "to_here" | "from_here" | "">("");
   const [fromFacility, setFromFacility] = useState("");
   const [toFacility, setToFacility] = useState("");
+  const [facilityOptions, setFacilityOptions] = useState<FacilityOption[]>([]);
+  const [facilityError, setFacilityError] = useState<string | null>(null);
 
   const [referrals, setReferrals] = useState<ReferralOut[]>([]);
 
@@ -87,22 +106,49 @@ export default function Dashboard() {
     }
   }
 
+  async function loadFacilities() {
+    try {
+      const [phcResp, hospitalResp] = await Promise.all([
+        api.get<FacilityOption[]>("/facilities", { params: { kind: "phc" } }),
+        api.get<FacilityOption[]>("/facilities", { params: { kind: "hospital" } }),
+      ]);
+      setFacilityOptions([...phcResp.data, ...hospitalResp.data]);
+    } catch (err: any) {
+      setFacilityError(err?.response?.data?.detail ?? "Failed to load facilities");
+    }
+  }
+
   useEffect(() => {
     loadReferrals();
-    loadUserInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
+  useEffect(() => {
+    loadUserInfo();
+    void loadFacilities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const formatFacility = (u: UserInfo) => {
+    if (u.facility_name) {
+      const suffix = u.facility_type === "hospital" ? "Hos" : "PHC";
+      return `${u.facility_name} (${suffix})`;
+    }
+    return "Healthcare Provider";
+  };
+
   async function loadUserInfo() {
-    const cached = userStore.get();
+    const cached = userStore.get() as UserInfo | null;
     if (cached) {
       setUserName(cached.full_name || cached.username);
+      setFacilityLabel(formatFacility(cached));
       return;
     }
     try {
-      const resp = await api.get("/auth/me");
+      const resp = await api.get<UserInfo>("/auth/me");
       userStore.set(resp.data);
       setUserName(resp.data.full_name || resp.data.username);
+      setFacilityLabel(formatFacility(resp.data));
     } catch (err) {
       console.error("Failed to load user info", err);
     }
@@ -234,7 +280,7 @@ export default function Dashboard() {
                             {userName}
                           </Typography>
                           <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.75)", lineHeight: 1, fontSize: 10 }}>
-                            Healthcare Provider
+                            {facilityLabel}
                           </Typography>
                         </Stack>
                       </Stack>
@@ -302,7 +348,7 @@ export default function Dashboard() {
                   </Stack>
                 </Stack>
 
-                <Grid container spacing={2} alignItems="center">
+                <Grid container spacing={2} alignItems="flex-start">
                   <Grid item xs={12} sm={6} md={3}>
                     <TextField
                       select
@@ -311,6 +357,7 @@ export default function Dashboard() {
                       onChange={(e) => setStatusFilter(e.target.value as any)}
                       fullWidth
                       size="small"
+                      helperText="Filter by status"
                     >
                       <MenuItem value="">All</MenuItem>
                       <MenuItem value="to_here">Referred to Here</MenuItem>
@@ -322,26 +369,46 @@ export default function Dashboard() {
 
                   <Grid item xs={12} sm={6} md={3}>
                     <TextField
+                      select
                       label="From facility"
                       value={fromFacility}
                       onChange={(e) => setFromFacility(e.target.value)}
                       fullWidth
                       size="small"
-                    />
+                      helperText={facilityError ?? "Filter by originating facility"}
+                      error={Boolean(facilityError)}
+                    >
+                      <MenuItem value="">All facilities</MenuItem>
+                      {facilityOptions.map((opt) => (
+                        <MenuItem key={opt.id} value={opt.name}>
+                          {opt.name} {opt.kind === "hospital" ? "(Hos)" : "(PHC)"}
+                        </MenuItem>
+                      ))}
+                    </TextField>
                   </Grid>
 
                   <Grid item xs={12} sm={6} md={3}>
                     <TextField
+                      select
                       label="To facility"
                       value={toFacility}
                       onChange={(e) => setToFacility(e.target.value)}
                       fullWidth
                       size="small"
-                    />
+                      helperText={facilityError ?? "Filter by receiving facility"}
+                      error={Boolean(facilityError)}
+                    >
+                      <MenuItem value="">All facilities</MenuItem>
+                      {facilityOptions.map((opt) => (
+                        <MenuItem key={opt.id} value={opt.name}>
+                          {opt.name} {opt.kind === "hospital" ? "(Hos)" : "(PHC)"}
+                        </MenuItem>
+                      ))}
+                    </TextField>
                   </Grid>
 
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Stack direction="row" spacing={1}>
+                  <Grid item xs={12} sm={6} md={3} sx={{ display: "flex", alignItems: "flex-start", height: "100%" }}>
+                    <Stack direction="row" spacing={1} sx={{ width: "100%", alignItems: "stretch" }}>
                       <Button
                         variant="contained"
                         onClick={loadReferrals}
@@ -362,6 +429,7 @@ export default function Dashboard() {
                         variant="outlined"
                         onClick={resetFilters}
                         disabled={busy}
+                        fullWidth
                         sx={{
                           textTransform: "none",
                           fontWeight: 700,

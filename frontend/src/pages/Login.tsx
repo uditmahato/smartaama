@@ -1,5 +1,5 @@
 // frontend/src/pages/Login.tsx
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -10,6 +10,12 @@ import {
   CircularProgress,
   Collapse,
   Divider,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  MenuItem,
+  Radio,
+  RadioGroup,
   Stack,
   TextField,
   Typography,
@@ -25,6 +31,8 @@ type BootstrapAdminRequest = {
   username: string;
   password: string;
   full_name?: string | null;
+  facility_kind: FacilityKind;
+  facility_id: string;
 };
 
 type bool = boolean;
@@ -35,6 +43,17 @@ type UserMeResponse = {
   full_name?: string | null;
   role: string;
   is_active: bool;
+  facility_type?: string | null;
+  facility_id?: string | null;
+  facility_name?: string | null;
+};
+
+type FacilityKind = "phc" | "hospital";
+
+type FacilityOption = {
+  id: string;
+  name: string;
+  kind: FacilityKind;
 };
 
 export default function Login() {
@@ -50,6 +69,15 @@ export default function Login() {
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [adminFullName, setAdminFullName] = useState("");
+  const [facilityKind, setFacilityKind] = useState<FacilityKind | "">("");
+  const [facilityId, setFacilityId] = useState("");
+  const [facilityOptions, setFacilityOptions] = useState<Record<FacilityKind, FacilityOption[]>>({
+    phc: [],
+    hospital: [],
+  });
+  const [loadingFacilities, setLoadingFacilities] = useState(false);
+  const [facilityError, setFacilityError] = useState<string | null>(null);
+  const [facilitiesLoaded, setFacilitiesLoaded] = useState(false);
 
   // Separate busy flags to avoid "Login" and "Bootstrap" blocking each other unnecessarily
   const [busyLogin, setBusyLogin] = useState(false);
@@ -67,9 +95,40 @@ export default function Login() {
     return (
       bootstrapToken.trim().length > 0 &&
       adminUsername.trim().length >= 3 &&
-      adminPassword.length >= 10
+      adminPassword.length >= 10 &&
+      Boolean(facilityKind && facilityId)
     );
-  }, [bootstrapToken, adminUsername, adminPassword]);
+  }, [bootstrapToken, adminUsername, adminPassword, facilityKind, facilityId]);
+
+  async function loadFacilities() {
+    if (loadingFacilities) return;
+    setFacilityError(null);
+    setLoadingFacilities(true);
+
+    try {
+      const [phcResp, hospitalResp] = await Promise.all([
+        api.get<FacilityOption[]>("/facilities", { params: { kind: "phc" } }),
+        api.get<FacilityOption[]>("/facilities", { params: { kind: "hospital" } }),
+      ]);
+
+      setFacilityOptions({ phc: phcResp.data, hospital: hospitalResp.data });
+      setFacilitiesLoaded(true);
+    } catch (err: any) {
+      setFacilityError(err?.response?.data?.detail ?? "Could not load facilities");
+    } finally {
+      setLoadingFacilities(false);
+    }
+  }
+
+  useEffect(() => {
+    if (showBootstrap && !facilitiesLoaded) {
+      void loadFacilities();
+    }
+  }, [showBootstrap, facilitiesLoaded]);
+
+  useEffect(() => {
+    setFacilityId("");
+  }, [facilityKind]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -105,6 +164,11 @@ export default function Login() {
   async function bootstrapAdmin() {
     if (!canBootstrap || busyBootstrap) return;
 
+    if (!facilityKind || !facilityId) {
+      setError("Select facility type and facility name.");
+      return;
+    }
+
     setError(null);
     setInfo(null);
     setBusyBootstrap(true);
@@ -114,13 +178,16 @@ export default function Login() {
         username: adminUsername.trim(),
         password: adminPassword,
         full_name: adminFullName.trim() || null,
+        facility_kind: facilityKind as FacilityKind,
+        facility_id: facilityId,
       };
 
       const resp = await api.post<UserMeResponse>("/auth/bootstrap-admin", payload, {
         headers: { "X-Bootstrap-Token": bootstrapToken.trim() },
       });
 
-      setInfo(`Admin account created for "${resp.data.username}". You can now sign in.`);
+  const facilityLabel = resp.data.facility_name || "selected facility";
+  setInfo(`Admin account created for "${resp.data.username}" at ${facilityLabel}. You can now sign in.`);
       // Pre-fill login fields for convenience (no auto-login)
       setUsername(payload.username);
       setPassword(payload.password);
@@ -286,11 +353,62 @@ export default function Login() {
                         disabled={isBusy}
                       />
 
+                      <Stack spacing={1}>
+                        <FormControl component="fieldset" disabled={isBusy || loadingFacilities}>
+                          <FormLabel component="legend">Facility</FormLabel>
+                          <RadioGroup
+                            row
+                            value={facilityKind}
+                            onChange={(e) => setFacilityKind(e.target.value as FacilityKind)}
+                          >
+                            <FormControlLabel value="phc" control={<Radio />} label="PHC" />
+                            <FormControlLabel value="hospital" control={<Radio />} label="Hospital" />
+                          </RadioGroup>
+                        </FormControl>
+
+                        {facilityKind && (
+                          <TextField
+                            select
+                            label={facilityKind === "phc" ? "Select PHC" : "Select hospital"}
+                            value={facilityId}
+                            onChange={(e) => setFacilityId(e.target.value)}
+                            fullWidth
+                            disabled={isBusy || loadingFacilities}
+                            helperText={
+                              facilityError
+                                ? facilityError
+                                : loadingFacilities
+                                  ? "Loading facilities..."
+                                  : "Choose from the seeded list"
+                            }
+                            error={Boolean(facilityError)}
+                          >
+                            {(facilityKind === "phc" ? facilityOptions.phc : facilityOptions.hospital).map((opt) => (
+                              <MenuItem key={opt.id} value={opt.id}>
+                                {opt.name}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        )}
+
+                        {facilityError && (
+                          <Button
+                            variant="text"
+                            size="small"
+                            onClick={() => loadFacilities()}
+                            disabled={loadingFacilities || isBusy}
+                            sx={{ alignSelf: "flex-start", textTransform: "none" }}
+                          >
+                            {loadingFacilities ? "Refreshing..." : "Reload facilities"}
+                          </Button>
+                        )}
+                      </Stack>
+
                       <Button
                         variant="outlined"
                         size="large"
                         onClick={bootstrapAdmin}
-                        disabled={!canBootstrap || isBusy}
+                        disabled={!canBootstrap || isBusy || loadingFacilities}
                         sx={{
                           textTransform: "none",
                           fontWeight: 700,

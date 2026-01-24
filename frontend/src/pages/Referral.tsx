@@ -1,5 +1,5 @@
 // frontend/src/pages/Referral.tsx
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Alert, Box, Button, Card, CardContent, Chip, Divider, Grid, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { api } from "../services/api";
@@ -16,21 +16,35 @@ type ReferralOut = {
   created_at: string;
 };
 
+type FacilityOption = {
+  id: string;
+  name: string;
+  kind: "phc" | "hospital";
+};
+
 export default function Referral() {
   const { patientId } = useParams();
   const navigate = useNavigate();
 
-  const [fromFacility, setFromFacility] = useState("PHC");
+  const [fromFacility, setFromFacility] = useState("");
   const [toFacility, setToFacility] = useState("");
   const [reason, setReason] = useState("");
   const [clinicianNote, setClinicianNote] = useState("");
+
+  const [facilityOptions, setFacilityOptions] = useState<FacilityOption[]>([]);
+  const [facilityError, setFacilityError] = useState<string | null>(null);
 
   const [referral, setReferral] = useState<ReferralOut | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const canCreate = useMemo(() => {
-    return Boolean(patientId) && toFacility.trim().length > 1 && reason.trim().length >= 5;
-  }, [patientId, toFacility, reason]);
+    return (
+      Boolean(patientId) &&
+      fromFacility.trim().length > 0 &&
+      toFacility.trim().length > 0 &&
+      reason.trim().length >= 5
+    );
+  }, [patientId, fromFacility, toFacility, reason]);
 
   const getStatusChip = (status: ReferralOut["status"]) => {
     switch (status) {
@@ -46,6 +60,26 @@ export default function Referral() {
         return { color: "info", label: "Draft" };
     }
   };
+
+  async function loadFacilities() {
+    try {
+      const [phcResp, hospitalResp] = await Promise.all([
+        api.get<FacilityOption[]>("/facilities", { params: { kind: "phc" } }),
+        api.get<FacilityOption[]>("/facilities", { params: { kind: "hospital" } }),
+      ]);
+      const combined = [...phcResp.data, ...hospitalResp.data];
+      setFacilityOptions(combined);
+      if (!fromFacility && combined.length) {
+        setFromFacility(combined[0].name);
+      }
+    } catch (err: any) {
+      setFacilityError(err?.response?.data?.detail ?? "Failed to load facilities");
+    }
+  }
+
+  useEffect(() => {
+    void loadFacilities();
+  }, []);
 
   async function create() {
     if (!patientId) return;
@@ -155,22 +189,41 @@ export default function Referral() {
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <TextField
+                      select
                       label="From facility"
                       value={fromFacility}
                       onChange={(e) => setFromFacility(e.target.value)}
                       fullWidth
                       size="small"
-                    />
+                      required
+                      helperText={facilityError ?? "Select referring facility"}
+                      error={Boolean(facilityError)}
+                    >
+                      {facilityOptions.map((opt) => (
+                        <MenuItem key={opt.id} value={opt.name}>
+                          {opt.name} {opt.kind === "hospital" ? "(Hos)" : "(PHC)"}
+                        </MenuItem>
+                      ))}
+                    </TextField>
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField
+                      select
                       label="To facility"
                       value={toFacility}
                       onChange={(e) => setToFacility(e.target.value)}
                       required
                       fullWidth
                       size="small"
-                    />
+                      helperText={facilityError ?? "Select receiving facility"}
+                      error={Boolean(facilityError)}
+                    >
+                      {facilityOptions.map((opt) => (
+                        <MenuItem key={opt.id} value={opt.name}>
+                          {opt.name} {opt.kind === "hospital" ? "(Hos)" : "(PHC)"}
+                        </MenuItem>
+                      ))}
+                    </TextField>
                   </Grid>
 
                   <Grid item xs={12}>

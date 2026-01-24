@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Literal, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -19,6 +20,7 @@ from app.core.security import (
 )
 from app.db.session import get_db
 from app.models.audit_log import AuditLog
+from app.models.facility import HospitalFacility, PHCFacility
 from app.models.user import User, UserRole
 
 router = APIRouter()
@@ -28,6 +30,8 @@ class BootstrapAdminPayload(BaseModel):
     username: str
     password: str
     full_name: Optional[str] = None
+    facility_kind: Literal["phc", "hospital"]
+    facility_id: UUID
 
 
 @router.post("/login")
@@ -91,6 +95,10 @@ def bootstrap_admin(
     username = payload.username
     password = payload.password
     full_name = payload.full_name
+    facility_kind = (payload.facility_kind or "").lower().strip()
+
+    if facility_kind not in {"phc", "hospital"}:
+        raise HTTPException(status_code=400, detail="facility_kind must be 'phc' or 'hospital'")
 
     if not username or not password:
         raise HTTPException(status_code=400, detail="Username and password required")
@@ -99,12 +107,20 @@ def bootstrap_admin(
     if exists:
         raise HTTPException(status_code=400, detail="User already exists")
 
+    model = PHCFacility if facility_kind == "phc" else HospitalFacility
+    facility = db.execute(select(model).where(model.id == payload.facility_id)).scalar_one_or_none()
+    if not facility:
+        raise HTTPException(status_code=404, detail="Facility not found")
+
     user = User(
         username=username.strip(),
         full_name=full_name.strip() if isinstance(full_name, str) else None,
         role=UserRole.ADMIN,
         password_hash=hash_password(password),
         is_active=True,
+        facility_type=facility_kind,
+        facility_id=facility.id,
+        facility_name=facility.name,
     )
     db.add(user)
     db.flush()
@@ -115,7 +131,13 @@ def bootstrap_admin(
             action="BOOTSTRAP_ADMIN_CREATED",
             entity_type="user",
             entity_id=user.id,
-            details={"username": user.username, "role": user.role.value},
+            details={
+                "username": user.username,
+                "role": user.role.value,
+                "facility_type": user.facility_type,
+                "facility_id": str(user.facility_id) if user.facility_id else None,
+                "facility_name": user.facility_name,
+            },
         )
     )
 
@@ -127,6 +149,9 @@ def bootstrap_admin(
         "username": user.username,
         "role": user.role.value,
         "is_active": user.is_active,
+        "facility_type": user.facility_type,
+        "facility_id": str(user.facility_id) if user.facility_id else None,
+        "facility_name": user.facility_name,
     }
 
 
@@ -141,4 +166,7 @@ def me(current_user: User = Depends(get_current_user)):
         "full_name": current_user.full_name,
         "role": current_user.role.value,
         "is_active": current_user.is_active,
+        "facility_type": current_user.facility_type,
+        "facility_id": str(current_user.facility_id) if current_user.facility_id else None,
+        "facility_name": current_user.facility_name,
     }

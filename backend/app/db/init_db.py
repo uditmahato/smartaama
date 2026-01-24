@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.db.session import engine, SessionLocal
 from app.db.base import Base
@@ -19,7 +19,22 @@ def init_db() -> None:
     - This is useful for local bootstrap in early development.
     """
     Base.metadata.create_all(bind=engine)
+    _ensure_user_facility_columns()
     _seed_facilities()
+
+
+def _ensure_user_facility_columns() -> None:
+    """Backfill facility columns on users table if missing (Postgres-safe)."""
+
+    ddl = [
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS facility_type VARCHAR(32)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS facility_id UUID",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS facility_name VARCHAR(255)",
+    ]
+
+    with engine.begin() as conn:
+        for statement in ddl:
+            conn.execute(text(statement))
 
 
 def _seed_facilities() -> None:

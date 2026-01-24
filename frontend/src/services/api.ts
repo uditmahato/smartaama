@@ -12,6 +12,9 @@ type UserInfo = {
   username: string;
   full_name?: string | null;
   role: string;
+  facility_type?: string | null;
+  facility_id?: string | null;
+  facility_name?: string | null;
 };
 
 export const tokenStore = {

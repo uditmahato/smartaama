@@ -32,6 +32,11 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
     full_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
+    # Optional facility context for admins/clinicians
+    facility_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    facility_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), nullable=True)
+    facility_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_role"), index=True, nullable=False, default=UserRole.CLINICIAN)
 
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
