@@ -1,10 +1,9 @@
-# backend/app/db/init_db.py
-
 from __future__ import annotations
 
 from sqlalchemy.orm import Session
 from sqlalchemy import select, text
 
+# Ensure these imports match your actual file structure
 from app.db.session import engine, SessionLocal
 from app.db.base import Base
 from app.models.facility import PHCFacility, HospitalFacility
@@ -18,10 +17,16 @@ def init_db() -> None:
     - In production, prefer Alembic migrations.
     - This is useful for local bootstrap in early development.
     """
+    print("Creating tables...")
     Base.metadata.create_all(bind=engine)
+    
+    print("Running DDL updates...")
     _ensure_user_facility_columns()
     _ensure_referral_received_status_column()
+    
+    print("Seeding facilities...")
     _seed_facilities()
+    print("Database initialization complete.")
 
 
 def _ensure_user_facility_columns() -> None:
@@ -90,3 +95,7 @@ def _ensure_names(session: Session, model, names: list[str]) -> None:
     missing = [name for name in names if name not in existing]
     for name in missing:
         session.add(model(name=name))
+
+# --- THIS PART IS CRITICAL TO RUN THE SCRIPT ---
+if __name__ == "__main__":
+    init_db()
