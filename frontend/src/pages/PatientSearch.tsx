@@ -1,6 +1,17 @@
 // frontend/src/pages/PatientSearch.tsx
 import { useEffect, useState } from "react";
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Grid, Stack, TextField, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Grid,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -35,7 +46,9 @@ export default function PatientSearch() {
     setError(null);
     setHasSearched(true);
     try {
-      const resp = await api.get<PatientOut[]>("/patients", { params: { q: q.trim(), limit: 50 } });
+      const resp = await api.get<PatientOut[]>("/patients", {
+        params: { q: q.trim(), limit: 50 },
+      });
       setPatients(resp.data);
     } catch (err: any) {
       setError(err?.response?.data?.detail ?? "Search failed");
@@ -49,7 +62,16 @@ export default function PatientSearch() {
   }, []);
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F6F7FB", py: { xs: 2, md: 3 }, px: { xs: 0.5, sm: 1, md: 1.5 }, width: "100%", boxSizing: "border-box" }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "#F6F7FB",
+        py: { xs: 2, md: 3 },
+        px: { xs: 0.5, sm: 1, md: 1.5 },
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+    >
       <Stack spacing={3}>
         {/* Top Bar */}
         <Card
@@ -75,10 +97,16 @@ export default function PatientSearch() {
               alignItems={{ xs: "flex-start", md: "center" }}
             >
               <Stack spacing={0.5}>
-                <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.2 }}>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 800, letterSpacing: -0.2 }}
+                >
                   Search Patients
                 </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.9, lineHeight: 1.7 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ opacity: 0.9, lineHeight: 1.7 }}
+                >
                   Find patient records by name, ID, phone, or national ID.
                 </Typography>
               </Stack>
@@ -101,7 +129,7 @@ export default function PatientSearch() {
                 </Button>
                 <Button
                   variant="contained"
-                  onClick={() => navigate("/")}
+                  onClick={() => navigate("/dashboard")}
                   sx={{
                     textTransform: "none",
                     fontWeight: 700,
@@ -121,11 +149,18 @@ export default function PatientSearch() {
           {/* Search Box */}
           <CardContent sx={{ p: { xs: 2.5, md: 3.5 }, bgcolor: "white" }}>
             <Stack spacing={2}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 800, color: "#0F172A" }}
+              >
                 Quick Search
               </Typography>
               {error && <Alert severity="error">{error}</Alert>}
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "flex-start", sm: "center" }}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2}
+                alignItems={{ xs: "flex-start", sm: "center" }}
+              >
                 <TextField
                   label="Search by name / MRN / phone / national ID"
                   value={q}
@@ -165,8 +200,15 @@ export default function PatientSearch() {
         >
           <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
             <Stack spacing={2}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 800, color: "#0F172A" }}
+                >
                   Results {hasSearched ? `(${patients.length})` : ""}
                 </Typography>
                 {busy && <CircularProgress size={20} />}
@@ -177,9 +219,27 @@ export default function PatientSearch() {
                   <CircularProgress />
                 </Box>
               ) : !hasSearched ? (
-                <Box sx={{ color: "text.secondary", fontSize: 14, py: 3, textAlign: "center" }}>Search to see patient results.</Box>
+                <Box
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: 14,
+                    py: 3,
+                    textAlign: "center",
+                  }}
+                >
+                  Search to see patient results.
+                </Box>
               ) : patients.length === 0 ? (
-                <Box sx={{ color: "text.secondary", fontSize: 14, py: 3, textAlign: "center" }}>No patients found.</Box>
+                <Box
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: 14,
+                    py: 3,
+                    textAlign: "center",
+                  }}
+                >
+                  No patients found.
+                </Box>
               ) : (
                 <Stack spacing={1.5}>
                   {patients.map((p) => (
@@ -200,24 +260,54 @@ export default function PatientSearch() {
                       <CardContent sx={{ py: 2, "&:last-child": { pb: 2 } }}>
                         <Grid container spacing={2} alignItems="center">
                           <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#0F172A" }}>
+                            <Typography
+                              variant="subtitle2"
+                              sx={{ fontWeight: 700, color: "#0F172A" }}
+                            >
                               {p.first_name} {p.middle_name ?? ""} {p.last_name}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ display: "block", mt: 0.5 }}
+                            >
                               MRN: {p.facility_mrn ?? p.patient_id ?? "-"}
                             </Typography>
                           </Grid>
                           <Grid item xs={12} sm={6}>
-                            <Stack direction="row" spacing={2} justifyContent={{ xs: "flex-start", sm: "flex-end" }}>
+                            <Stack
+                              direction="row"
+                              spacing={2}
+                              justifyContent={{
+                                xs: "flex-start",
+                                sm: "flex-end",
+                              }}
+                            >
                               <Box>
-                                <Typography variant="caption" color="text.secondary">Age</Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  Age
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 600 }}
+                                >
                                   {p.age_in_years ?? "-"} years
                                 </Typography>
                               </Box>
                               <Box>
-                                <Typography variant="caption" color="text.secondary">Phone</Typography>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  Phone
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 600 }}
+                                >
                                   {p.phone_number ?? "-"}
                                 </Typography>
                               </Box>
