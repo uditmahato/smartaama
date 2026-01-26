@@ -13,6 +13,7 @@ import UpdateRecord from "./pages/UpdateRecord";
 import Referral from "./pages/Referral";
 import { tokenStore } from "./services/api";
 import { JSX } from "react";
+import Signup from "./pages/Signup";
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const token = tokenStore.get();
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
 
         {/* Protected pages */}
         <Route
