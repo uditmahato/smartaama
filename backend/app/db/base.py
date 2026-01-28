@@ -9,3 +9,4 @@ from app.models.clinical_event import ClinicalEvent  # noqa: F401
 from app.models.referral import Referral  # noqa: F401
 from app.models.audit_log import AuditLog  # noqa: F401
 from app.models.facility import PHCFacility, HospitalFacility  # noqa: F401
+from app.models.ai_patient_analysis import AIPatientAnalysis  # noqa: F401

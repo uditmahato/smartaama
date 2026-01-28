@@ -53,24 +53,25 @@ def login(
     stmt = select(User).where(User.username == form_data.username)
     user = db.execute(stmt).scalar_one_or_none()
 
-    if not user.is_approved:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Your account is not approved yet. Please contact the administrator.",
-        )
-
+    # Check if user exists first
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
         )
-
-   
     
+    # Verify password
     if not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
+        )
+    
+    # Check if approved (after verifying user exists and password is correct)
+    if not user.is_approved:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account is not approved yet. Please contact the administrator.",
         )
 
     token = create_access_token(subject_user=user)

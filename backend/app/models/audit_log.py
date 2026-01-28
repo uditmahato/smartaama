@@ -47,7 +47,7 @@ class AuditLog(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     # Structured details (avoid putting PHI unnecessarily; keep minimal)
     details: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
 
-    actor: Mapped[Optional["User"]] = relationship("User", lazy="joined")
+    actor: Mapped[Optional["User"]] = relationship("User", lazy="noload")
 
     __table_args__ = (
         Index("ix_audit_logs_action_time", "action", "created_at"),

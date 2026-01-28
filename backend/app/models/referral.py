@@ -85,13 +85,13 @@ class Referral(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Relationships
     patient: Mapped["Patient"] = relationship("Patient", back_populates="referrals")
-    created_by: Mapped[Optional["User"]] = relationship("User", back_populates="created_referrals", lazy="joined")
+    created_by: Mapped[Optional["User"]] = relationship("User", back_populates="created_referrals", lazy="noload")
 
     # Events optionally tagged to this referral (not required, but useful)
     events: Mapped[List["ClinicalEvent"]] = relationship(
         "ClinicalEvent",
         primaryjoin="Referral.id==ClinicalEvent.referral_id",
-        lazy="selectin",
+        lazy="noload",
         viewonly=True,
     )
 

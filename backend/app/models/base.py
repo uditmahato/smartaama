@@ -16,6 +16,10 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+# Export utcnow for use in other models
+__all__ = ['Base', 'UUIDPrimaryKeyMixin', 'TimestampMixin', 'utcnow']
+
+
 class Base(DeclarativeBase):
     """Root SQLAlchemy Declarative Base for all ORM models."""
     type_annotation_map = {

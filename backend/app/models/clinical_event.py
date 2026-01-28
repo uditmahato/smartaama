@@ -74,8 +74,8 @@ class ClinicalEvent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Relationships
     patient: Mapped["Patient"] = relationship("Patient", back_populates="clinical_events")
-    created_by: Mapped[Optional["User"]] = relationship("User", lazy="joined")
-    referral: Mapped[Optional["Referral"]] = relationship("Referral", lazy="selectin")
+    created_by: Mapped[Optional["User"]] = relationship("User", lazy="noload")
+    referral: Mapped[Optional["Referral"]] = relationship("Referral", lazy="noload")
 
     __table_args__ = (
         CheckConstraint("char_length(section) > 0", name="ck_clinical_events_section_nonempty"),
