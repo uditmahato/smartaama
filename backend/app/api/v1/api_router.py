@@ -1,11 +1,23 @@
 # backend/app/api/v1/api_router.py
 
+from app.api.v1.endpoints import (
+    admin,
+    ai_risk,
+    auth,
+    clinical_events,
+    facilities,
+    locations,
+    medical_data,
+    medical_schema,
+    patients,
+    referrals,
+)
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, patients, clinical_events, referrals, ai_risk, medical_schema, medical_data, locations, facilities
 
 api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["Auth"])
+api_router.include_router(admin.router, prefix="/admin")
 api_router.include_router(patients.router, prefix="/patients", tags=["Patients"])
 api_router.include_router(clinical_events.router, prefix="/events", tags=["Clinical Events"])
 api_router.include_router(referrals.router, prefix="/referrals", tags=["Referrals"])
