@@ -14,4 +14,4 @@ sentence-transformers
 celery
 redis
 pydantic-settings
-
+python-multipart

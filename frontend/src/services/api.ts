@@ -67,3 +67,9 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+
+export async function fetchMe(): Promise<UserInfo> {
+  const resp = await api.get("/auth/me");
+  return resp.data;
+}

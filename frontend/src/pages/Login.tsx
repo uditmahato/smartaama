@@ -48,9 +48,9 @@ type UserMeResponse = {
   facility_name?: string | null;
 };
 
-type FacilityKind = "phc" | "hospital";
+export type FacilityKind = "phc" | "hospital";
 
-type FacilityOption = {
+export type FacilityOption = {
   id: string;
   name: string;
   kind: FacilityKind;
@@ -65,13 +65,17 @@ export default function Login() {
 
   // Bootstrap panel (DEV-only usage)
   const [showBootstrap, setShowBootstrap] = useState(false);
-  const [bootstrapToken, setBootstrapToken] = useState(import.meta.env.VITE_BOOTSTRAP_TOKEN || "");
+  const [bootstrapToken, setBootstrapToken] = useState(
+    import.meta.env.VITE_BOOTSTRAP_TOKEN || "",
+  );
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [adminFullName, setAdminFullName] = useState("");
   const [facilityKind, setFacilityKind] = useState<FacilityKind | "">("");
   const [facilityId, setFacilityId] = useState("");
-  const [facilityOptions, setFacilityOptions] = useState<Record<FacilityKind, FacilityOption[]>>({
+  const [facilityOptions, setFacilityOptions] = useState<
+    Record<FacilityKind, FacilityOption[]>
+  >({
     phc: [],
     hospital: [],
   });
@@ -88,7 +92,7 @@ export default function Login() {
 
   const canLogin = useMemo(
     () => username.trim().length > 0 && password.length > 0,
-    [username, password]
+    [username, password],
   );
 
   const canBootstrap = useMemo(() => {
@@ -108,13 +112,17 @@ export default function Login() {
     try {
       const [phcResp, hospitalResp] = await Promise.all([
         api.get<FacilityOption[]>("/facilities", { params: { kind: "phc" } }),
-        api.get<FacilityOption[]>("/facilities", { params: { kind: "hospital" } }),
+        api.get<FacilityOption[]>("/facilities", {
+          params: { kind: "hospital" },
+        }),
       ]);
 
       setFacilityOptions({ phc: phcResp.data, hospital: hospitalResp.data });
       setFacilitiesLoaded(true);
     } catch (err: any) {
-      setFacilityError(err?.response?.data?.detail ?? "Could not load facilities");
+      setFacilityError(
+        err?.response?.data?.detail ?? "Could not load facilities",
+      );
     } finally {
       setLoadingFacilities(false);
     }
@@ -155,7 +163,10 @@ export default function Login() {
       tokenStore.set(resp.data.access_token);
       navigate("/", { replace: true });
     } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Sign-in failed. Please check your credentials.");
+      setError(
+        err?.response?.data?.detail ??
+          "Sign-in failed. Please check your credentials.",
+      );
     } finally {
       setBusyLogin(false);
     }
@@ -182,17 +193,26 @@ export default function Login() {
         facility_id: facilityId,
       };
 
-      const resp = await api.post<UserMeResponse>("/auth/bootstrap-admin", payload, {
-        headers: { "X-Bootstrap-Token": bootstrapToken.trim() },
-      });
+      const resp = await api.post<UserMeResponse>(
+        "/auth/bootstrap-admin",
+        payload,
+        {
+          headers: { "X-Bootstrap-Token": bootstrapToken.trim() },
+        },
+      );
 
-  const facilityLabel = resp.data.facility_name || "selected facility";
-  setInfo(`Admin account created for "${resp.data.username}" at ${facilityLabel}. You can now sign in.`);
+      const facilityLabel = resp.data.facility_name || "selected facility";
+      setInfo(
+        `Admin account created for "${resp.data.username}" at ${facilityLabel}. You can now sign in.`,
+      );
       // Pre-fill login fields for convenience (no auto-login)
       setUsername(payload.username);
       setPassword(payload.password);
     } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Bootstrap failed. Verify token and server environment.");
+      setError(
+        err?.response?.data?.detail ??
+          "Bootstrap failed. Verify token and server environment.",
+      );
     } finally {
       setBusyBootstrap(false);
     }
@@ -223,11 +243,19 @@ export default function Login() {
         <CardContent sx={{ p: 4 }}>
           <Stack spacing={2.25}>
             <Stack spacing={0.5}>
-              <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: 0.2 }}>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 800, letterSpacing: 0.2 }}
+              >
                 SmartAama
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-                Sign in to access maternal records, clinical tracking, and referrals.
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ lineHeight: 1.7 }}
+              >
+                Sign in to access maternal records, clinical tracking, and
+                referrals.
               </Typography>
             </Stack>
 
@@ -276,8 +304,13 @@ export default function Login() {
                   {busyLogin ? <CircularProgress size={20} /> : "Sign in"}
                 </Button>
 
-                <Typography variant="caption" color="text.secondary" sx={{ textAlign: "center" }}>
-                  Use your assigned credentials. If you do not have access, contact your system administrator.
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ textAlign: "center" }}
+                >
+                  Use your assigned credentials. If you do not have access,
+                  contact your system administrator.
                 </Typography>
               </Stack>
             </Box>
@@ -296,10 +329,17 @@ export default function Login() {
                   borderRadius: 2,
                 }}
               >
-                {showBootstrap ? "Hide admin bootstrap (DEV)" : "Admin bootstrap (DEV)"}
+                Admin boo
+                {showBootstrap
+                  ? "Hide admin bootstrap (DEV)"
+                  : "Admin bootstrap (DEV)"}
+              </Button>
+              <Button onClick={() => navigate("/signup")}>
+                Register your account
               </Button>
 
               <Collapse in={showBootstrap}>
+                Admin boo
                 <Card
                   variant="outlined"
                   sx={{
@@ -311,11 +351,19 @@ export default function Login() {
                   <CardContent sx={{ p: 3 }}>
                     <Stack spacing={1.75}>
                       <Stack spacing={0.5}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: 800 }}
+                        >
                           Bootstrap admin account
                         </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-                          Development-only action. Requires backend <b>ENV=dev</b> and a valid <b>BOOTSTRAP_TOKEN</b>.
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ lineHeight: 1.7 }}
+                        >
+                          Development-only action. Requires backend{" "}
+                          <b>ENV=dev</b> and a valid <b>BOOTSTRAP_TOKEN</b>.
                         </Typography>
                       </Stack>
 
@@ -354,22 +402,39 @@ export default function Login() {
                       />
 
                       <Stack spacing={1}>
-                        <FormControl component="fieldset" disabled={isBusy || loadingFacilities}>
+                        <FormControl
+                          component="fieldset"
+                          disabled={isBusy || loadingFacilities}
+                        >
                           <FormLabel component="legend">Facility</FormLabel>
                           <RadioGroup
                             row
                             value={facilityKind}
-                            onChange={(e) => setFacilityKind(e.target.value as FacilityKind)}
+                            onChange={(e) =>
+                              setFacilityKind(e.target.value as FacilityKind)
+                            }
                           >
-                            <FormControlLabel value="phc" control={<Radio />} label="PHC" />
-                            <FormControlLabel value="hospital" control={<Radio />} label="Hospital" />
+                            <FormControlLabel
+                              value="phc"
+                              control={<Radio />}
+                              label="PHC"
+                            />
+                            <FormControlLabel
+                              value="hospital"
+                              control={<Radio />}
+                              label="Hospital"
+                            />
                           </RadioGroup>
                         </FormControl>
 
                         {facilityKind && (
                           <TextField
                             select
-                            label={facilityKind === "phc" ? "Select PHC" : "Select hospital"}
+                            label={
+                              facilityKind === "phc"
+                                ? "Select PHC"
+                                : "Select hospital"
+                            }
                             value={facilityId}
                             onChange={(e) => setFacilityId(e.target.value)}
                             fullWidth
@@ -383,7 +448,10 @@ export default function Login() {
                             }
                             error={Boolean(facilityError)}
                           >
-                            {(facilityKind === "phc" ? facilityOptions.phc : facilityOptions.hospital).map((opt) => (
+                            {(facilityKind === "phc"
+                              ? facilityOptions.phc
+                              : facilityOptions.hospital
+                            ).map((opt) => (
                               <MenuItem key={opt.id} value={opt.id}>
                                 {opt.name}
                               </MenuItem>
@@ -397,9 +465,14 @@ export default function Login() {
                             size="small"
                             onClick={() => loadFacilities()}
                             disabled={loadingFacilities || isBusy}
-                            sx={{ alignSelf: "flex-start", textTransform: "none" }}
+                            sx={{
+                              alignSelf: "flex-start",
+                              textTransform: "none",
+                            }}
                           >
-                            {loadingFacilities ? "Refreshing..." : "Reload facilities"}
+                            {loadingFacilities
+                              ? "Refreshing..."
+                              : "Reload facilities"}
                           </Button>
                         )}
                       </Stack>
@@ -416,7 +489,11 @@ export default function Login() {
                           py: 1.05,
                         }}
                       >
-                        {busyBootstrap ? <CircularProgress size={20} /> : "Create admin"}
+                        {busyBootstrap ? (
+                          <CircularProgress size={20} />
+                        ) : (
+                          "Create admin"
+                        )}
                       </Button>
                     </Stack>
                   </CardContent>

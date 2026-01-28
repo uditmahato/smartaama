@@ -1,15 +1,9 @@
-# backend/app/api/v1/endpoints/auth.py
-
 from __future__ import annotations
 
+import os
+import shutil
 from typing import Literal, Optional
 from uuid import UUID
-
-from fastapi import APIRouter, Body, Depends, Header, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import (
@@ -22,9 +16,23 @@ from app.db.session import get_db
 from app.models.audit_log import AuditLog
 from app.models.facility import HospitalFacility, PHCFacility
 from app.models.user import User, UserRole
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    File,
+    Form,
+    Header,
+    HTTPException,
+    UploadFile,
+    status,
+)
+from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 router = APIRouter()
-
 
 class BootstrapAdminPayload(BaseModel):
     username: str
@@ -45,12 +53,20 @@ def login(
     stmt = select(User).where(User.username == form_data.username)
     user = db.execute(stmt).scalar_one_or_none()
 
+    if not user.is_approved:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account is not approved yet. Please contact the administrator.",
+        )
+
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
         )
 
+   
+    
     if not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -114,13 +130,16 @@ def bootstrap_admin(
 
     user = User(
         username=username.strip(),
+        email=username.strip(),
         full_name=full_name.strip() if isinstance(full_name, str) else None,
         role=UserRole.ADMIN,
         password_hash=hash_password(password),
         is_active=True,
+        is_approved=True,
         facility_type=facility_kind,
         facility_id=facility.id,
         facility_name=facility.name,
+        is_super_admin=True,
     )
     db.add(user)
     db.flush()
@@ -155,6 +174,59 @@ def bootstrap_admin(
     }
 
 
+UPLOAD_DIR = "uploads/id_cards"
+
+@router.post("/register")
+def register(
+    email: str = Form(...),
+    password: str = Form(...),
+    full_name: str = Form(...),
+    phone_number: str = Form(...),
+    nmc_number: str = Form(...),
+    working_hospital: str = Form(...),
+    facility_type: Literal["phc", "hospital"] = Form(...),
+    facility_id: UUID = Form(...),
+    id_card_image: UploadFile | None = File(None),
+    db: Session = Depends(get_db),
+):
+    exists = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
+    if exists:
+        raise HTTPException(status_code=400, detail="User already exists")
+
+    user = User(
+        username=email.strip(),
+        email=email.strip(),
+        password_hash=hash_password(password),
+        full_name=full_name.strip(),
+        phone_number=phone_number.strip(),
+        nmc_number=nmc_number.strip(),
+        working_hospital=working_hospital.strip(),
+        facility_type=facility_type,
+        facility_id=facility_id,
+        role=UserRole.CLINICIAN,
+        is_active=False,
+        is_approved=False,
+    )
+
+    db.add(user)
+    db.flush()
+
+    if id_card_image:
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+        filename = f"{user.id}_{id_card_image.filename}"
+        file_path = os.path.join(UPLOAD_DIR, filename)
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(id_card_image.file, buffer)
+
+        user.id_card_image_path = file_path
+
+    db.commit()
+    db.refresh(user)
+
+    return {"detail": "Registration successful. Awaiting approval"}
+
 @router.get("/me")
 def me(current_user: User = Depends(get_current_user)):
     """
@@ -163,10 +235,14 @@ def me(current_user: User = Depends(get_current_user)):
     return {
         "id": str(current_user.id),
         "username": current_user.username,
+        "email": current_user.email,
         "full_name": current_user.full_name,
         "role": current_user.role.value,
         "is_active": current_user.is_active,
+        "is_approved": current_user.is_approved,
         "facility_type": current_user.facility_type,
         "facility_id": str(current_user.facility_id) if current_user.facility_id else None,
         "facility_name": current_user.facility_name,
     }
+
+

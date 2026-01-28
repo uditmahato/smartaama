@@ -13,6 +13,10 @@ import UpdateRecord from "./pages/UpdateRecord";
 import Referral from "./pages/Referral";
 import { tokenStore } from "./services/api";
 import { JSX } from "react";
+import Signup from "./pages/Signup";
+import Users from "./pages/admin/Users";
+import RequireAdmin from "./components/RequiredAdmin";
+import PendingUsers from "./pages/admin/PendingUsers";
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const token = tokenStore.get();
@@ -29,6 +33,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
 
         {/* Protected pages */}
         <Route
@@ -39,7 +44,24 @@ export default function App() {
             </RequireAuth>
           }
         />
+        {/* Admin only routes */}
+        <Route
+          path="/admin/users"
+          element={
+            <RequireAdmin>
+              <Users />
+            </RequireAdmin>
+          }
+        />
 
+        <Route
+          path="/admin/pending"
+          element={
+            <RequireAdmin>
+              <PendingUsers />
+            </RequireAdmin>
+          }
+        />
         <Route
           path="/patients"
           element={
