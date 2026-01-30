@@ -2,12 +2,13 @@
 
 import os
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
 from app.api.v1.api_router import api_router
 from app.core.config import settings
 from app.db.init_db import init_db
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from app.settings import ID_CARDS_DIR
 
 app = FastAPI(title="Smart Aama API", version="1.0.0")
 
@@ -22,6 +23,8 @@ app.add_middleware(
 
 app.include_router(api_router, prefix="/api/v1")
 
+
+app.mount("/uploads/id_cards", StaticFiles(directory=ID_CARDS_DIR), name="uploads")
 
 @app.on_event("startup")
 def _startup() -> None:
