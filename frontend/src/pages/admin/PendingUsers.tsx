@@ -1,13 +1,5 @@
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import {
-  Box,
-  Button,
-  Stack,
-  Typography,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { api } from "../../services/api";
 import Navbar, { navLinks } from "../../components/Navbar";
@@ -20,27 +12,17 @@ type User = {
   facility_type: string;
   working_hospital: string;
   created_at: string;
-  id_card_image_path?: string; // path from backend
 };
 
 export default function PendingUsers() {
   const [rows, setRows] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [openImage, setOpenImage] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string>("");
-
-  // Load pending users
   async function load() {
     setLoading(true);
-    try {
-      const res = await api.get("/admin/users/pending");
-      setRows(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    const res = await api.get("/admin/users/pending");
+    setRows(res.data);
+    setLoading(false);
   }
 
   async function approve(id: string) {
@@ -53,20 +35,6 @@ export default function PendingUsers() {
     load();
   }
 
-  // Open ID card dialog
-  const handleOpenImage = (imagePath?: string) => {
-    if (!imagePath) return;
-    //@ts-ignore
-    const fullUrl = `${import.meta.env.VITE_UPLOADS_BASE_URL}/${encodeURI(imagePath)}`;
-    setSelectedImage(fullUrl);
-    setOpenImage(true);
-  };
-
-  const handleCloseImage = () => {
-    setOpenImage(false);
-    setSelectedImage("");
-  };
-
   useEffect(() => {
     load();
   }, []);
@@ -76,28 +44,13 @@ export default function PendingUsers() {
     { field: "email", headerName: "Email", flex: 1 },
     { field: "phone_number", headerName: "Phone", flex: 1 },
     { field: "facility_type", headerName: "Facility", width: 120 },
+    { field: "working_hospital", headerName: "Hospital", flex: 1 },
     {
-      field: "working_hospital",
-      headerName: "Currently Working Hospital",
-      flex: 1,
-    },
-    { field: "nmc_number", headerName: "NMC Number", flex: 1 },
-
-    {
-      field: "id_card",
-      headerName: "ID Card",
-      width: 120,
-      sortable: false,
-      renderCell: (params) => (
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={() => handleOpenImage(params.row.id_card_image_path)}
-          disabled={!params.row.id_card_image_path}
-        >
-          View
-        </Button>
-      ),
+      field: "created_at",
+      headerName: "Registered At",
+      width: 180,
+      valueFormatter: ({ value }) =>
+        value ? new Date(value as string).toLocaleString() : "-",
     },
     {
       field: "actions",
@@ -149,31 +102,10 @@ export default function PendingUsers() {
           rows={rows}
           columns={columns}
           loading={loading}
-          pageSizeOptions={[10, 25, 50, 100]}
+          pageSizeOptions={[10, 25, 50]}
           disableRowSelectionOnClick
         />
       </div>
-
-      {/* Dialog to show ID card */}
-      <Dialog
-        open={openImage}
-        onClose={handleCloseImage}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>ID Card</DialogTitle>
-        <DialogContent>
-          {selectedImage ? (
-            <img
-              src={selectedImage}
-              alt="ID Card"
-              style={{ width: "100%", height: "auto" }}
-            />
-          ) : (
-            <Typography>No image available</Typography>
-          )}
-        </DialogContent>
-      </Dialog>
     </Box>
   );
 }
