@@ -89,7 +89,30 @@ function formatValue(v: any): string {
   if (t === "code") return v.display ? `${v.display}${v.code ? ` (${v.code})` : ""}` : String(val ?? "-");
   if (t === "integer" || t === "number") return `${val ?? "-"}${unit}`;
 
-  if (typeof val === "object") return JSON.stringify(val);
+  // Handle objects more gracefully
+  if (typeof val === "object") {
+    if (val === null) return "-";
+    if (Array.isArray(val)) {
+      if (val.length === 0) return "-";
+      // Join array elements with commas
+      return val.map(item => {
+        if (typeof item === "object" && item !== null) {
+          // For objects in array, try to extract meaningful value
+          return item.display || item.name || item.label || JSON.stringify(item);
+        }
+        return String(item);
+      }).join(", ");
+    }
+    // For regular objects, try to extract meaningful properties
+    if (val.display) return val.display;
+    if (val.name) return val.name;
+    if (val.label) return val.label;
+    if (val.value) return String(val.value);
+    // Format as readable key-value pairs
+    const entries = Object.entries(val).slice(0, 5); // Limit to 5 entries
+    if (entries.length === 0) return "-";
+    return entries.map(([k, v]) => `${humanizeLabel(k)}: ${v}`).join(", ");
+  }
   return `${val ?? "-"}${unit}`;
 }
 

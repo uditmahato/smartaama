@@ -50,20 +50,21 @@ function AIPatientSummary({ patientId }: AIPatientSummaryProps) {
 
       if (forceRegenerate) {
         setRegenerating(true);
-        await api.post("/ai-analysis/generate", {
-          patient_id: patientId,
-          force_regenerate: true,
-        });
-        setRegenerating(false);
       }
 
-      const response = await api.get(`/ai-analysis/patient/${patientId}?auto_generate=true`);
+      const params = new URLSearchParams({
+        auto_generate: "true",
+        ...(forceRegenerate && { force_regenerate: "true" })
+      });
+
+      const response = await api.get(`/ai-analysis/patient/${patientId}?${params}`);
       setAnalysis(response.data);
     } catch (err: any) {
       console.error("Error fetching AI analysis:", err);
       setError(err.response?.data?.detail || "Failed to load AI analysis");
     } finally {
       setLoading(false);
+      setRegenerating(false);
     }
   };
 
@@ -131,91 +132,260 @@ function AIPatientSummary({ patientId }: AIPatientSummaryProps) {
     <Box
       sx={{
         background: "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)",
-        borderRadius: 2,
-        p: 3,
+        borderRadius: 3,
+        p: 0,
         border: "1px solid rgba(255, 255, 255, 0.2)",
+        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
+        overflow: "hidden",
       }}
     >
-      <Stack spacing={2}>
+      {/* Header */}
+      <Box sx={{ p: 3, pb: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Stack direction="row" spacing={1} alignItems="center">
-            <AIIcon sx={{ color: "white" }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, color: "white" }}>
-              AI Patient Summary
-            </Typography>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Box
+              sx={{
+                p: 1.5,
+                bgcolor: "rgba(255, 255, 255, 0.2)",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <AIIcon sx={{ color: "white", fontSize: 28 }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 700,
+                  color: "white",
+                  fontSize: "1.5rem",
+                  letterSpacing: "-0.5px",
+                }}
+              >
+                AI Clinical Summary
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "rgba(255, 255, 255, 0.8)",
+                  fontSize: "0.875rem",
+                  mt: 0.5,
+                }}
+              >
+                Intelligent analysis of patient condition
+              </Typography>
+            </Box>
           </Stack>
           <Stack direction="row" spacing={1} alignItems="center">
             {analysis.summary.risk_level && (
               <Chip
-                icon={getRiskIcon(analysis.summary.risk_level)}
-                label={`Risk: ${analysis.summary.risk_level.toUpperCase()}`}
-                color={getRiskColor(analysis.summary.risk_level)}
-                size="small"
-                sx={{ fontWeight: 600 }}
+                {...(getRiskIcon(analysis.summary.risk_level) && { icon: getRiskIcon(analysis.summary.risk_level) })}
+                label={`${analysis.summary.risk_level.toUpperCase()} RISK`}
+                color={getRiskColor(analysis.summary.risk_level) as any}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "0.75rem",
+                  height: 32,
+                  "& .MuiChip-label": {
+                    px: 2,
+                  },
+                }}
               />
             )}
             <Tooltip title="Regenerate analysis">
               <IconButton
-              size="small"
-              onClick={() => fetchAnalysis(true)}
-              disabled={regenerating}
-              sx={{ color: "white" }}
-            >
-              {regenerating ? <CircularProgress size={20} sx={{ color: "white" }} /> : <RefreshIcon />}
-            </IconButton>
-          </Tooltip>
+                size="small"
+                onClick={() => fetchAnalysis(true)}
+                disabled={regenerating}
+                sx={{
+                  color: "white",
+                  bgcolor: "rgba(255, 255, 255, 0.1)",
+                  "&:hover": {
+                    bgcolor: "rgba(255, 255, 255, 0.2)",
+                  },
+                }}
+              >
+                {regenerating ? (
+                  <CircularProgress size={18} sx={{ color: "white" }} />
+                ) : (
+                  <RefreshIcon fontSize="small" />
+                )}
+              </IconButton>
+            </Tooltip>
+          </Stack>
         </Stack>
-      </Stack>
+      </Box>
 
+      {/* Summary Content */}
       <Box
         sx={{
-          p: 2,
-          bgcolor: "rgba(255, 255, 255, 0.15)",
+          mx: 3,
+          mb: 3,
+          p: 3,
+          bgcolor: "rgba(255, 255, 255, 0.95)",
           borderRadius: 2,
-          backdropFilter: "blur(10px)",
+          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.1)",
         }}
       >
-        <Typography variant="body1" sx={{ lineHeight: 1.7, opacity: 0.95 }}>
+        <Typography
+          variant="body1"
+          sx={{
+            lineHeight: 1.8,
+            color: "#2c3e50",
+            fontSize: "1rem",
+            fontWeight: 400,
+          }}
+        >
           {analysis.summary.summary}
         </Typography>
       </Box>
 
+      {/* Key Findings */}
       {analysis.summary.key_findings && analysis.summary.key_findings.length > 0 && (
-        <Box>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, opacity: 0.9 }}>
-            Key Findings:
+        <Box sx={{ mx: 3, mb: 3 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 700,
+              color: "white",
+              mb: 2,
+              fontSize: "1.125rem",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <Box
+              sx={{
+                width: 4,
+                height: 20,
+                bgcolor: "white",
+                borderRadius: 2,
+              }}
+            />
+            Key Clinical Signs
           </Typography>
-          <Stack spacing={1}>
-            {analysis.summary.key_findings.map((finding, idx) => (
-              <Box
-                key={idx}
-                sx={{
-                  p: 1.5,
-                  bgcolor: "rgba(255, 255, 255, 0.1)",
-                  borderRadius: 1,
-                  borderLeft: "3px solid rgba(255, 255, 255, 0.5)",
-                }}
-              >
-                <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                  • {finding}
-                </Typography>
-              </Box>
-            ))}
+          <Stack spacing={2}>
+            {analysis.summary.key_findings.map((finding, idx) => {
+              const isElevated = finding.includes('⚠️') || finding.includes('Elevated') || finding.includes('High') || finding.includes('Low');
+              const isNormal = finding.includes('Normal');
+              
+              return (
+                <Box
+                  key={idx}
+                  sx={{
+                    p: 2.5,
+                    bgcolor: "rgba(255, 255, 255, 0.95)",
+                    borderRadius: 2,
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                    borderLeft: `4px solid ${
+                      isElevated ? "#e74c3c" : isNormal ? "#27ae60" : "#3498db"
+                    }`,
+                  }}
+                >
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: "50%",
+                        bgcolor: isElevated ? "#fee" : isNormal ? "#efe" : "#eef",
+                        color: isElevated ? "#e74c3c" : isNormal ? "#27ae60" : "#3498db",
+                        fontSize: "1.25rem",
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {isElevated ? "⚠" : isNormal ? "✓" : "📈"}
+                    </Box>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: "#2c3e50",
+                        lineHeight: 1.5,
+                        fontSize: "1rem",
+                        fontWeight: isElevated ? 600 : 500,
+                      }}
+                    >
+                      {finding}
+                    </Typography>
+                  </Stack>
+                </Box>
+              );
+            })}
           </Stack>
         </Box>
       )}
 
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pt: 1 }}>
-        <Typography variant="caption" sx={{ opacity: 0.7, color: "white" }}>
-          Last analyzed: {new Date(analysis.last_analyzed_at).toLocaleString()}
-        </Typography>
-        {analysis.model_used && (
-          <Typography variant="caption" sx={{ opacity: 0.7, color: "white" }}>
-            Model: {analysis.model_used}
-          </Typography>
-        )}
-      </Stack>
-      </Stack>
+      {/* Footer */}
+      <Box
+        sx={{
+          px: 3,
+          pb: 3,
+        }}
+      >
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: "rgba(255, 255, 255, 0.1)",
+            borderRadius: 2,
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+          }}
+        >
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "flex-start", sm: "center" }}
+            spacing={{ xs: 1, sm: 2 }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  bgcolor: "#2ecc71",
+                }}
+              />
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "rgba(255, 255, 255, 0.9)",
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                }}
+              >
+                Last analyzed: {new Date(analysis.last_analyzed_at).toLocaleDateString()} at{" "}
+                {new Date(analysis.last_analyzed_at).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </Typography>
+            </Stack>
+            {analysis.model_used && (
+              <Chip
+                label={`AI Model: ${analysis.model_used}`}
+                size="small"
+                sx={{
+                  bgcolor: "rgba(255, 255, 255, 0.2)",
+                  color: "white",
+                  fontWeight: 600,
+                  fontSize: "0.75rem",
+                  "& .MuiChip-label": {
+                    px: 1.5,
+                  },
+                }}
+              />
+            )}
+          </Stack>
+        </Box>
+      </Box>
     </Box>
   );
 }

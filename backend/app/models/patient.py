@@ -56,7 +56,6 @@ class Patient(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         back_populates="patient",
         cascade="all, delete-orphan",
         passive_deletes=True,
-        order_by="ClinicalEvent.event_time.asc()",
     )
 
     referrals: Mapped[List["Referral"]] = relationship(
@@ -64,7 +63,6 @@ class Patient(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         back_populates="patient",
         cascade="all, delete-orphan",
         passive_deletes=True,
-        order_by="Referral.created_at.asc()",
     )
 
     ai_analysis: Mapped[Optional["AIPatientAnalysis"]] = relationship(

@@ -25,10 +25,11 @@ from app.services.ai_patient_service import AIPatientService
 router = APIRouter(tags=["AI Analysis"])
 
 
-@router.get("/patient/{patient_id}", response_model=AIPatientAnalysisResponse)
+@router.get("/patients/{patient_id}/analysis", response_model=AIPatientAnalysisResponse)
 async def get_patient_ai_analysis(
     patient_id: UUID,
     auto_generate: bool = Query(True, description="Auto-generate if not exists"),
+    force_regenerate: bool = Query(False, description="Force regeneration even if exists"),
     current_user: User = Depends(require_any_authenticated),
     db: Session = Depends(get_db),
 ):
@@ -47,10 +48,10 @@ async def get_patient_ai_analysis(
     stmt = select(AIPatientAnalysis).where(AIPatientAnalysis.patient_id == patient_id)
     analysis = db.execute(stmt).scalar_one_or_none()
     
-    # Auto-generate if requested and doesn't exist
-    if not analysis and auto_generate:
+    # Auto-generate if requested and doesn't exist, or force regenerate
+    if (not analysis and auto_generate) or force_regenerate:
         service = AIPatientService(db, settings)
-        analysis = await service.get_or_generate_analysis(patient_id, force_regenerate=False)
+        analysis = await service.get_or_generate_analysis(patient_id, force_regenerate=force_regenerate)
     
     if not analysis:
         raise HTTPException(
