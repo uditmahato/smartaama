@@ -67,6 +67,14 @@ class Patient(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         order_by="Referral.created_at.asc()",
     )
 
+    ai_analysis: Mapped[Optional["AIPatientAnalysis"]] = relationship(
+        "AIPatientAnalysis",
+        back_populates="patient",
+        uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
     __table_args__ = (
         # Composite search optimizations
         Index("ix_patients_name_age", "last_name", "first_name", "age_in_years"),

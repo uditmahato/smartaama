@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     QDRANT_URL: Optional[str] = Field(default=None)
     WEAVIATE_URL: Optional[str] = Field(default=None)
 
+    # OpenAI API Configuration
+    OPENAI_API_KEY: Optional[str] = Field(default=None, description="OpenAI API key for AI features")
+    OPENAI_MODEL: str = Field(default="gpt-4.1-mini", description="OpenAI model to use for analysis")
+
     @field_validator("ENV", mode="before")
     @classmethod
     def normalize_env(cls, v: str) -> str:

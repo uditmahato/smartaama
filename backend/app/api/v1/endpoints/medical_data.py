@@ -26,6 +26,7 @@ from app.schemas.medical_data import (
     SectionTimeSeriesOut,
     TimeSeriesDataPoint,
 )
+from app.services.ai_update_service import mark_ai_analysis_for_update
 
 router = APIRouter()
 
@@ -100,6 +101,9 @@ def add_section_data(
             },
         )
     )
+    
+    # Mark AI analysis for regeneration
+    mark_ai_analysis_for_update(db, patient_id)
     
     db.commit()
     

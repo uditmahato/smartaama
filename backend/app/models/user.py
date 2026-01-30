@@ -72,7 +72,7 @@ class User(Base):
     )
 
     created_referrals: Mapped[list["Referral"]] = relationship(
-        "Referral", back_populates="created_by", lazy="selectin"
+        "Referral", back_populates="created_by", lazy="noload"
     )
 
     def __repr__(self) -> str:
