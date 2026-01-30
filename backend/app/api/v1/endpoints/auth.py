@@ -31,6 +31,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from app.settings import ID_CARDS_DIR
 
 router = APIRouter()
 
@@ -175,8 +176,6 @@ def bootstrap_admin(
     }
 
 
-UPLOAD_DIR = "uploads/id_cards"
-
 @router.post("/register")
 def register(
     email: str = Form(...),
@@ -193,6 +192,11 @@ def register(
     exists = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
     if exists:
         raise HTTPException(status_code=400, detail="User already exists")
+    
+    model = PHCFacility if facility_type == "phc" else HospitalFacility
+    facility = db.execute(select(model).where(model.id == facility_id)).scalar_one_or_none()
+    if not facility:
+        raise HTTPException(status_code=404, detail="Facility not found")
 
     user = User(
         username=email.strip(),
@@ -204,6 +208,7 @@ def register(
         working_hospital=working_hospital.strip(),
         facility_type=facility_type,
         facility_id=facility_id,
+        facility_name=facility.name,
         role=UserRole.CLINICIAN,
         is_active=False,
         is_approved=False,
@@ -213,15 +218,17 @@ def register(
     db.flush()
 
     if id_card_image:
-        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        os.makedirs(ID_CARDS_DIR, exist_ok=True)
 
-        filename = f"{user.id}_{id_card_image.filename}"
-        file_path = os.path.join(UPLOAD_DIR, filename)
+        safe_filename = id_card_image.filename.replace(" ", "_")
+        filename = f"{user.id}_{safe_filename}"
+        file_path = ID_CARDS_DIR / filename
 
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(id_card_image.file, buffer)
 
-        user.id_card_image_path = file_path
+        # store relative path for frontend to use
+        user.id_card_image_path = f"id_cards/{filename}"
 
     db.commit()
     db.refresh(user)
