@@ -2,16 +2,13 @@ import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import { api } from "../../services/api";
 import {
-  Alert,
   Box,
   Button,
-  Card,
-  IconButton,
-  Menu,
-  MenuItem,
-  Stack,
-  TextField,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   Typography,
+  Stack,
 } from "@mui/material";
 import Navbar, { navLinks } from "../../components/Navbar";
 
@@ -22,37 +19,63 @@ type User = {
   is_active: boolean;
   is_approved: boolean;
   facility_type: string | null;
+  id_card_image_path?: string; // path from backend
 };
 
 export default function Users() {
   const [rows, setRows] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openImage, setOpenImage] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string>("");
 
+  // Load users from backend
   async function load() {
     setLoading(true);
-    const res = await api.get("/admin/users");
-    setRows(res.data);
-    setLoading(false);
+    try {
+      const res = await api.get("/admin/users");
+      setRows(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }
 
+  // Delete user
   async function remove(id: string) {
     if (!confirm("Delete this user?")) return;
     await api.delete(`/admin/users/${id}`);
     load();
   }
 
+  // Open dialog with image
+  const handleOpenImage = (imagePath?: string) => {
+    if (!imagePath) return;
+
+    // Build full URL from env variable
+    const fullUrl = imagePath.startsWith("http")
+      ? imagePath
+      : //@ts-ignore
+        `${import.meta.env.VITE_UPLOADS_BASE_URL}/${encodeURIComponent(imagePath)}`;
+
+    setSelectedImage(fullUrl);
+    setOpenImage(true);
+  };
+
+  const handleCloseImage = () => {
+    setOpenImage(false);
+    setSelectedImage("");
+  };
+
   useEffect(() => {
     load();
   }, []);
 
+  // Define table columns
   const columns: GridColDef[] = [
     { field: "username", headerName: "Username", flex: 1 },
     { field: "role", headerName: "Role", width: 140 },
-    {
-      field: "facility_type",
-      headerName: "Facility",
-      width: 120,
-    },
+    { field: "facility_type", headerName: "Facility", width: 120 },
     {
       field: "is_active",
       headerName: "Active",
@@ -64,6 +87,22 @@ export default function Users() {
       headerName: "Approved",
       width: 120,
       valueFormatter: ({ value }) => (value ? "Yes" : "No"),
+    },
+    {
+      field: "id_card",
+      headerName: "ID Card",
+      width: 120,
+      sortable: false,
+      renderCell: (params) => (
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={() => handleOpenImage(params.row.id_card_image_path)}
+          disabled={!params.row.id_card_image_path} // disable if no image
+        >
+          View
+        </Button>
+      ),
     },
     {
       field: "actions",
@@ -84,30 +123,43 @@ export default function Users() {
   ];
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        bgcolor: "#F6F7FB",
-        py: { xs: 2, md: 3 },
-        px: { xs: 0.5, sm: 1, md: 1.5 },
-        width: "100%",
-        boxSizing: "border-box",
-      }}
-    >
+    <Box sx={{ minHeight: "100vh", bgcolor: "#F6F7FB", py: 3, px: 2 }}>
       <Navbar
         title="Users"
         subtitle="Manage users and their roles"
         links={navLinks}
       />
+
       <div style={{ height: 600, padding: 3 }}>
         <DataGrid
           rows={rows}
           columns={columns}
           loading={loading}
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[10, 25, 50, 100]} // include 100 to avoid MUI warning
           disableRowSelectionOnClick
         />
       </div>
+
+      {/* Dialog to show ID card */}
+      <Dialog
+        open={openImage}
+        onClose={handleCloseImage}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>ID Card</DialogTitle>
+        <DialogContent>
+          {selectedImage ? (
+            <img
+              src={selectedImage}
+              alt="ID Card"
+              style={{ width: "100%", height: "auto" }}
+            />
+          ) : (
+            <Typography>No image available</Typography>
+          )}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }
