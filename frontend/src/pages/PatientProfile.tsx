@@ -27,6 +27,8 @@ import {
 import { Edit as EditIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from "@mui/icons-material";
 import Drawer from "@mui/material/Drawer";
 import { api } from "../services/api";
+import AIPatientSummary from "../components/AIPatientSummary";
+import AIReferralRecommendation from "../components/AIReferralRecommendation";
 
 type PatientOut = {
   id: string;
@@ -496,6 +498,36 @@ function PatientProfile() {
                 </Button>
               </Stack>
             </Stack>
+          </CardContent>
+        </Card>
+
+        {/* AI Summary Section */}
+        <Card
+          sx={{
+            borderRadius: 3,
+            border: "1px solid rgba(15, 23, 42, 0.10)",
+            boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            color: "white",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+            <AIPatientSummary patientId={patientId!} />
+          </CardContent>
+        </Card>
+
+        {/* AI Referral Recommendation Section */}
+        <Card
+          sx={{
+            borderRadius: 3,
+            border: "1px solid rgba(15, 23, 42, 0.10)",
+            boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
+            background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+            color: "white",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+            <AIReferralRecommendation patientId={patientId!} />
           </CardContent>
         </Card>
 
