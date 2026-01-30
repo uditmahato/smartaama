@@ -73,21 +73,18 @@ export default function Users() {
 
   // Define table columns
   const columns: GridColDef[] = [
-    { field: "username", headerName: "Username", flex: 1 },
+    { field: "full_name", headerName: "Username", flex: 1, width: 200 },
+    { field: "email", headerName: "Email", flex: 1, width: 200 },
     { field: "role", headerName: "Role", width: 140 },
     { field: "facility_type", headerName: "Facility", width: 120 },
+    { field: "facility_name", headerName: "Facility Name", width: 120 },
     {
-      field: "is_active",
-      headerName: "Active",
-      width: 120,
-      valueFormatter: ({ value }) => (value ? "Yes" : "No"),
+      field: "working_hospital",
+      headerName: "Currently Working Hospital",
+      flex: 1,
     },
-    {
-      field: "is_approved",
-      headerName: "Approved",
-      width: 120,
-      valueFormatter: ({ value }) => (value ? "Yes" : "No"),
-    },
+    //nmc
+    { field: "nmc_number", headerName: "NMC Number", flex: 1 },
     {
       field: "id_card",
       headerName: "ID Card",

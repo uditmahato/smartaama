@@ -81,13 +81,8 @@ export default function PendingUsers() {
       headerName: "Currently Working Hospital",
       flex: 1,
     },
-    {
-      field: "created_at",
-      headerName: "Registered At",
-      width: 180,
-      valueFormatter: ({ value }) =>
-        value ? new Date(value as string).toLocaleString() : "-",
-    },
+    { field: "nmc_number", headerName: "NMC Number", flex: 1 },
+
     {
       field: "id_card",
       headerName: "ID Card",
