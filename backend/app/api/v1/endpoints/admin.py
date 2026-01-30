@@ -25,8 +25,13 @@ def pending_users(
     if not _is_super_admin(current_user):
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    stmt = select(User).where(User.is_approved == False)
-    return db.execute(stmt).scalars().all()
+    stmt = select(User).where(
+        User.is_approved == False,
+         User.is_active == True
+    )
+    pending = db.execute(stmt).scalars().all()
+    return pending
+
 
 
 @router.patch("/users/{user_id}/approve")
