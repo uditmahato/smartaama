@@ -8,6 +8,7 @@ from app.models.user import User, UserRole
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from app.schemas.user import UserOut
 
 router = APIRouter()
 
@@ -76,7 +77,7 @@ def reject_user(
     return {"detail": "User rejected successfully"}
 
 
-@router.get("/users")
+@router.get("/users", response_model=list[UserOut])
 def list_users(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -89,7 +90,8 @@ def list_users(
         User.is_approved == True
     )
 
-    return db.execute(stmt).scalars().all()
+    users = db.execute(stmt).scalars().all()
+    return users
 
 
 
