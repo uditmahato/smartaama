@@ -674,7 +674,7 @@ Based on WHO maternal health guidelines and Nepal's referral protocols, provide:
         analysis.risk_factors = referral_rec.risk_factors
         analysis.clinical_indicators = referral_rec.clinical_indicators
         
-        analysis.model_used = "mock-model" if not self.openai_enabled else self.settings.OPENAI_MODEL
+        analysis.model_used = "clinical-thresholds" if not self.openai_enabled else self.settings.OPENAI_MODEL
         analysis.tokens_used = 0
         analysis.last_analyzed_at = datetime.utcnow()
         
