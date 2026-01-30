@@ -1,7 +1,21 @@
 // frontend/src/pages/Referral.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Divider, Grid, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Divider,
+  Grid,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { api, userStore } from "../services/api";
 
 type ReferralOut = {
@@ -10,7 +24,13 @@ type ReferralOut = {
   from_facility: string;
   to_facility: string;
   status: "draft" | "submitted" | "received" | "closed" | "cancelled";
-  received_facility_status?: "draft" | "submitted" | "received" | "closed" | "cancelled" | null;
+  received_facility_status?:
+    | "draft"
+    | "submitted"
+    | "received"
+    | "closed"
+    | "cancelled"
+    | null;
   reason: string;
   clinician_decision?: string | null;
   clinician_note?: string | null;
@@ -29,6 +49,7 @@ type UserInfo = {
   full_name?: string | null;
   role: string;
   facility_name?: string | null;
+  facility_id?: string | null;
 };
 
 export default function Referral() {
@@ -49,10 +70,13 @@ export default function Referral() {
   const [isLoading, setIsLoading] = useState(!!referralId);
   const [statusUpdateNote, setStatusUpdateNote] = useState("");
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [selectedReceivedStatus, setSelectedReceivedStatus] = useState<string>("");
+  const [selectedReceivedStatus, setSelectedReceivedStatus] =
+    useState<string>("");
 
   const isFromHospital = useMemo(() => {
-    return facilityOptions.some((f) => f.name === fromFacility && f.kind === "hospital");
+    return facilityOptions.some(
+      (f) => f.name === fromFacility && f.kind === "hospital",
+    );
   }, [fromFacility, facilityOptions]);
 
   const canCreate = useMemo(() => {
@@ -65,29 +89,50 @@ export default function Referral() {
   }, [patientId, fromFacility, toFacility, reason]);
 
   const isReceivingFacility = useMemo(() => {
-    return referral && userFacilityName && referral.to_facility === userFacilityName;
+    return (
+      referral && userFacilityName && referral.to_facility === userFacilityName
+    );
   }, [referral, userFacilityName]);
 
-  const getStatusChip = (status: ReferralOut["status"]) => {
+  const getStatusChip = (
+    status: ReferralOut["status"],
+    ref?: ReferralOut | null,
+  ) => {
+    const userFacility = userFacilityName;
+
+    const isSender = ref && userFacility && ref.from_facility === userFacility;
+
     switch (status) {
       case "submitted":
-        return { color: "warning", label: "Referred from Here" };
+        return {
+          color: "warning",
+          label: isSender
+            ? "Referred from Here"
+            : `Referred from ${ref?.from_facility ?? "Unknown Facility"}`,
+        };
+
       case "received":
-        return { color: "success", label: "Referred to Here" };
+        return {
+          color: "success",
+          label: `Referred to ${ref?.to_facility ?? "Unknown Facility"}`,
+        };
+
       case "closed":
         return { color: "default", label: "Closed Case" };
+
       case "cancelled":
         return { color: "success", label: "Admitted Case" };
+
       default:
-        return { color: "default", label: "Closed Case" };
+        return { color: "default", label: status };
     }
   };
 
   async function loadUserInfo() {
     const cached = userStore.get() as UserInfo | null;
     if (cached) {
-        setUserFacilityName(cached.facility_name ?? null);
-        return;
+      setUserFacilityName(cached.facility_name ?? null);
+      return;
     }
     try {
       const resp = await api.get<UserInfo>("/auth/me");
@@ -102,12 +147,16 @@ export default function Referral() {
     try {
       const [phcResp, hospitalResp] = await Promise.all([
         api.get<FacilityOption[]>("/facilities", { params: { kind: "phc" } }),
-        api.get<FacilityOption[]>("/facilities", { params: { kind: "hospital" } }),
+        api.get<FacilityOption[]>("/facilities", {
+          params: { kind: "hospital" },
+        }),
       ]);
       const combined = [...phcResp.data, ...hospitalResp.data];
       setFacilityOptions(combined);
     } catch (err: any) {
-      setFacilityError(err?.response?.data?.detail ?? "Failed to load facilities");
+      setFacilityError(
+        err?.response?.data?.detail ?? "Failed to load facilities",
+      );
     }
   }
 
@@ -146,7 +195,9 @@ export default function Referral() {
 
   useEffect(() => {
     if (!fromFacility && facilityOptions.length) {
-      const preferred = userFacilityName && facilityOptions.find((f) => f.name === userFacilityName);
+      const preferred =
+        userFacilityName &&
+        facilityOptions.find((f) => f.name === userFacilityName);
       if (preferred) {
         setFromFacility(preferred.name);
       } else {
@@ -178,11 +229,16 @@ export default function Referral() {
     setError(null);
     setIsUpdatingStatus(true);
     try {
-      const resp = await api.post<ReferralOut>(`/referrals/${referral.id}/status`, { 
-        status,
-        // Only include note if user is the receiving facility
-        note: isReceivingFacility ? (statusUpdateNote.trim() || undefined) : undefined
-      });
+      const resp = await api.post<ReferralOut>(
+        `/referrals/${referral.id}/status`,
+        {
+          status,
+          // Only include note if user is the receiving facility
+          note: isReceivingFacility
+            ? statusUpdateNote.trim() || undefined
+            : undefined,
+        },
+      );
       setReferral(resp.data);
       setStatusUpdateNote("");
     } catch (err: any) {
@@ -192,20 +248,28 @@ export default function Referral() {
     }
   }
 
-  async function setReceivedFacilityStatus(status: ReferralOut["received_facility_status"]) {
+  async function setReceivedFacilityStatus(
+    status: ReferralOut["received_facility_status"],
+  ) {
     if (!referral) return;
     setError(null);
     setIsUpdatingStatus(true);
     try {
-      const resp = await api.post<ReferralOut>(`/referrals/${referral.id}/received-status`, { 
-        received_facility_status: status,
-        note: statusUpdateNote.trim() || undefined
-      });
+      const resp = await api.post<ReferralOut>(
+        `/referrals/${referral.id}/received-status`,
+        {
+          received_facility_status: status,
+          note: statusUpdateNote.trim() || undefined,
+        },
+      );
       setReferral(resp.data);
       setStatusUpdateNote("");
       setSelectedReceivedStatus(resp.data.received_facility_status || "");
     } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Failed to update received facility status");
+      setError(
+        err?.response?.data?.detail ??
+          "Failed to update received facility status",
+      );
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -215,18 +279,35 @@ export default function Referral() {
     if (selectedReceivedStatus) {
       setReceivedFacilityStatus(selectedReceivedStatus as any);
     }
-  }
+  };
 
   if (isLoading && referralId) {
     return (
-      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#F6F7FB" }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          bgcolor: "#F6F7FB",
+        }}
+      >
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F6F7FB", py: { xs: 2, md: 3 }, px: { xs: 0.5, sm: 1, md: 1.5 }, width: "100%", boxSizing: "border-box" }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "#F6F7FB",
+        py: { xs: 2, md: 3 },
+        px: { xs: 0.5, sm: 1, md: 1.5 },
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+    >
       <Stack spacing={3}>
         {/* Top Bar */}
         <Card
@@ -252,11 +333,18 @@ export default function Referral() {
               alignItems={{ xs: "flex-start", md: "center" }}
             >
               <Stack spacing={0.5}>
-                <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.2 }}>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 800, letterSpacing: -0.2 }}
+                >
                   Patient Referral
                 </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.9, lineHeight: 1.7 }}>
-                  Create and manage referral requests with clinical details and notes.
+                <Typography
+                  variant="body2"
+                  sx={{ opacity: 0.9, lineHeight: 1.7 }}
+                >
+                  Create and manage referral requests with clinical details and
+                  notes.
                 </Typography>
               </Stack>
 
@@ -298,7 +386,10 @@ export default function Referral() {
           <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
             {!referral ? (
               <Stack spacing={3}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 800, color: "#0F172A" }}
+                >
                   Create New Referral
                 </Typography>
 
@@ -318,7 +409,8 @@ export default function Referral() {
                     >
                       {facilityOptions.map((opt) => (
                         <MenuItem key={opt.id} value={opt.name}>
-                          {opt.name} {opt.kind === "hospital" ? "(Hos)" : "(PHC)"}
+                          {opt.name}{" "}
+                          {opt.kind === "hospital" ? "(Hos)" : "(PHC)"}
                         </MenuItem>
                       ))}
                     </TextField>
@@ -337,7 +429,8 @@ export default function Referral() {
                     >
                       {facilityOptions.map((opt) => (
                         <MenuItem key={opt.id} value={opt.name}>
-                          {opt.name} {opt.kind === "hospital" ? "(Hos)" : "(PHC)"}
+                          {opt.name}{" "}
+                          {opt.kind === "hospital" ? "(Hos)" : "(PHC)"}
                         </MenuItem>
                       ))}
                     </TextField>
@@ -405,16 +498,26 @@ export default function Referral() {
             ) : (
               <Stack spacing={3}>
                 <Stack spacing={2}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 800, color: "#0F172A" }}
+                  >
                     Referral Created
                   </Typography>
 
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="flex-start">
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={2}
+                    alignItems="flex-start"
+                  >
                     <Box flex={1}>
                       <Typography variant="caption" color="text.secondary">
                         Referral ID
                       </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      <Typography
+                        variant="body1"
+                        sx={{ fontWeight: 700, mt: 0.5 }}
+                      >
                         {referral.id}
                       </Typography>
                     </Box>
@@ -424,8 +527,11 @@ export default function Referral() {
                       </Typography>
                       <Box sx={{ mt: 0.75 }}>
                         <Chip
-                          label={getStatusChip(referral.status).label}
-                          color={getStatusChip(referral.status).color as any}
+                          label={getStatusChip(referral.status, referral).label}
+                          color={
+                            getStatusChip(referral.status, referral)
+                              .color as any
+                          }
                           variant="outlined"
                         />
                       </Box>
@@ -436,8 +542,19 @@ export default function Referral() {
                       </Typography>
                       <Box sx={{ mt: 0.75 }}>
                         <Chip
-                          label={referral.received_facility_status ? getStatusChip(referral.received_facility_status).label : "Pending"}
-                          color={referral.received_facility_status ? getStatusChip(referral.received_facility_status).color as any : "default"}
+                          label={
+                            referral.received_facility_status
+                              ? getStatusChip(referral.received_facility_status)
+                                  .label
+                              : "Pending"
+                          }
+                          color={
+                            referral.received_facility_status
+                              ? (getStatusChip(
+                                  referral.received_facility_status,
+                                ).color as any)
+                              : "default"
+                          }
                           variant="outlined"
                         />
                       </Box>
@@ -448,7 +565,10 @@ export default function Referral() {
                 <Divider sx={{ my: 1 }} />
 
                 <Stack spacing={2}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#0F172A" }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 700, color: "#0F172A" }}
+                  >
                     Referral Details
                   </Typography>
 
@@ -457,7 +577,10 @@ export default function Referral() {
                       <Typography variant="caption" color="text.secondary">
                         From Facility
                       </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 600, mt: 0.5 }}
+                      >
                         {referral.from_facility}
                       </Typography>
                     </Grid>
@@ -465,7 +588,10 @@ export default function Referral() {
                       <Typography variant="caption" color="text.secondary">
                         To Facility
                       </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 600, mt: 0.5 }}
+                      >
                         {referral.to_facility}
                       </Typography>
                     </Grid>
@@ -493,8 +619,13 @@ export default function Referral() {
                 <Divider sx={{ my: 1 }} />
 
                 <Stack spacing={2}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#0F172A" }}>
-                    {isReceivingFacility ? "Update Your Status (Received Place)" : "Update Status (Referring)"}
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 700, color: "#0F172A" }}
+                  >
+                    {isReceivingFacility
+                      ? "Update Your Status (Received Place)"
+                      : "Update Status (Referring)"}
                   </Typography>
 
                   {isReceivingFacility ? (
@@ -505,7 +636,9 @@ export default function Referral() {
                           select
                           label="Your facility status"
                           value={selectedReceivedStatus}
-                          onChange={(e) => setSelectedReceivedStatus(e.target.value)}
+                          onChange={(e) =>
+                            setSelectedReceivedStatus(e.target.value)
+                          }
                           fullWidth
                           size="small"
                           disabled={isUpdatingStatus}
@@ -513,7 +646,9 @@ export default function Referral() {
                         >
                           <MenuItem value="received">Admitted Here</MenuItem>
                           <MenuItem value="closed">Closed Case</MenuItem>
-                          <MenuItem value="cancelled">Referred Elsewhere</MenuItem>
+                          <MenuItem value="cancelled">
+                            Referred Elsewhere
+                          </MenuItem>
                         </TextField>
                       </Grid>
                       <Grid item xs={12} md={6}>
@@ -521,7 +656,12 @@ export default function Referral() {
                           variant="contained"
                           onClick={handleSaveReceivedStatus}
                           fullWidth
-                          disabled={isUpdatingStatus || !selectedReceivedStatus || selectedReceivedStatus === (referral.received_facility_status || "")}
+                          disabled={
+                            isUpdatingStatus ||
+                            !selectedReceivedStatus ||
+                            selectedReceivedStatus ===
+                              (referral.received_facility_status || "")
+                          }
                           sx={{
                             textTransform: "none",
                             fontWeight: 700,
@@ -559,10 +699,18 @@ export default function Referral() {
                           onChange={(e) => setStatus(e.target.value as any)}
                           fullWidth
                           size="small"
-                          disabled={referral.status === "submitted" || isUpdatingStatus}
-                          helperText={referral.status === "submitted" ? "Locked until received" : ""}
+                          disabled={
+                            referral.status === "submitted" || isUpdatingStatus
+                          }
+                          helperText={
+                            referral.status === "submitted"
+                              ? "Locked until received"
+                              : ""
+                          }
                         >
-                          <MenuItem value="submitted">Referred from Here</MenuItem>
+                          <MenuItem value="submitted">
+                            Referred from Here
+                          </MenuItem>
                           <MenuItem value="received">Referred to Here</MenuItem>
                           <MenuItem value="closed">Closed Case</MenuItem>
                           <MenuItem value="cancelled">Cancelled</MenuItem>
@@ -574,14 +722,21 @@ export default function Referral() {
                             p: 1.5,
                             border: "1px solid #e0e0e0",
                             borderRadius: 1,
-                            bgcolor: "#f5f5f5"
+                            bgcolor: "#f5f5f5",
                           }}
                         >
                           <Typography variant="caption" color="text.secondary">
                             Received Place Status
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>
-                            {referral.received_facility_status ? getStatusChip(referral.received_facility_status as any).label : "Pending acknowledgment"}
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 600, mt: 0.5 }}
+                          >
+                            {referral.received_facility_status
+                              ? getStatusChip(
+                                  referral.received_facility_status as any,
+                                ).label
+                              : "Pending acknowledgment"}
                           </Typography>
                         </Box>
                       </Grid>
@@ -591,44 +746,100 @@ export default function Referral() {
                   {referral.clinician_note && (
                     <>
                       <Divider sx={{ my: 2 }} />
-                      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#0F172A", mb: 2 }}>
-                        {isReceivingFacility ? "Updates Submitted" : "Facility Updates"}
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ fontWeight: 700, color: "#0F172A", mb: 2 }}
+                      >
+                        {isReceivingFacility
+                          ? "Updates Submitted"
+                          : "Facility Updates"}
                       </Typography>
                       <Box sx={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                        <table
+                          style={{ width: "100%", borderCollapse: "collapse" }}
+                        >
                           <thead>
-                            <tr style={{ backgroundColor: "#f3f4f6", borderBottom: "2px solid #e5e7eb" }}>
-                              <th style={{ padding: "12px", textAlign: "left", fontWeight: 600, color: "#374151" }}>Date & Time</th>
-                              <th style={{ padding: "12px", textAlign: "left", fontWeight: 600, color: "#374151" }}>Status</th>
-                              <th style={{ padding: "12px", textAlign: "left", fontWeight: 600, color: "#374151" }}>Notes</th>
+                            <tr
+                              style={{
+                                backgroundColor: "#f3f4f6",
+                                borderBottom: "2px solid #e5e7eb",
+                              }}
+                            >
+                              <th
+                                style={{
+                                  padding: "12px",
+                                  textAlign: "left",
+                                  fontWeight: 600,
+                                  color: "#374151",
+                                }}
+                              >
+                                Date & Time
+                              </th>
+                              <th
+                                style={{
+                                  padding: "12px",
+                                  textAlign: "left",
+                                  fontWeight: 600,
+                                  color: "#374151",
+                                }}
+                              >
+                                Status
+                              </th>
+                              <th
+                                style={{
+                                  padding: "12px",
+                                  textAlign: "left",
+                                  fontWeight: 600,
+                                  color: "#374151",
+                                }}
+                              >
+                                Notes
+                              </th>
                             </tr>
                           </thead>
                           <tbody>
                             {(() => {
-                              const lines = referral.clinician_note.split('\n');
+                              const lines = referral.clinician_note.split("\n");
                               const updates = [];
-                              
+
                               for (let i = 0; i < lines.length; i++) {
                                 const line = lines[i].trim();
                                 // Check if this is a status update header line
-                                if (line.includes('[') && line.includes('Received facility status:')) {
-                                  const timestampMatch = line.match(/\[(.*?)\]/);
-                                  const statusMatch = line.match(/status: (\w+)/i);
-                                  const timestamp = timestampMatch ? timestampMatch[1] : '';
-                                  let statusValue = statusMatch ? statusMatch[1] : '';
-                                  
+                                if (
+                                  line.includes("[") &&
+                                  line.includes("Received facility status:")
+                                ) {
+                                  const timestampMatch =
+                                    line.match(/\[(.*?)\]/);
+                                  const statusMatch =
+                                    line.match(/status: (\w+)/i);
+                                  const timestamp = timestampMatch
+                                    ? timestampMatch[1]
+                                    : "";
+                                  let statusValue = statusMatch
+                                    ? statusMatch[1]
+                                    : "";
+
                                   // Map status values to display labels
                                   let displayStatus = statusValue;
-                                  if (statusValue === 'closed') displayStatus = 'Closed Case';
-                                  else if (statusValue === 'received') displayStatus = 'Admitted Here';
-                                  else if (statusValue === 'referred') displayStatus = 'Referred Elsewhere';
-                                  
+                                  if (statusValue === "closed")
+                                    displayStatus = "Closed Case";
+                                  else if (statusValue === "received")
+                                    displayStatus = "Admitted Here";
+                                  else if (statusValue === "referred")
+                                    displayStatus = "Referred Elsewhere";
+
                                   // Get the note from the next non-empty line
                                   let noteText = "-";
                                   for (let j = i + 1; j < lines.length; j++) {
                                     const nextLine = lines[j].trim();
                                     // Stop if we hit another status line
-                                    if (nextLine.includes('[') && nextLine.includes('Received facility status:')) {
+                                    if (
+                                      nextLine.includes("[") &&
+                                      nextLine.includes(
+                                        "Received facility status:",
+                                      )
+                                    ) {
                                       break;
                                     }
                                     if (nextLine) {
@@ -637,27 +848,49 @@ export default function Referral() {
                                       break;
                                     }
                                   }
-                                  
+
                                   updates.push({
                                     timestamp,
                                     status: displayStatus,
-                                    note: noteText
+                                    note: noteText,
                                   });
                                 }
                               }
-                              
+
                               return updates.map((update, idx) => (
-                                <tr key={idx} style={{ borderBottom: "1px solid #e5e7eb" }}>
-                                  <td style={{ padding: "12px", color: "#6b7280" }}>{update.timestamp}</td>
+                                <tr
+                                  key={idx}
+                                  style={{ borderBottom: "1px solid #e5e7eb" }}
+                                >
+                                  <td
+                                    style={{
+                                      padding: "12px",
+                                      color: "#6b7280",
+                                    }}
+                                  >
+                                    {update.timestamp}
+                                  </td>
                                   <td style={{ padding: "12px" }}>
                                     <Chip
-                                      label={update.status}
-                                      size="small"
-                                      color="primary"
+                                      label={
+                                        getStatusChip(referral.status, referral)
+                                          .label
+                                      }
+                                      color={
+                                        getStatusChip(referral.status, referral)
+                                          .color as any
+                                      }
                                       variant="outlined"
                                     />
                                   </td>
-                                  <td style={{ padding: "12px", color: "#374151" }}>{update.note}</td>
+                                  <td
+                                    style={{
+                                      padding: "12px",
+                                      color: "#374151",
+                                    }}
+                                  >
+                                    {update.note}
+                                  </td>
                                 </tr>
                               ));
                             })()}
@@ -667,11 +900,23 @@ export default function Referral() {
                     </>
                   )}
 
-                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "block", mt: 2 }}
+                  >
                     {isReceivingFacility ? (
-                      <>Note: Only the receiving facility can add notes when updating status.</>
+                      <>
+                        Note: Only the receiving facility can add notes when
+                        updating status.
+                      </>
                     ) : (
-                      <>Note: All referrals start as "Referred from Here" and are locked until the receiving facility marks them as "Referred to Here". Only the receiving facility can add notes.</>
+                      <>
+                        Note: All referrals start as "Referred from Here" and
+                        are locked until the receiving facility marks them as
+                        "Referred to Here". Only the receiving facility can add
+                        notes.
+                      </>
                     )}
                   </Typography>
                 </Stack>
