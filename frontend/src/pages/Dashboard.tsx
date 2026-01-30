@@ -70,6 +70,7 @@ export default function Dashboard() {
   const [toFacility, setToFacility] = useState("");
   const [facilityOptions, setFacilityOptions] = useState<FacilityOption[]>([]);
   const [facilityError, setFacilityError] = useState<string | null>(null);
+  const [userFacilityName, setUserFacilityName] = useState<string | null>(null);
 
   const [referrals, setReferrals] = useState<ReferralOut[]>([]);
 
@@ -147,6 +148,8 @@ export default function Dashboard() {
     if (cached) {
       setUserName(cached.full_name || cached.username);
       setFacilityLabel(formatFacility(cached));
+      setUserFacilityName(cached.facility_name ?? null);
+
       return;
     }
     try {
@@ -154,27 +157,45 @@ export default function Dashboard() {
       userStore.set(resp.data);
       setUserName(resp.data.full_name || resp.data.username);
       setFacilityLabel(formatFacility(resp.data));
+      setUserFacilityName(resp.data.facility_name ?? null);
     } catch (err) {
       console.error("Failed to load user info", err);
     }
   }
 
-  const getStatusChip = (status: ReferralOut["status"]) => {
-    // Keep colors conservative and semantically consistent
+  const getStatusChip = (
+    status: ReferralOut["status"],
+    ref?: ReferralOut | null,
+  ) => {
+    const userFacility = userFacilityName;
+
+    const isSender = ref && userFacility && ref.from_facility === userFacility;
+
     switch (status) {
       case "submitted":
-        return { color: "warning", label: "Referred from Here" };
+        return {
+          color: "warning",
+          label: isSender
+            ? "Referred from Here"
+            : `Referred from ${ref?.from_facility ?? "Unknown Facility"}`,
+        };
+
       case "received":
-        return { color: "success", label: "Referred to Here" };
+        return {
+          color: "success",
+          label: `Referred to ${ref?.to_facility ?? "Unknown Facility"}`,
+        };
+
       case "closed":
         return { color: "default", label: "Closed Case" };
+
       case "cancelled":
         return { color: "success", label: "Admitted Case" };
+
       default:
-        return { color: "default", label: "Closed Case" };
+        return { color: "default", label: status };
     }
   };
-
   const resetFilters = () => {
     setStatusFilter("");
     setFromFacility("");
@@ -444,11 +465,14 @@ export default function Dashboard() {
                           </Stack>
 
                           <Chip
-                            label={chip.label}
-                            size="small"
-                            color={chip.color as any}
+                            label={
+                              getStatusChip(referral.status, referral).label
+                            }
+                            color={
+                              getStatusChip(referral.status, referral)
+                                .color as any
+                            }
                             variant="outlined"
-                            sx={{ fontWeight: 700 }}
                           />
                         </Stack>
                       </CardContent>
