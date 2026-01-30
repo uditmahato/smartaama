@@ -8,7 +8,6 @@ from app.models.user import User, UserRole
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from app.schemas.user import UserOut
 
 router = APIRouter()
 
@@ -25,13 +24,8 @@ def pending_users(
     if not _is_super_admin(current_user):
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    stmt = select(User).where(
-        User.is_approved == False,
-         User.is_active == True
-    )
-    pending = db.execute(stmt).scalars().all()
-    return pending
-
+    stmt = select(User).where(User.is_approved == False)
+    return db.execute(stmt).scalars().all()
 
 
 @router.patch("/users/{user_id}/approve")
@@ -82,7 +76,7 @@ def reject_user(
     return {"detail": "User rejected successfully"}
 
 
-@router.get("/users", response_model=list[UserOut])
+@router.get("/users")
 def list_users(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -95,8 +89,7 @@ def list_users(
         User.is_approved == True
     )
 
-    users = db.execute(stmt).scalars().all()
-    return users
+    return db.execute(stmt).scalars().all()
 
 
 

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from uuid import UUID
 from datetime import datetime
-from typing import Optional
+
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -20,19 +20,9 @@ class UserCreate(UserBase):
 class UserOut(UserBase):
     id: UUID
     role: str
-    is_active: Optional[bool]
-    is_approved: Optional[bool]
-    full_name: Optional[str]
-    email: Optional[EmailStr]
     is_active: bool
     is_approved: bool
     created_at: datetime
-    facility_name: Optional[str]
-    facility_type: Optional[str]
-    facility_id: Optional[UUID]
-    working_hospital: Optional[str]
-    id_card_image_path: Optional[str]
-
 
     class Config:
         orm_mode = True
