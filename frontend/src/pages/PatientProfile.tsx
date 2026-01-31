@@ -24,7 +24,11 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Edit as EditIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from "@mui/icons-material";
+import {
+  Edit as EditIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+} from "@mui/icons-material";
 import Drawer from "@mui/material/Drawer";
 import { api } from "../services/api";
 import AIPatientSummary from "../components/AIPatientSummary";
@@ -86,7 +90,10 @@ function formatValue(v: any): string {
 
   if (t === "boolean") return Boolean(val) ? "Yes" : "No";
   if (t === "enum") return v.display ?? humanizeLabel(String(val));
-  if (t === "code") return v.display ? `${v.display}${v.code ? ` (${v.code})` : ""}` : String(val ?? "-");
+  if (t === "code")
+    return v.display
+      ? `${v.display}${v.code ? ` (${v.code})` : ""}`
+      : String(val ?? "-");
   if (t === "integer" || t === "number") return `${val ?? "-"}${unit}`;
 
   // Handle objects more gracefully
@@ -95,13 +102,17 @@ function formatValue(v: any): string {
     if (Array.isArray(val)) {
       if (val.length === 0) return "-";
       // Join array elements with commas
-      return val.map(item => {
-        if (typeof item === "object" && item !== null) {
-          // For objects in array, try to extract meaningful value
-          return item.display || item.name || item.label || JSON.stringify(item);
-        }
-        return String(item);
-      }).join(", ");
+      return val
+        .map((item) => {
+          if (typeof item === "object" && item !== null) {
+            // For objects in array, try to extract meaningful value
+            return (
+              item.display || item.name || item.label || JSON.stringify(item)
+            );
+          }
+          return String(item);
+        })
+        .join(", ");
     }
     // For regular objects, try to extract meaningful properties
     if (val.display) return val.display;
@@ -139,19 +150,21 @@ function PatientProfile() {
   const [schemas, setSchemas] = useState<Record<string, SectionSchema>>({});
   const [notesDrawer, setNotesDrawer] = useState<boolean>(false);
   const [referralsDrawer, setReferralsDrawer] = useState<boolean>(false);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({});
 
   // UI controls
   const [sectionFilter, setSectionFilter] = useState<string>("");
   const [factorFilter, setFactorFilter] = useState<string>("");
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   const toggleAllSections = (expand: boolean) => {
     const newState: Record<string, boolean> = {};
-    summaryBySection.forEach(sec => {
+    summaryBySection.forEach((sec) => {
       newState[sec.section] = expand;
     });
     setExpandedSections(newState);
@@ -166,7 +179,7 @@ function PatientProfile() {
       const userResp = await api.get<any>("/auth/me");
       const userFacilityName = userResp.data.facility_name;
       setUserFacility(userFacilityName);
-      
+
       const p = await api.get<PatientOut>(`/patients/${patientId}`);
       setPatient(p.data);
 
@@ -180,17 +193,25 @@ function PatientProfile() {
         params: { patient_id: patientId, limit: 100 },
       });
       setReferrals(r.data);
-      
+
       // Determine if user can edit: only if user is from the referring facility
       // Check if there's any referral where this facility is the receiver (to_facility)
-      const isReceivingFacility = r.data.some((ref: any) => ref.to_facility === userFacilityName);
-      const isReferringFacility = r.data.some((ref: any) => ref.from_facility === userFacilityName);
-      
+      const isReceivingFacility = r.data.some(
+        (ref: any) => ref.to_facility === userFacilityName,
+      );
+      const isReferringFacility = r.data.some(
+        (ref: any) => ref.from_facility === userFacilityName,
+      );
+
       // Can edit only if they are the referring facility, or if no referrals exist
-      setCanEdit(!isReceivingFacility || isReferringFacility || r.data.length === 0);
+      setCanEdit(
+        !isReceivingFacility || isReferringFacility || r.data.length === 0,
+      );
 
       // Load schemas for sections
-      const sectionsResponse = await api.get("/schema/sections?updates_only=true");
+      const sectionsResponse = await api.get(
+        "/schema/sections?updates_only=true",
+      );
       const schemasMap: Record<string, SectionSchema> = {};
       for (const section of sectionsResponse.data) {
         schemasMap[section.section_key] = section;
@@ -234,7 +255,9 @@ function PatientProfile() {
       const ta = new Date(a.event_time).getTime();
       const tb = new Date(b.event_time).getTime();
       if (tb !== ta) return tb - ta; // newest first
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return (
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
     });
   }, [events]);
 
@@ -245,7 +268,9 @@ function PatientProfile() {
       const ta = new Date(a.event_time).getTime();
       const tb = new Date(b.event_time).getTime();
       if (ta !== tb) return ta - tb;
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      return (
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
     });
 
     // section -> factor -> latest event
@@ -256,17 +281,28 @@ function PatientProfile() {
     }
 
     // convert to arrays for rendering, include all schema fields
-    const out: Array<{ section: string; items: Array<{ factor: string; ev: ClinicalEventOut | null; fieldLabel: string }> }> = [];
-    
+    const out: Array<{
+      section: string;
+      items: Array<{
+        factor: string;
+        ev: ClinicalEventOut | null;
+        fieldLabel: string;
+      }>;
+    }> = [];
+
     // Get unique sections from both schemas and events
     const allSections = new Set<string>();
-    Object.keys(schemas).forEach(s => allSections.add(s));
+    Object.keys(schemas).forEach((s) => allSections.add(s));
     eventMap.forEach((_, section) => allSections.add(section));
 
     for (const section of Array.from(allSections).sort()) {
       const schema = schemas[section];
       const factorMap = eventMap.get(section) || new Map();
-      const items: Array<{ factor: string; ev: ClinicalEventOut | null; fieldLabel: string }> = [];
+      const items: Array<{
+        factor: string;
+        ev: ClinicalEventOut | null;
+        fieldLabel: string;
+      }> = [];
 
       // If schema exists, include all fields
       if (schema) {
@@ -274,7 +310,7 @@ function PatientProfile() {
           items.push({
             factor: field.name,
             ev: factorMap.get(field.name) || null,
-            fieldLabel: field.label
+            fieldLabel: field.label,
           });
         }
       } else {
@@ -285,7 +321,10 @@ function PatientProfile() {
       }
 
       if (items.length > 0) {
-        out.push({ section, items: items.sort((a, b) => a.fieldLabel.localeCompare(b.fieldLabel)) });
+        out.push({
+          section,
+          items: items.sort((a, b) => a.fieldLabel.localeCompare(b.fieldLabel)),
+        });
       }
     }
 
@@ -305,11 +344,23 @@ function PatientProfile() {
   }, [sortedEvents]);
 
   const referralList = useMemo(() => {
-    return referrals.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return referrals.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
   }, [referrals]);
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F6F7FB", py: { xs: 2, md: 3 }, px: { xs: 0.5, sm: 1, md: 1.5 }, width: "100%", boxSizing: "border-box" }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "#F6F7FB",
+        py: { xs: 2, md: 3 },
+        px: { xs: 0.5, sm: 1, md: 1.5 },
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+    >
       <Stack spacing={3}>
         {/* Top Bar */}
         {patient && (
@@ -336,11 +387,21 @@ function PatientProfile() {
                 alignItems={{ xs: "flex-start", md: "center" }}
               >
                 <Stack spacing={0.5}>
-                  <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.2 }}>
-                    {patient.first_name} {patient.middle_name ?? ""} {patient.last_name}
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 800, letterSpacing: -0.2 }}
+                  >
+                    {patient.first_name} {patient.middle_name ?? ""}{" "}
+                    {patient.last_name}
                   </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.9, lineHeight: 1.7 }}>
-                    MRN: {patient.facility_mrn || patient.patient_id || "Not assigned"}
+                  <Typography
+                    variant="body2"
+                    sx={{ opacity: 0.9, lineHeight: 1.7 }}
+                  >
+                    MRN:{" "}
+                    {patient.facility_mrn ||
+                      patient.patient_id ||
+                      "Not assigned"}
                   </Typography>
                 </Stack>
 
@@ -359,7 +420,7 @@ function PatientProfile() {
                         px: 2.25,
                       }}
                     >
-                      Update Record
+                      Update Medical Record
                     </Button>
                   )}
                   <Button
@@ -401,12 +462,14 @@ function PatientProfile() {
                 <Alert severity="error">{error}</Alert>
               </CardContent>
             )}
-            
+
             {!canEdit && patient && (
               <CardContent sx={{ p: { xs: 2.5, md: 3.5 }, bgcolor: "white" }}>
                 <Alert severity="info" sx={{ borderRadius: 2 }}>
-                  <strong>Read-Only Access:</strong> You are viewing this patient's record as a receiving facility. 
-                  You can view all information and update referral status, but cannot edit patient vitals or medical records.
+                  <strong>Read-Only Access:</strong> You are viewing this
+                  patient's record as a receiving facility. You can view all
+                  information and update referral status, but cannot edit
+                  patient vitals or medical records.
                 </Alert>
               </CardContent>
             )}
@@ -426,8 +489,15 @@ function PatientProfile() {
           >
             <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
               <Stack spacing={2}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 800, color: "#0F172A" }}
+                  >
                     Personal Information
                   </Typography>
                   {canEdit && (
@@ -445,53 +515,94 @@ function PatientProfile() {
 
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="body2" color="text.secondary">Full Name</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Full Name
+                    </Typography>
                     <Typography variant="body1">
-                      {patient.first_name} {patient.middle_name ?? ""} {patient.last_name}
+                      {patient.first_name} {patient.middle_name ?? ""}{" "}
+                      {patient.last_name}
                     </Typography>
                   </Grid>
                   <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="body2" color="text.secondary">Patient ID / Facility MRN</Typography>
-                    <Typography variant="body1">{patient.facility_mrn || patient.patient_id || "Not assigned"}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Patient ID / Facility MRN
+                    </Typography>
+                    <Typography variant="body1">
+                      {patient.facility_mrn ||
+                        patient.patient_id ||
+                        "Not assigned"}
+                    </Typography>
                   </Grid>
                   <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="body2" color="text.secondary">Age</Typography>
-                    <Typography variant="body1">{patient.age_in_years ? `${patient.age_in_years} years` : "Not recorded"}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Age
+                    </Typography>
+                    <Typography variant="body1">
+                      {patient.age_in_years
+                        ? `${patient.age_in_years} years`
+                        : "Not recorded"}
+                    </Typography>
                   </Grid>
                   <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="body2" color="text.secondary">Sex</Typography>
-                    <Typography variant="body1">{patient.sex || "Not recorded"}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Sex
+                    </Typography>
+                    <Typography variant="body1">
+                      {patient.sex || "Not recorded"}
+                    </Typography>
                   </Grid>
                   <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="body2" color="text.secondary">Phone Number</Typography>
-                    <Typography variant="body1">{patient.phone_number || "Not provided"}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Phone Number
+                    </Typography>
+                    <Typography variant="body1">
+                      {patient.phone_number || "Not provided"}
+                    </Typography>
                   </Grid>
                   <Grid item xs={12} sm={6} md={4}>
-                    <Typography variant="body2" color="text.secondary">District</Typography>
-                    <Typography variant="body1">{patient.district || "Not recorded"}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      District
+                    </Typography>
+                    <Typography variant="body1">
+                      {patient.district || "Not recorded"}
+                    </Typography>
                   </Grid>
                   {patient.municipality && (
                     <Grid item xs={12} sm={6} md={4}>
-                      <Typography variant="body2" color="text.secondary">Metropolitan City / Sub Metropolitan City / Municipality</Typography>
-                      <Typography variant="body1">{patient.municipality}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Metropolitan City / Sub Metropolitan City / Municipality
+                      </Typography>
+                      <Typography variant="body1">
+                        {patient.municipality}
+                      </Typography>
                     </Grid>
                   )}
                   {patient.ward && (
                     <Grid item xs={12} sm={6} md={4}>
-                      <Typography variant="body2" color="text.secondary">Ward</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Ward
+                      </Typography>
                       <Typography variant="body1">{patient.ward}</Typography>
                     </Grid>
                   )}
                   {patient.address_line && (
                     <Grid item xs={12} sm={6} md={4}>
-                      <Typography variant="body2" color="text.secondary">Tole Name</Typography>
-                      <Typography variant="body1">{patient.address_line}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Tole Name
+                      </Typography>
+                      <Typography variant="body1">
+                        {patient.address_line}
+                      </Typography>
                     </Grid>
                   )}
                   {patient.national_id && (
                     <Grid item xs={12} sm={6} md={4}>
-                      <Typography variant="body2" color="text.secondary">National ID</Typography>
-                      <Typography variant="body1">{patient.national_id}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        National ID
+                      </Typography>
+                      <Typography variant="body1">
+                        {patient.national_id}
+                      </Typography>
                     </Grid>
                   )}
                 </Grid>
@@ -509,14 +620,20 @@ function PatientProfile() {
         >
           <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
             <Stack spacing={2}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 800, color: "#0F172A" }}
+              >
                 Notes & Referrals
               </Typography>
               <Stack direction="row" spacing={2}>
                 <Button variant="outlined" onClick={() => setNotesDrawer(true)}>
                   View Notes ({events.filter((e) => e.note).length})
                 </Button>
-                <Button variant="outlined" onClick={() => setReferralsDrawer(true)}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setReferralsDrawer(true)}
+                >
                   View Referral History ({referrals.length})
                 </Button>
               </Stack>
@@ -563,20 +680,27 @@ function PatientProfile() {
         >
           <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
             <Stack spacing={2}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 800, color: "#0F172A" }}
+                >
                   Clinical Summary
                 </Typography>
                 <Stack direction="row" spacing={1}>
-                  <Button 
-                    variant="outlined" 
+                  <Button
+                    variant="outlined"
                     size="small"
                     onClick={() => toggleAllSections(true)}
                   >
                     Show All
                   </Button>
-                  <Button 
-                    variant="outlined" 
+                  <Button
+                    variant="outlined"
                     size="small"
                     onClick={() => toggleAllSections(false)}
                   >
@@ -594,17 +718,31 @@ function PatientProfile() {
                   {summaryBySection.map((sec) => {
                     const isExpanded = expandedSections[sec.section] === true; // default collapsed
                     return (
-                      <Card 
-                        key={sec.section} 
+                      <Card
+                        key={sec.section}
                         sx={{
                           border: "1px solid rgba(15, 23, 42, 0.08)",
                           borderRadius: 2,
                         }}
                       >
                         <CardContent>
-                          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: isExpanded ? 2 : 0 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 700 }}>{humanizeLabel(sec.section)}</Typography>
-                            <Stack direction="row" spacing={1} alignItems="center">
+                          <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            sx={{ mb: isExpanded ? 2 : 0 }}
+                          >
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 700 }}
+                            >
+                              {humanizeLabel(sec.section)}
+                            </Typography>
+                            <Stack
+                              direction="row"
+                              spacing={1}
+                              alignItems="center"
+                            >
                               <Chip
                                 label={`${sec.items.length} factors`}
                                 size="small"
@@ -616,45 +754,91 @@ function PatientProfile() {
                                   <IconButton
                                     size="small"
                                     color="primary"
-                                    onClick={() => navigate(`/patients/${patientId}/update?section=${sec.section}`)}
+                                    onClick={() =>
+                                      navigate(
+                                        `/patients/${patientId}/update?section=${sec.section}`,
+                                      )
+                                    }
                                   >
                                     <EditIcon fontSize="small" />
                                   </IconButton>
                                 </Tooltip>
                               )}
-                              <Tooltip title={isExpanded ? "Collapse" : "Expand"} arrow>
+                              <Tooltip
+                                title={isExpanded ? "Collapse" : "Expand"}
+                                arrow
+                              >
                                 <IconButton
                                   size="small"
                                   onClick={() => toggleSection(sec.section)}
                                 >
-                                  {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                  {isExpanded ? (
+                                    <ExpandLessIcon />
+                                  ) : (
+                                    <ExpandMoreIcon />
+                                  )}
                                 </IconButton>
                               </Tooltip>
                             </Stack>
                           </Stack>
 
-                          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                          <Collapse
+                            in={isExpanded}
+                            timeout="auto"
+                            unmountOnExit
+                          >
                             <Grid container spacing={1}>
-                              {sec.items.slice(0, 12).map(({ factor, ev, fieldLabel }) => (
-                                <Grid item xs={12} sm={6} md={4} key={`${sec.section}:${factor}`}>
-                                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                                    {fieldLabel}
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ mb: 0.5, color: ev ? "text.primary" : "text.disabled" }}>
-                                    {ev ? formatValue(ev.value) : "Not recorded"}
-                                  </Typography>
-                                  {ev && (
-                                    <Typography variant="caption" color="text.secondary">
-                                      {new Date(ev.event_time).toLocaleString()}
+                              {sec.items
+                                .slice(0, 12)
+                                .map(({ factor, ev, fieldLabel }) => (
+                                  <Grid
+                                    item
+                                    xs={12}
+                                    sm={6}
+                                    md={4}
+                                    key={`${sec.section}:${factor}`}
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ fontWeight: 600, mb: 0.5 }}
+                                    >
+                                      {fieldLabel}
                                     </Typography>
-                                  )}
-                                </Grid>
-                              ))}
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        mb: 0.5,
+                                        color: ev
+                                          ? "text.primary"
+                                          : "text.disabled",
+                                      }}
+                                    >
+                                      {ev
+                                        ? formatValue(ev.value)
+                                        : "Not recorded"}
+                                    </Typography>
+                                    {ev && (
+                                      <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                      >
+                                        {new Date(
+                                          ev.event_time,
+                                        ).toLocaleString()}
+                                      </Typography>
+                                    )}
+                                  </Grid>
+                                ))}
                             </Grid>
 
                             {sec.items.length > 12 && (
-                              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
-                                Showing first 12 factors. Use timeline filters to drill down.
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: "block", mt: 1 }}
+                              >
+                                Showing first 12 factors. Use timeline filters
+                                to drill down.
                               </Typography>
                             )}
                           </Collapse>
@@ -677,11 +861,18 @@ function PatientProfile() {
         >
           <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
             <Stack spacing={2}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#0F172A" }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 800, color: "#0F172A" }}
+              >
                 Timeline ({filteredTimeline.length})
               </Typography>
 
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "flex-start", sm: "center" }}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2}
+                alignItems={{ xs: "flex-start", sm: "center" }}
+              >
                 <TextField
                   select
                   label="Section"
@@ -747,7 +938,9 @@ function PatientProfile() {
                       <TableRow key={ev.id} hover>
                         <TableCell>{humanizeLabel(ev.section)}</TableCell>
                         <TableCell>{humanizeLabel(ev.factor)}</TableCell>
-                        <TableCell>{new Date(ev.event_time).toLocaleString()}</TableCell>
+                        <TableCell>
+                          {new Date(ev.event_time).toLocaleString()}
+                        </TableCell>
                         <TableCell>{formatValue(ev.value)}</TableCell>
                       </TableRow>
                     ))}
@@ -758,9 +951,18 @@ function PatientProfile() {
           </CardContent>
         </Card>
 
-        <Drawer anchor="right" open={notesDrawer} onClose={() => setNotesDrawer(false)} sx={{ minWidth: 360 }}>
+        <Drawer
+          anchor="right"
+          open={notesDrawer}
+          onClose={() => setNotesDrawer(false)}
+          sx={{ minWidth: 360 }}
+        >
           <Stack spacing={2} sx={{ p: 2, width: { xs: 320, sm: 420 } }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
               <Typography variant="h6">Notes</Typography>
               <Button size="small" onClick={() => setNotesDrawer(false)}>
                 Close
@@ -776,75 +978,108 @@ function PatientProfile() {
                   <TableRow>
                     <TableCell sx={{ fontWeight: 600 }}>Event time</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Section</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Factor</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Note</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {notesList.map((ev) => (
-                  <TableRow key={ev.id} hover>
-                    <TableCell>{new Date(ev.event_time).toLocaleString()}</TableCell>
-                    <TableCell>{humanizeLabel(ev.section)}</TableCell>
-                    <TableCell>{humanizeLabel(ev.factor)}</TableCell>
-                    <TableCell>{ev.note}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Factor</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Note</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Stack>
-      </Drawer>
-
-      <Drawer anchor="right" open={referralsDrawer} onClose={() => setReferralsDrawer(false)} sx={{ minWidth: 360 }}>
-        <Stack spacing={2} sx={{ p: 2, width: { xs: 320, sm: 420 } }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="h6">Referral History</Typography>
-            <Button size="small" onClick={() => setReferralsDrawer(false)}>
-              Close
-            </Button>
+                </TableHead>
+                <TableBody>
+                  {notesList.map((ev) => (
+                    <TableRow key={ev.id} hover>
+                      <TableCell>
+                        {new Date(ev.event_time).toLocaleString()}
+                      </TableCell>
+                      <TableCell>{humanizeLabel(ev.section)}</TableCell>
+                      <TableCell>{humanizeLabel(ev.factor)}</TableCell>
+                      <TableCell>{ev.note}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </Stack>
-          {referralList.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              No referrals recorded.
-            </Typography>
-          ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Created</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>From</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>To</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {referralList.map((ref) => (
-                  <TableRow 
-                    key={ref.id} 
-                    hover 
-                    onClick={() => {
-                      navigate(`/patients/${patientId}/referral/${ref.id}`);
-                      setReferralsDrawer(false);
-                    }}
-                    sx={{ cursor: "pointer" }}
-                  >
-                    <TableCell>{new Date(ref.created_at).toLocaleString()}</TableCell>
-                    <TableCell>{ref.from_facility}</TableCell>
-                    <TableCell>{ref.to_facility}</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={ref.status === 'submitted' ? 'Referred from Here' : ref.status === 'received' ? 'Referred to Here' : ref.status === 'closed' ? 'Closed Case' : ref.status === 'cancelled' ? 'Admitted Case' : 'Closed Case'} 
-                        size="small" 
-                        color={ref.status === 'submitted' ? 'warning' : ref.status === 'received' ? 'success' : ref.status === 'closed' ? 'default' : ref.status === 'cancelled' ? 'success' : 'default'}
-                      />
-                    </TableCell>
+        </Drawer>
+
+        <Drawer
+          anchor="right"
+          open={referralsDrawer}
+          onClose={() => setReferralsDrawer(false)}
+          sx={{ minWidth: 360 }}
+        >
+          <Stack spacing={2} sx={{ p: 2, width: { xs: 320, sm: 420 } }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Typography variant="h6">Referral History</Typography>
+              <Button size="small" onClick={() => setReferralsDrawer(false)}>
+                Close
+              </Button>
+            </Stack>
+            {referralList.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                No referrals recorded.
+              </Typography>
+            ) : (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Created</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>From</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>To</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Stack>
-      </Drawer>
+                </TableHead>
+                <TableBody>
+                  {referralList.map((ref) => (
+                    <TableRow
+                      key={ref.id}
+                      hover
+                      onClick={() => {
+                        navigate(`/patients/${patientId}/referral/${ref.id}`);
+                        setReferralsDrawer(false);
+                      }}
+                      sx={{ cursor: "pointer" }}
+                    >
+                      <TableCell>
+                        {new Date(ref.created_at).toLocaleString()}
+                      </TableCell>
+                      <TableCell>{ref.from_facility}</TableCell>
+                      <TableCell>{ref.to_facility}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={
+                            ref.status === "submitted"
+                              ? "Referred from Here"
+                              : ref.status === "received"
+                                ? "Referred to Here"
+                                : ref.status === "closed"
+                                  ? "Closed Case"
+                                  : ref.status === "cancelled"
+                                    ? "Admitted Case"
+                                    : "Closed Case"
+                          }
+                          size="small"
+                          color={
+                            ref.status === "submitted"
+                              ? "warning"
+                              : ref.status === "received"
+                                ? "success"
+                                : ref.status === "closed"
+                                  ? "default"
+                                  : ref.status === "cancelled"
+                                    ? "success"
+                                    : "default"
+                          }
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </Stack>
+        </Drawer>
       </Stack>
     </Box>
   );
