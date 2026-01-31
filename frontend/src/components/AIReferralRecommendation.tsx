@@ -53,7 +53,9 @@ interface AIAnalysisResponse {
   model_used?: string;
 }
 
-function AIReferralRecommendation({ patientId }: AIReferralRecommendationProps) {
+function AIReferralRecommendation({
+  patientId,
+}: AIReferralRecommendationProps) {
   const [analysis, setAnalysis] = useState<AIAnalysisResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
@@ -66,13 +68,15 @@ function AIReferralRecommendation({ patientId }: AIReferralRecommendationProps) 
       } else {
         setLoading(true);
       }
-      
+
       const params = new URLSearchParams({
         auto_generate: "true",
-        ...(forceRegenerate && { force_regenerate: "true" })
+        ...(forceRegenerate && { force_regenerate: "true" }),
       });
 
-      const response = await api.get(`/ai-analysis/patient/${patientId}?${params}`);
+      const response = await api.get(
+        `/ai-analysis/patients/${patientId}/analysis?${params}`,
+      );
       setAnalysis(response.data);
       setError(null);
     } catch (err: any) {
@@ -120,7 +124,10 @@ function AIReferralRecommendation({ patientId }: AIReferralRecommendationProps) 
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "white" }}>
+      <Alert
+        severity="error"
+        sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "white" }}
+      >
         {error}
       </Alert>
     );
@@ -128,7 +135,10 @@ function AIReferralRecommendation({ patientId }: AIReferralRecommendationProps) 
 
   if (!analysis?.referral_recommendation) {
     return (
-      <Alert severity="info" sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "white" }}>
+      <Alert
+        severity="info"
+        sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "white" }}
+      >
         No referral recommendation available yet.
       </Alert>
     );
@@ -149,7 +159,11 @@ function AIReferralRecommendation({ patientId }: AIReferralRecommendationProps) 
     >
       {/* Header */}
       <Box sx={{ p: 3, pb: 2 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
           <Stack direction="row" spacing={2} alignItems="center">
             <Box
               sx={{
@@ -211,7 +225,15 @@ function AIReferralRecommendation({ patientId }: AIReferralRecommendationProps) 
       </Box>
 
       {/* Main Decision */}
-      <Box sx={{ mx: 3, mb: 3, p: 3, bgcolor: "rgba(255, 255, 255, 0.95)", borderRadius: 2 }}>
+      <Box
+        sx={{
+          mx: 3,
+          mb: 3,
+          p: 3,
+          bgcolor: "rgba(255, 255, 255, 0.95)",
+          borderRadius: 2,
+        }}
+      >
         <Stack direction="row" alignItems="center" spacing={3}>
           <Box
             sx={{
@@ -231,11 +253,23 @@ function AIReferralRecommendation({ patientId }: AIReferralRecommendationProps) 
             )}
           </Box>
           <Box flex={1}>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: "#2c3e50", fontSize: "1.75rem", mb: 0.5 }}>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                color: "#2c3e50",
+                fontSize: "1.75rem",
+                mb: 0.5,
+              }}
+            >
               {rec.referral_needed ? "Referral Needed" : "No Referral Needed"}
             </Typography>
-            <Typography variant="body1" sx={{ color: "#7f8c8d", fontSize: "1rem" }}>
-              Confidence: {Math.round(rec.confidence * 100)}% • {getConfidenceLabel(rec.confidence)}
+            <Typography
+              variant="body1"
+              sx={{ color: "#7f8c8d", fontSize: "1rem" }}
+            >
+              Confidence: {Math.round(rec.confidence * 100)}% •{" "}
+              {getConfidenceLabel(rec.confidence)}
             </Typography>
           </Box>
           <Chip
@@ -266,7 +300,15 @@ function AIReferralRecommendation({ patientId }: AIReferralRecommendationProps) 
       {/* Reasons */}
       {rec.reasons && rec.reasons.length > 0 && (
         <Box sx={{ mx: 3, mb: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: "white", mb: 2, fontSize: "1.125rem" }}>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 700,
+              color: "white",
+              mb: 2,
+              fontSize: "1.125rem",
+            }}
+          >
             Clinical Reasons
           </Typography>
           <Stack spacing={1.5}>
@@ -280,7 +322,10 @@ function AIReferralRecommendation({ patientId }: AIReferralRecommendationProps) 
                   borderLeft: "4px solid #e91e63",
                 }}
               >
-                <Typography variant="body1" sx={{ color: "#2c3e50", fontWeight: 500 }}>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "#2c3e50", fontWeight: 500 }}
+                >
                   • {reason}
                 </Typography>
               </Box>
@@ -290,46 +335,88 @@ function AIReferralRecommendation({ patientId }: AIReferralRecommendationProps) 
       )}
 
       {/* Risk Factors */}
-      {rec.risk_factors?.detected_risks && rec.risk_factors.detected_risks.length > 0 ? (
+      {rec.risk_factors?.detected_risks &&
+      rec.risk_factors.detected_risks.length > 0 ? (
         <Box sx={{ mx: 3, mb: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: "white", mb: 2, fontSize: "1.125rem" }}>
-            Detected Risk Factors ({rec.risk_factors.confidence_calculation || 'Calculating...'})
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 700,
+              color: "white",
+              mb: 2,
+              fontSize: "1.125rem",
+            }}
+          >
+            Detected Risk Factors (
+            {rec.risk_factors.confidence_calculation || "Calculating..."})
           </Typography>
           <Grid container spacing={2}>
-            {rec.risk_factors.detected_risks.map((risk: DetectedRisk, idx: number) => (
-              <Grid item xs={12} sm={6} key={idx}>
-                <Box
-                  sx={{
-                    p: 2.5,
-                    bgcolor: "rgba(255, 255, 255, 0.95)",
-                    borderRadius: 2,
-                    border: "2px solid #e91e63",
-                  }}
-                >
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#2c3e50" }}>
-                      {risk.name}
+            {rec.risk_factors.detected_risks.map(
+              (risk: DetectedRisk, idx: number) => (
+                <Grid item xs={12} sm={6} key={idx}>
+                  <Box
+                    sx={{
+                      p: 2.5,
+                      bgcolor: "rgba(255, 255, 255, 0.95)",
+                      borderRadius: 2,
+                      border: "2px solid #e91e63",
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      sx={{ mb: 1 }}
+                    >
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ fontWeight: 700, color: "#2c3e50" }}
+                      >
+                        {risk.name}
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 700, color: "#e91e63" }}
+                      >
+                        {Math.round(risk.weight * 100)}%
+                      </Typography>
+                    </Stack>
+                    <Typography variant="body2" sx={{ color: "#7f8c8d" }}>
+                      {risk.value}
                     </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#e91e63" }}>
-                      {Math.round(risk.weight * 100)}%
-                    </Typography>
-                  </Stack>
-                  <Typography variant="body2" sx={{ color: "#7f8c8d" }}>
-                    {risk.value}
-                  </Typography>
-                </Box>
-              </Grid>
-            ))}
+                  </Box>
+                </Grid>
+              ),
+            )}
           </Grid>
         </Box>
       ) : (
         <Box sx={{ mx: 3, mb: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: "white", mb: 2, fontSize: "1.125rem" }}>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 700,
+              color: "white",
+              mb: 2,
+              fontSize: "1.125rem",
+            }}
+          >
             Risk Analysis
           </Typography>
-          <Box sx={{ p: 2.5, bgcolor: "rgba(255, 255, 255, 0.95)", borderRadius: 2 }}>
-            <Typography variant="body1" sx={{ color: "#2c3e50", textAlign: "center" }}>
-              {rec.confidence > 0 ? "Analysis based on clinical data review" : "No specific risk factors detected"}
+          <Box
+            sx={{
+              p: 2.5,
+              bgcolor: "rgba(255, 255, 255, 0.95)",
+              borderRadius: 2,
+            }}
+          >
+            <Typography
+              variant="body1"
+              sx={{ color: "#2c3e50", textAlign: "center" }}
+            >
+              {rec.confidence > 0
+                ? "Analysis based on clinical data review"
+                : "No specific risk factors detected"}
             </Typography>
           </Box>
         </Box>
@@ -337,17 +424,35 @@ function AIReferralRecommendation({ patientId }: AIReferralRecommendationProps) 
 
       {/* Footer */}
       <Box sx={{ px: 3, pb: 3 }}>
-        <Box sx={{ p: 2, bgcolor: "rgba(255, 255, 255, 0.1)", borderRadius: 2 }}>
-          <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems="center" spacing={2}>
-            <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "0.875rem" }}>
-              Last analyzed: {new Date(analysis.last_analyzed_at).toLocaleDateString()} at{" "}
-              {new Date(analysis.last_analyzed_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        <Box
+          sx={{ p: 2, bgcolor: "rgba(255, 255, 255, 0.1)", borderRadius: 2 }}
+        >
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            justifyContent="space-between"
+            alignItems="center"
+            spacing={2}
+          >
+            <Typography
+              variant="body2"
+              sx={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "0.875rem" }}
+            >
+              Last analyzed:{" "}
+              {new Date(analysis.last_analyzed_at).toLocaleDateString()} at{" "}
+              {new Date(analysis.last_analyzed_at).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </Typography>
             {analysis.model_used && (
               <Chip
                 label={`AI: ${analysis.model_used}`}
                 size="small"
-                sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", color: "white", fontWeight: 600 }}
+                sx={{
+                  bgcolor: "rgba(255, 255, 255, 0.2)",
+                  color: "white",
+                  fontWeight: 600,
+                }}
               />
             )}
           </Stack>
