@@ -76,11 +76,7 @@ export default function PendingUsers() {
     { field: "email", headerName: "Email", flex: 1 },
     { field: "phone_number", headerName: "Phone", flex: 1 },
     { field: "facility_type", headerName: "Facility", width: 120 },
-    {
-      field: "working_hospital",
-      headerName: "Currently Working Hospital",
-      flex: 1,
-    },
+    { field: "facility_name", headerName: "Facility Name", width: 120 },
     { field: "nmc_number", headerName: "NMC Number", flex: 1 },
     {
       field: "id_card",

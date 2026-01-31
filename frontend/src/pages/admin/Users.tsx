@@ -77,11 +77,7 @@ export default function Users() {
     { field: "email", headerName: "Email", flex: 1 },
     { field: "role", headerName: "Role", width: 140 },
     { field: "facility_type", headerName: "Facility", width: 120 },
-    {
-      field: "working_hospital",
-      headerName: "Currently Working Hospital",
-      flex: 1,
-    },
+    { field: "facility_name", headerName: "Facility Name", width: 120 },
     //nmc
     { field: "nmc_number", headerName: "NMC Number", flex: 1 },
     {

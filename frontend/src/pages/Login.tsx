@@ -66,6 +66,7 @@ export default function Login() {
   // Bootstrap panel (DEV-only usage)
   const [showBootstrap, setShowBootstrap] = useState(false);
   const [bootstrapToken, setBootstrapToken] = useState(
+    //@ts-ignore
     import.meta.env.VITE_BOOTSTRAP_TOKEN || "",
   );
   const [adminUsername, setAdminUsername] = useState("");
@@ -269,10 +270,10 @@ export default function Login() {
             <Box component="form" onSubmit={onSubmit} noValidate>
               <Stack spacing={2}>
                 <TextField
-                  label="Username"
+                  label="Email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
+                  autoComplete="email"
                   required
                   fullWidth
                   disabled={isBusy}
@@ -318,7 +319,7 @@ export default function Login() {
             <Divider sx={{ opacity: 0.7 }} />
 
             <Stack spacing={1}>
-              <Button
+              {/* <Button
                 variant="text"
                 onClick={() => setShowBootstrap((v) => !v)}
                 disabled={busyLogin} // allow reading, but avoid toggling mid-login
@@ -333,7 +334,7 @@ export default function Login() {
                 {showBootstrap
                   ? "Hide admin bootstrap (DEV)"
                   : "Admin bootstrap (DEV)"}
-              </Button>
+              </Button> */}
               <Button onClick={() => navigate("/signup")}>
                 Register your account
               </Button>
