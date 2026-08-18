@@ -54,10 +54,12 @@ function AIPatientSummary({ patientId }: AIPatientSummaryProps) {
 
       const params = new URLSearchParams({
         auto_generate: "true",
-        ...(forceRegenerate && { force_regenerate: "true" })
+        ...(forceRegenerate && { force_regenerate: "true" }),
       });
 
-      const response = await api.get(`/ai-analysis/patient/${patientId}?${params}`);
+      const response = await api.get(
+        `/ai-analysis/patients/${patientId}/analysis?${params}`,
+      );
       setAnalysis(response.data);
     } catch (err: any) {
       console.error("Error fetching AI analysis:", err);
@@ -114,7 +116,10 @@ function AIPatientSummary({ patientId }: AIPatientSummaryProps) {
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "white" }}>
+      <Alert
+        severity="error"
+        sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "white" }}
+      >
         {error}
       </Alert>
     );
@@ -122,7 +127,10 @@ function AIPatientSummary({ patientId }: AIPatientSummaryProps) {
 
   if (!analysis?.summary) {
     return (
-      <Alert severity="info" sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "white" }}>
+      <Alert
+        severity="info"
+        sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "white" }}
+      >
         No AI summary available yet.
       </Alert>
     );
@@ -141,7 +149,11 @@ function AIPatientSummary({ patientId }: AIPatientSummaryProps) {
     >
       {/* Header */}
       <Box sx={{ p: 3, pb: 2 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
           <Stack direction="row" spacing={2} alignItems="center">
             <Box
               sx={{
@@ -182,7 +194,9 @@ function AIPatientSummary({ patientId }: AIPatientSummaryProps) {
           <Stack direction="row" spacing={1} alignItems="center">
             {analysis.summary.risk_level && (
               <Chip
-                {...(getRiskIcon(analysis.summary.risk_level) && { icon: getRiskIcon(analysis.summary.risk_level) })}
+                {...(getRiskIcon(analysis.summary.risk_level) && {
+                  icon: getRiskIcon(analysis.summary.risk_level),
+                })}
                 label={`${analysis.summary.risk_level.toUpperCase()} RISK`}
                 color={getRiskColor(analysis.summary.risk_level) as any}
                 sx={{
@@ -244,84 +258,101 @@ function AIPatientSummary({ patientId }: AIPatientSummaryProps) {
       </Box>
 
       {/* Key Findings */}
-      {analysis.summary.key_findings && analysis.summary.key_findings.length > 0 && (
-        <Box sx={{ mx: 3, mb: 3 }}>
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 700,
-              color: "white",
-              mb: 2,
-              fontSize: "1.125rem",
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-            }}
-          >
-            <Box
+      {analysis.summary.key_findings &&
+        analysis.summary.key_findings.length > 0 && (
+          <Box sx={{ mx: 3, mb: 3 }}>
+            <Typography
+              variant="h6"
               sx={{
-                width: 4,
-                height: 20,
-                bgcolor: "white",
-                borderRadius: 2,
+                fontWeight: 700,
+                color: "white",
+                mb: 2,
+                fontSize: "1.125rem",
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
               }}
-            />
-            Key Clinical Signs
-          </Typography>
-          <Stack spacing={2}>
-            {analysis.summary.key_findings.map((finding, idx) => {
-              const isElevated = finding.includes('⚠️') || finding.includes('Elevated') || finding.includes('High') || finding.includes('Low');
-              const isNormal = finding.includes('Normal');
-              
-              return (
-                <Box
-                  key={idx}
-                  sx={{
-                    p: 2.5,
-                    bgcolor: "rgba(255, 255, 255, 0.95)",
-                    borderRadius: 2,
-                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-                    borderLeft: `4px solid ${
-                      isElevated ? "#e74c3c" : isNormal ? "#27ae60" : "#3498db"
-                    }`,
-                  }}
-                >
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Box
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: "50%",
-                        bgcolor: isElevated ? "#fee" : isNormal ? "#efe" : "#eef",
-                        color: isElevated ? "#e74c3c" : isNormal ? "#27ae60" : "#3498db",
-                        fontSize: "1.25rem",
-                        fontWeight: 700,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {isElevated ? "⚠" : isNormal ? "✓" : "📈"}
-                    </Box>
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        color: "#2c3e50",
-                        lineHeight: 1.5,
-                        fontSize: "1rem",
-                        fontWeight: isElevated ? 600 : 500,
-                      }}
-                    >
-                      {finding}
-                    </Typography>
-                  </Stack>
-                </Box>
-              );
-            })}
-          </Stack>
-        </Box>
-      )}
+            >
+              <Box
+                sx={{
+                  width: 4,
+                  height: 20,
+                  bgcolor: "white",
+                  borderRadius: 2,
+                }}
+              />
+              Key Clinical Signs
+            </Typography>
+            <Stack spacing={2}>
+              {analysis.summary.key_findings.map((finding, idx) => {
+                const isElevated =
+                  finding.includes("⚠️") ||
+                  finding.includes("Elevated") ||
+                  finding.includes("High") ||
+                  finding.includes("Low");
+                const isNormal = finding.includes("Normal");
+
+                return (
+                  <Box
+                    key={idx}
+                    sx={{
+                      p: 2.5,
+                      bgcolor: "rgba(255, 255, 255, 0.95)",
+                      borderRadius: 2,
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                      borderLeft: `4px solid ${
+                        isElevated
+                          ? "#e74c3c"
+                          : isNormal
+                            ? "#27ae60"
+                            : "#3498db"
+                      }`,
+                    }}
+                  >
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Box
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "50%",
+                          bgcolor: isElevated
+                            ? "#fee"
+                            : isNormal
+                              ? "#efe"
+                              : "#eef",
+                          color: isElevated
+                            ? "#e74c3c"
+                            : isNormal
+                              ? "#27ae60"
+                              : "#3498db",
+                          fontSize: "1.25rem",
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {isElevated ? "⚠" : isNormal ? "✓" : "📈"}
+                      </Box>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          color: "#2c3e50",
+                          lineHeight: 1.5,
+                          fontSize: "1rem",
+                          fontWeight: isElevated ? 600 : 500,
+                        }}
+                      >
+                        {finding}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                );
+              })}
+            </Stack>
+          </Box>
+        )}
 
       {/* Footer */}
       <Box
@@ -361,7 +392,8 @@ function AIPatientSummary({ patientId }: AIPatientSummaryProps) {
                   fontWeight: 500,
                 }}
               >
-                Last analyzed: {new Date(analysis.last_analyzed_at).toLocaleDateString()} at{" "}
+                Last analyzed:{" "}
+                {new Date(analysis.last_analyzed_at).toLocaleDateString()} at{" "}
                 {new Date(analysis.last_analyzed_at).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
