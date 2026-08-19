@@ -1,105 +1,109 @@
-# Medical Schema System - Smart Aama
+# Medical Schema and Structured Clinical Data
 
-## Overview
+SmartAama captures clinical data against a predefined schema: every field has a
+type, a unit (where relevant), optional enum values, and a nullable flag. Clinicians
+enter values only; the backend validates them and stores each value as a
+`ClinicalEvent` row.
 
-The medical schema system provides a structured, type-safe way to capture clinical data with predefined fields, data types, and units. This ensures data consistency and eliminates the need for doctors to manually select data types.
+Source of truth: `backend/app/models/medical_schema.py`
+(`MEDICAL_SCHEMA` dict, `SectionDefinition`, `FieldDefinition`).
+To add or change a field or section, edit that file; the API serves it immediately.
 
-## Key Features
+## Sections
 
-### 1. **Predefined Data Types & Units**
-- All clinical fields have predefined types (integer, float, boolean, string, enum, date)
-- Units are automatically included (e.g., "mmHg" for blood pressure, "g/dL" for hemoglobin)
-- Doctors only enter values; the system handles type validation and unit display
+Sections have a `category` of `static`, `obstetric`, or `event_based`.
 
-### 2. **Hierarchical Sections**
-Data is organized into logical sections:
+| Category | Section key | Label |
+|---|---|---|
+| static | `patient_particulars` | Patient Particulars (`show_in_updates=False`; captured at registration) |
+| static | `menstrual_history` | Menstrual History |
+| static | `contraceptive_history` | Contraceptive History |
+| static | `past_medical_history` | Past Medical History |
+| static | `family_history` | Family History |
+| static | `present_pregnancy` | Present Pregnancy |
+| obstetric | `obstetric_history` | Obstetric History |
+| event_based | `first_trimester_anc` | First Trimester ANC |
+| event_based | `second_trimester_anc` | Second Trimester ANC |
+| event_based | `third_trimester_anc` | Third Trimester ANC |
+| event_based | `general_examination` | General Examination |
+| event_based | `vitals` | Vital Signs |
+| event_based | `general_signs` | General Signs |
+| event_based | `per_abdominal_examination` | Per Abdominal Examination |
+| event_based | `cardiovascular_respiratory` | Cardiovascular & Respiratory Examination |
+| event_based | `blood_investigations` | Blood Investigations |
+| event_based | `renal_function_tests` | Renal Function Tests |
+| event_based | `liver_function_tests` | Liver Function Tests |
+| event_based | `serology` | Serology |
+| event_based | `thyroid_function_tests` | Thyroid Function Tests |
+| event_based | `ultrasonography` | Ultrasonography |
+| event_based | `urine_examination` | Urine Examination |
 
-**Static Profile Sections** (one-time or rarely updated):
-- Patient Particulars
-- Menstrual History
-- Contraceptive History
-- Past Medical History
-- Family History
-- Present Pregnancy
-- Obstetric History
+Notes on field naming that matter to other code (for example the advisory rule engine):
 
-**Event-Based Sections** (time-series data with multiple dated entries):
-- First/Second/Third Trimester ANC
-- General Examination
-- Vital Signs
-- General Signs
-- Per Abdominal Examination
-- Cardiovascular & Respiratory Examination
-- Blood Investigations
-- Renal Function Tests
-- Liver Function Tests
-- Serology
-- Thyroid Function Tests
-- Ultrasonography
-- Urine Examination
+- Blood pressure lives in `vitals` as `blood_pressure_systolic` / `blood_pressure_diastolic`;
+  maternal pulse is `vitals.pulse_rate`.
+- Haemoglobin is `blood_investigations.hemoglobin`.
+- Urine protein is `urine_examination.dipstick_protein`.
+- Fetal heart rate appears in `per_abdominal_examination.fetal_heart_rate` and
+  `ultrasonography.fetal_heart_rate`.
 
-### 3. **Time-Series Support**
-- Event-based sections automatically record the date/time of each entry
-- Multiple entries can exist for the same section (e.g., multiple blood test results)
-- Historical data is preserved and queryable by date
+## Field definition
 
-## API Endpoints
-
-### Get Schema Information
-
-#### List All Sections
-```http
-GET /api/v1/schema/sections
-GET /api/v1/schema/sections?category=static
-GET /api/v1/schema/sections?category=event_based
+```python
+class FieldDefinition(BaseModel):
+    name: str                       # key used in data_points
+    label: str
+    field_type: FieldType           # string|integer|float|boolean|date|datetime|enum|object|array
+    unit: Optional[str] = None      # e.g. "mmHg", "g/dL", "bpm"
+    nullable: bool = False
+    enum_values: Optional[List[str]] = None
+    default_value: Any = None
+    min_value: Optional[float] = None   # informational; not enforced by the API today
+    max_value: Optional[float] = None   # informational; not enforced by the API today
+    description: Optional[str] = None
 ```
 
-#### Get Section Details
+## API
+
+All paths below are relative to `/api/v1`.
+
+### Schema metadata (`/schema`) - authenticated (any role), read-only
+
 ```http
-GET /api/v1/schema/sections/{section_key}
+GET /schema/sections                          # all sections
+GET /schema/sections?category=static          # static | obstetric | event_based
+GET /schema/sections?updates_only=true        # only sections with show_in_updates=True
+GET /schema/sections/{section_key}            # full SectionDefinition (fields, types, units, enums)
+GET /schema/sections/{section_key}/fields     # simplified {name,label,type,unit,required} list
 ```
 
-Returns field definitions including:
-- Field name and label
-- Data type (integer, float, boolean, string, enum, date, etc.)
-- Unit (if applicable)
-- Enum values (for dropdown fields)
-- Required/optional status
-- Min/max values (for validation)
+Example `GET /schema/sections/vitals` (abridged):
 
-Example response:
 ```json
 {
   "section_key": "vitals",
   "section_label": "Vital Signs",
   "category": "event_based",
   "fields": [
-    {
-      "name": "pulse_rate",
-      "label": "Pulse Rate",
-      "field_type": "integer",
-      "unit": "bpm",
-      "nullable": false
-    },
-    {
-      "name": "blood_pressure_systolic",
-      "label": "Blood Pressure (Systolic)",
-      "field_type": "integer",
-      "unit": "mmHg",
-      "nullable": false
-    }
+    {"name": "pulse_rate", "label": "Pulse Rate", "field_type": "integer", "unit": "bpm", "nullable": false},
+    {"name": "blood_pressure_systolic", "label": "Blood Pressure (Systolic)", "field_type": "integer", "unit": "mmHg", "nullable": false}
   ]
 }
 ```
 
-### Add Medical Data
+### Structured data entry (`/medical-data`) - authenticated
 
-#### Add Data for a Section
+Authorization: callers must have access to the patient (facility-based, see
+`ACCESS_CONTROL.md`); writes require the `clinician`, `hospital` or `admin` role, and
+`viewer` is read-only. Every write also invalidates the stored advisory analysis for
+that patient (`mark_ai_analysis_for_update`).
+
+#### Add data for one section
+
 ```http
-POST /api/v1/medical-data/patients/{patient_id}/sections/{section_key}
+POST /medical-data/patients/{patient_id}/sections/{section_key}
 ```
 
-Request body:
 ```json
 {
   "section_key": "vitals",
@@ -115,59 +119,55 @@ Request body:
 }
 ```
 
-The system will:
-1. Validate data types against the schema
-2. Attach units automatically
-3. Record the event with a timestamp
-4. Create audit logs
+Behaviour:
 
-#### Bulk Entry (Multiple Sections)
+1. `section_key` in the body must equal the one in the URL (400 otherwise).
+2. `data_points` is validated against the schema (`app/schemas/medical_data.py`):
+   unknown field, wrong type, non-nullable `null`, or value outside `enum_values`
+   all return 422.
+3. One `ClinicalEvent` row is created per field, with `section=<section_key>`,
+   `factor=<field name>`, and `value = {"value": ..., "unit": ..., "type": ...}`.
+   `event_time` defaults to now.
+4. An `AuditLog` row (`MEDICAL_DATA_ADDED`) is written.
+
+Static sections use the same append-only mechanism; "latest" simply means the newest
+value per field.
+
+#### Bulk entry (several sections in one visit)
+
 ```http
-POST /api/v1/medical-data/patients/{patient_id}/bulk-entry
+POST /medical-data/patients/{patient_id}/bulk-entry
 ```
 
-Request body:
 ```json
 {
   "patient_id": "uuid",
   "sections": [
-    {
-      "section_key": "vitals",
-      "data_points": {
-        "pulse_rate": 78,
-        "blood_pressure_systolic": 110,
-        "blood_pressure_diastolic": 70
-      }
-    },
-    {
-      "section_key": "blood_investigations",
-      "data_points": {
-        "hemoglobin": 11.2,
-        "blood_group": "O+"
-      }
-    }
+    {"section_key": "vitals", "data_points": {"pulse_rate": 78, "blood_pressure_systolic": 110, "blood_pressure_diastolic": 70}},
+    {"section_key": "blood_investigations", "data_points": {"hemoglobin": 11.2, "blood_group": "O+"}}
   ],
   "visit_note": "Second trimester ANC visit"
 }
 ```
 
-### Retrieve Data
+#### Latest values for a section
 
-#### Get Latest Data for a Section
 ```http
-GET /api/v1/medical-data/patients/{patient_id}/sections/{section_key}/latest
+GET /medical-data/patients/{patient_id}/sections/{section_key}/latest
 ```
 
-Returns the most recent values for all fields in that section.
+Returns `{section_key, section_label, category, data_points, event_time, recorded_at}`
+with the most recent value of each field, or `data_points: {}` and a `message` when
+nothing has been recorded.
 
-#### Get Historical Data (Time Series)
+#### History (time series)
+
 ```http
-GET /api/v1/medical-data/patients/{patient_id}/sections/{section_key}/history?limit=10
+GET /medical-data/patients/{patient_id}/sections/{section_key}/history?limit=10
 ```
 
-Returns multiple dated entries for event-based sections.
+Entries are grouped by `event_time` (newest first):
 
-Example response:
 ```json
 {
   "section_key": "vitals",
@@ -176,128 +176,39 @@ Example response:
     {
       "event_id": "uuid",
       "event_time": "2026-01-24T10:30:00Z",
-      "data_points": {
-        "pulse_rate": 78,
-        "blood_pressure_systolic": 110,
-        "blood_pressure_diastolic": 70,
-        "weight": 62
-      },
-      "note": "Routine checkup"
-    },
-    {
-      "event_id": "uuid",
-      "event_time": "2026-01-10T09:15:00Z",
-      "data_points": {
-        "pulse_rate": 76,
-        "blood_pressure_systolic": 108,
-        "blood_pressure_diastolic": 68,
-        "weight": 60
-      },
-      "note": null
+      "data_points": {"pulse_rate": 78, "blood_pressure_systolic": 110, "blood_pressure_diastolic": 70, "weight": 62},
+      "note": "Routine checkup",
+      "recorded_by": null
     }
   ],
   "total_entries": 2
 }
 ```
 
-## Frontend Integration
+There is no API to delete or edit a clinical event; corrections are made by
+recording a new entry.
 
-### 1. Fetch Schema on Load
+## Frontend usage
+
+The frontend axios instance (`frontend/src/services/api.ts`) already has
+`VITE_API_BASE_URL` (for example `http://localhost:8000/api/v1`) as its base URL, so
+calls omit the prefix. `UpdateRecord.tsx` and `PatientProfile.tsx` are the current
+consumers.
+
 ```typescript
-// Get schema for a section
-const response = await api.get(`/api/v1/schema/sections/vitals`);
-const schema = response.data;
+// Sections to show in the clinical-update form
+const sections = (await api.get("/schema/sections?updates_only=true")).data;
 
-// Generate form fields dynamically
-schema.fields.forEach(field => {
-  // Render input based on field.field_type
-  // Display field.label and field.unit
-  // For enums, use field.enum_values for dropdown
+// Field definitions for one section -> render inputs by field_type, show unit, use enum_values for selects
+const schema = (await api.get(`/schema/sections/${sectionKey}`)).data;
+
+// Submit
+await api.post(`/medical-data/patients/${patientId}/sections/${sectionKey}`, {
+  section_key: sectionKey,
+  data_points: values,
+  event_time: new Date().toISOString(),
 });
+
+// History
+const history = (await api.get(`/medical-data/patients/${patientId}/sections/vitals/history`)).data;
 ```
-
-### 2. Display Units Automatically
-```typescript
-// Example: Display "Pulse Rate (bpm)"
-<FormLabel>
-  {field.label} {field.unit && `(${field.unit})`}
-</FormLabel>
-<TextField
-  type={field.field_type === 'integer' ? 'number' : 'text'}
-  required={!field.nullable}
-/>
-```
-
-### 3. Submit Data
-```typescript
-const formData = {
-  section_key: "vitals",
-  data_points: {
-    pulse_rate: 78,
-    blood_pressure_systolic: 110,
-    blood_pressure_diastolic: 70,
-    temperature: 36.8
-  },
-  event_time: new Date().toISOString()
-};
-
-await api.post(
-  `/api/v1/medical-data/patients/${patientId}/sections/vitals`,
-  formData
-);
-```
-
-### 4. Show Historical Data
-```typescript
-// Fetch history
-const response = await api.get(
-  `/api/v1/medical-data/patients/${patientId}/sections/vitals/history`
-);
-
-// Display as table or chart
-response.data.entries.forEach(entry => {
-  console.log(`${entry.event_time}: BP ${entry.data_points.blood_pressure_systolic}/${entry.data_points.blood_pressure_diastolic}`);
-});
-```
-
-## Data Categories
-
-### Static Sections
-- Updated once or rarely modified
-- Latest entry is displayed
-- Examples: demographics, medical history, current pregnancy details
-
-### Event-Based Sections
-- New entry created each time
-- Full history is preserved
-- Examples: vitals, examinations, lab results
-- Each entry has a timestamp (event_time)
-
-## Benefits
-
-1. **No Manual Type Selection**: Doctors don't choose data types; they're predefined
-2. **Consistent Units**: Units are shown automatically (e.g., "mmHg", "g/dL", "bpm")
-3. **Type Safety**: Backend validates all data against the schema
-4. **Time-Series Ready**: Event-based sections support multiple dated entries
-5. **Dynamic Forms**: Frontend can generate forms automatically from schema
-6. **Audit Trail**: All entries are logged with user and timestamp
-7. **Immutable Records**: Clinical events are never deleted, only appended
-
-## Example Workflow
-
-1. Doctor opens "Vitals" section
-2. Frontend fetches schema: `/api/v1/schema/sections/vitals`
-3. Form renders with proper labels, units, and input types
-4. Doctor enters values (no type selection needed)
-5. Data submitted with timestamp
-6. System validates types and creates clinical events
-7. Historical vitals can be viewed as a timeline
-
-## Schema Definition Location
-
-All medical field definitions are in:
-```
-backend/app/models/medical_schema.py
-```
-
-To add new fields or sections, update this file. The schema is immediately available via the API.
