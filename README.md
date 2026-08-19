@@ -41,6 +41,7 @@ This README describes the repository **as it is today**. Anything not implemente
 - [Setup in detail](#setup-in-detail)
 - [Configuration](#configuration)
 - [Testing and CI](#testing-and-ci)
+- [Releases](#releases)
 - [API overview](#api-overview)
 - [Roles and authorization](#roles-and-authorization)
 - [Advisory engine](#advisory-engine)
@@ -182,8 +183,9 @@ Only what is actually used and installed:
 
 ```
 smartaama/
-├── README.md · LICENSE (MIT) · CONTRIBUTING.md · .gitignore
-├── .github/workflows/ci.yml       # backend (SQLite + PostgreSQL), frontend, E2E
+├── README.md · LICENSE (MIT) · CONTRIBUTING.md · CHANGELOG.md · VERSION · .gitignore
+├── scripts/package_release.py     # builds the release archives (used by the Release workflow)
+├── .github/workflows/             # ci.yml (tests/build/E2E) · release.yml (tagged releases)
 ├── backend/
 │   ├── requirements.txt · .env.example · pytest.ini · alembic.ini
 │   ├── alembic/                   # migrations (versions/0001_baseline, 0002_facilities, …)
@@ -298,6 +300,27 @@ Test coverage is focused rather than exhaustive: authentication/authorization, u
 serialization, facility scoping, referral rules, migration parity (`alembic check`), the
 advisory rule set, and five end-to-end user journeys (login, signup + approval, patient
 creation, record update → advisory, referral flow).
+
+## Releases
+
+Versioned releases are published on the GitHub **Releases** page. Each release ships:
+
+| Asset | Contents |
+|---|---|
+| `smartaama-backend-<version>.tar.gz` | Backend source (`app/`, `alembic/`, `requirements.txt`, `.env.example`, start scripts, Nepal locations data). Deploy with a Python 3.11+ venv and PostgreSQL: `pip install -r requirements.txt`, configure `.env`, `python -m app.db.init_db`, run with uvicorn. |
+| `smartaama-frontend-<version>.tar.gz` | Production build of the React app — serve as static files behind any web server. The API base URL is baked in at build time (`VITE_API_BASE_URL`); rebuild if your API is not at `http://localhost:8000/api/v1`. |
+| `smartaama-<version>-full.zip` | Both of the above plus `documentation/`, README, LICENSE, CHANGELOG. |
+| `SHA256SUMS` | Checksums — verify with `sha256sum -c SHA256SUMS`. |
+
+The version is the single `VERSION` file at the repository root (also reported by the API as
+`app.version` / in `/docs`). Changes are tracked in [`CHANGELOG.md`](CHANGELOG.md).
+
+**Cutting a release** (maintainers): bump `VERSION` and add a `CHANGELOG.md` section on `main`,
+then push a matching tag — `git tag -a v0.1.0 -m "SmartAama 0.1.0" && git push origin v0.1.0`.
+The `Release` workflow verifies the tag matches `VERSION`, runs the backend tests and the
+frontend build, packages the archives with `scripts/package_release.py`, and publishes the
+GitHub Release with the changelog section as notes. The same script works locally:
+`python scripts/package_release.py --build` → `dist-release/`.
 
 ## API overview
 

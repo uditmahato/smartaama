@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -30,7 +32,21 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Smart Aama API", version="1.0.0", lifespan=lifespan)
+def _app_version() -> str:
+    """Version from the repository's VERSION file (single source of truth), or 0.0.0-dev."""
+    for candidate in (Path(__file__).resolve().parents[2] / "VERSION", Path(__file__).resolve().parents[1] / "VERSION"):
+        try:
+            text = candidate.read_text(encoding="utf-8").strip()
+            if text:
+                return text
+        except OSError:
+            continue
+    return "0.0.0-dev"
+
+
+APP_VERSION = _app_version()
+
+app = FastAPI(title="Smart Aama API", version=APP_VERSION, lifespan=lifespan)
 
 # CORS for React frontend (explicit allowlist from CORS_ORIGINS)
 app.add_middleware(

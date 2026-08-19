@@ -57,6 +57,15 @@ If you change the database schema:
 - Commits are authored by humans under their own identity.
 - Do not commit `.env`, uploads, databases, or build output (see `.gitignore`).
 
+## Cutting a release (maintainers)
+
+1. On `main`, bump `VERSION` (semver) and move the `[Unreleased]` items in `CHANGELOG.md`
+   into a new `[x.y.z] - YYYY-MM-DD` section; keep the `frontend/package.json` version in sync.
+2. Commit, then tag and push: `git tag -a vx.y.z -m "SmartAama x.y.z" && git push origin vx.y.z`.
+3. `.github/workflows/release.yml` verifies the tag matches `VERSION`, runs tests + build,
+   packages `dist-release/` via `scripts/package_release.py` and publishes the GitHub Release.
+   You can dry-run the packaging locally with `python scripts/package_release.py --build`.
+
 ## Licence
 
 By contributing you agree that your contributions are licensed under the repository's
