@@ -15,80 +15,64 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { api, userStore } from "../services/api";
+import {
+  api,
+  facilityMatches,
+  getErrorMessage,
+  type ReferralOut,
+} from "../services/api";
+import type { FacilityOption } from "../services/types";
+import { useUser } from "../hooks/useUser";
 
 import { navLinks } from "../components/Navbar";
 import Navbar from "../components/Navbar";
 
-type ReferralOut = {
-  id: string;
-  patient_id: string;
-  from_facility: string;
-  to_facility: string;
-  status: "draft" | "submitted" | "received" | "closed" | "cancelled";
-  reason: string;
-  clinician_decision?: string | null;
-  clinician_note?: string | null;
-  submitted_at?: string | null;
-  received_at?: string | null;
-  closed_at?: string | null;
-  created_at: string;
+type StatusFilter = "" | "to_here" | "from_here" | "admitted" | "closed";
+
+const STATUS_FILTER_LABELS: Record<Exclude<StatusFilter, "">, string> = {
+  to_here: "Referred to Here",
+  from_here: "Referred from Here",
+  admitted: "Admitted Case",
+  closed: "Closed Case",
 };
 
-type UserInfo = {
-  id: string;
-  username: string;
-  full_name?: string | null;
-  role: string;
-  facility_type?: string | null;
-  facility_id?: string | null;
-  facility_name?: string | null;
-};
-
-type FacilityOption = {
-  id: string;
-  name: string;
-  kind: "phc" | "hospital";
-};
+type ChipColor = "default" | "warning" | "success" | "error";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useUser();
+  const userFacilityName = user?.facility_name ?? null;
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string>("User");
-  const [facilityLabel, setFacilityLabel] = useState<string>(
-    "Healthcare Provider",
-  );
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const menuOpen = Boolean(anchorEl);
 
-  const [statusFilter, setStatusFilter] = useState<
-    ReferralOut["status"] | "admitted" | "to_here" | "from_here" | ""
-  >("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("");
   const [fromFacility, setFromFacility] = useState("");
   const [toFacility, setToFacility] = useState("");
   const [facilityOptions, setFacilityOptions] = useState<FacilityOption[]>([]);
   const [facilityError, setFacilityError] = useState<string | null>(null);
-  const [userFacilityName, setUserFacilityName] = useState<string | null>(null);
 
   const [referrals, setReferrals] = useState<ReferralOut[]>([]);
 
   const params = useMemo(() => {
-    const p: Record<string, any> = { limit: 50, offset: 0 };
-    if (statusFilter) {
-      if (statusFilter === "admitted") {
-        // Map "Admitted Case" to received for now (backend has no separate admitted status)
-        p.status = "received";
-      } else if (statusFilter === "closed") {
+    const p: Record<string, string | number> = { limit: 50, offset: 0 };
+    // Filter mapping (backend contract): `direction` is relative to the caller's facility.
+    switch (statusFilter) {
+      case "to_here":
+        p.direction = "incoming";
+        break;
+      case "from_here":
+        p.direction = "outgoing";
+        break;
+      case "admitted":
+        p.direction = "incoming";
+        p.received_status = "received";
+        break;
+      case "closed":
         p.status = "closed";
-      } else if (statusFilter === "from_here") {
-        // Outgoing referrals: submitted from this facility
-        p.status = "submitted";
-      } else if (statusFilter === "to_here") {
-        // Incoming referrals: received at this facility
-        p.status = "received";
-      }
+        break;
+      default:
+        break;
     }
     if (fromFacility.trim()) p.from_facility = fromFacility.trim();
     if (toFacility.trim()) p.to_facility = toFacility.trim();
@@ -101,8 +85,8 @@ export default function Dashboard() {
     try {
       const resp = await api.get<ReferralOut[]>("/referrals", { params });
       setReferrals(resp.data);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Failed to load referrals");
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to load referrals"));
     } finally {
       setBusy(false);
     }
@@ -117,10 +101,8 @@ export default function Dashboard() {
         }),
       ]);
       setFacilityOptions([...phcResp.data, ...hospitalResp.data]);
-    } catch (err: any) {
-      setFacilityError(
-        err?.response?.data?.detail ?? "Failed to load facilities",
-      );
+    } catch (err) {
+      setFacilityError(getErrorMessage(err, "Failed to load facilities"));
     }
   }
 
@@ -130,46 +112,16 @@ export default function Dashboard() {
   }, [params]);
 
   useEffect(() => {
-    loadUserInfo();
     void loadFacilities();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const formatFacility = (u: UserInfo) => {
-    if (u.facility_name) {
-      const suffix = u.facility_type === "hospital" ? "Hos" : "PHC";
-      return `${u.facility_name} (${suffix})`;
-    }
-    return "Healthcare Provider";
-  };
-
-  async function loadUserInfo() {
-    const cached = userStore.get() as UserInfo | null;
-    if (cached) {
-      setUserName(cached.full_name || cached.username);
-      setFacilityLabel(formatFacility(cached));
-      setUserFacilityName(cached.facility_name ?? null);
-
-      return;
-    }
-    try {
-      const resp = await api.get<UserInfo>("/auth/me");
-      userStore.set(resp.data);
-      setUserName(resp.data.full_name || resp.data.username);
-      setFacilityLabel(formatFacility(resp.data));
-      setUserFacilityName(resp.data.facility_name ?? null);
-    } catch (err) {
-      console.error("Failed to load user info", err);
-    }
-  }
 
   const getStatusChip = (
     status: ReferralOut["status"],
     ref?: ReferralOut | null,
-  ) => {
-    const userFacility = userFacilityName;
-
-    const isSender = ref && userFacility && ref.from_facility === userFacility;
+  ): { color: ChipColor; label: string } => {
+    const isSender = Boolean(
+      ref && facilityMatches(ref.from_facility, userFacilityName),
+    );
 
     switch (status) {
       case "submitted":
@@ -190,7 +142,7 @@ export default function Dashboard() {
         return { color: "default", label: "Closed Case" };
 
       case "cancelled":
-        return { color: "success", label: "Admitted Case" };
+        return { color: "error", label: "Cancelled" };
 
       default:
         return { color: "default", label: status };
@@ -247,7 +199,9 @@ export default function Dashboard() {
                   select
                   label="Status"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  onChange={(e) =>
+                    setStatusFilter(e.target.value as StatusFilter)
+                  }
                   fullWidth
                   size="small"
                   helperText="Filter by status"
@@ -378,7 +332,7 @@ export default function Dashboard() {
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {statusFilter
-                  ? `Status: ${statusFilter === "to_here" ? "Referred to Here" : statusFilter === "from_here" ? "Referred from Here" : statusFilter === "admitted" ? "Admitted Case" : "Closed Case"}`
+                  ? `Status: ${STATUS_FILTER_LABELS[statusFilter]}`
                   : "All statuses"}
               </Typography>
             </Stack>
@@ -402,7 +356,7 @@ export default function Dashboard() {
             ) : (
               <Stack spacing={1.25}>
                 {referrals.map((referral) => {
-                  const chip = getStatusChip(referral.status);
+                  const chip = getStatusChip(referral.status, referral);
                   return (
                     <Card
                       key={referral.id}
@@ -465,13 +419,8 @@ export default function Dashboard() {
                           </Stack>
 
                           <Chip
-                            label={
-                              getStatusChip(referral.status, referral).label
-                            }
-                            color={
-                              getStatusChip(referral.status, referral)
-                                .color as any
-                            }
+                            label={chip.label}
+                            color={chip.color}
                             variant="outlined"
                           />
                         </Stack>

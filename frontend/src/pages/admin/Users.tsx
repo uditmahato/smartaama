@@ -1,100 +1,100 @@
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
-import { api } from "../../services/api";
+import { Alert, Box, Button, Chip, Snackbar } from "@mui/material";
 import {
-  Box,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Typography,
-  Stack,
-} from "@mui/material";
+  deleteUser,
+  fetchAdminUsers,
+  getErrorMessage,
+  type UserOut,
+} from "../../services/api";
+import { useUser } from "../../hooks/useUser";
 import Navbar, { navLinks } from "../../components/Navbar";
-
-type User = {
-  id: string;
-  username: string;
-  role: string;
-  is_active: boolean;
-  is_approved: boolean;
-  facility_type: string | null;
-  id_card_image_path?: string; // path from backend
-};
+import IdCardDialog from "../../components/IdCardDialog";
 
 export default function Users() {
-  const [rows, setRows] = useState<User[]>([]);
+  const { user: me } = useUser();
+  const [rows, setRows] = useState<UserOut[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openImage, setOpenImage] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [idCardUserId, setIdCardUserId] = useState<string | null>(null);
 
   // Load users from backend
   async function load() {
     setLoading(true);
+    setError(null);
     try {
-      const res = await api.get("/admin/users");
-      setRows(res.data);
+      setRows(await fetchAdminUsers());
     } catch (err) {
-      console.error(err);
+      setError(getErrorMessage(err, "Failed to load users"));
     } finally {
       setLoading(false);
     }
   }
 
-  // Delete user
-  async function remove(id: string) {
-    if (!confirm("Delete this user?")) return;
-    await api.delete(`/admin/users/${id}`);
-    load();
+  // Delete (soft-delete) user
+  async function remove(target: UserOut) {
+    if (
+      !window.confirm(
+        `Deactivate user "${target.username}"? They will no longer be able to sign in.`,
+      )
+    )
+      return;
+    setBusyId(target.id);
+    setError(null);
+    try {
+      await deleteUser(target.id);
+      setNotice(`User "${target.username}" deactivated.`);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to delete user"));
+    } finally {
+      setBusyId(null);
+    }
   }
-
-  // Open dialog with image
-  const handleOpenImage = (imagePath?: string) => {
-    if (!imagePath) return;
-
-    // Build full URL from env variable
-    const fullUrl = imagePath.startsWith("http")
-      ? imagePath
-      : //@ts-ignore
-        `${import.meta.env.VITE_UPLOADS_BASE_URL}/${encodeURIComponent(imagePath)}`;
-
-    setSelectedImage(fullUrl);
-    setOpenImage(true);
-  };
-
-  const handleCloseImage = () => {
-    setOpenImage(false);
-    setSelectedImage("");
-  };
 
   useEffect(() => {
     load();
   }, []);
 
   // Define table columns
-  const columns: GridColDef[] = [
+  const columns: GridColDef<UserOut>[] = [
     { field: "username", headerName: "Username", flex: 1 },
     { field: "email", headerName: "Email", flex: 1 },
-    { field: "role", headerName: "Role", width: 140 },
-    { field: "facility_type", headerName: "Facility", width: 120 },
-    { field: "facility_name", headerName: "Facility Name", width: 120 },
-    //nmc
-    { field: "nmc_number", headerName: "NMC Number", flex: 1 },
+    { field: "full_name", headerName: "Name", flex: 1 },
+    { field: "role", headerName: "Role", width: 120 },
+    { field: "facility_type", headerName: "Facility", width: 110 },
+    { field: "facility_name", headerName: "Facility Name", flex: 1 },
+    { field: "nmc_number", headerName: "NMC Number", width: 130 },
+    {
+      field: "is_approved",
+      headerName: "Status",
+      width: 120,
+      renderCell: (params) =>
+        params.row.is_approved ? (
+          <Chip label="Approved" color="success" size="small" />
+        ) : (
+          <Chip label="Pending" color="warning" size="small" />
+        ),
+    },
     {
       field: "id_card",
       headerName: "ID Card",
-      width: 120,
+      width: 110,
       sortable: false,
-      renderCell: (params) => (
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={() => handleOpenImage(params.row.id_card_image_path)}
-          disabled={!params.row.id_card_image_path} // disable if no image
-        >
-          View
-        </Button>
-      ),
+      renderCell: (params) =>
+        params.row.has_id_card ? (
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => setIdCardUserId(params.row.id)}
+          >
+            View
+          </Button>
+        ) : (
+          <span style={{ color: "rgba(0,0,0,0.38)" }}>None</span>
+        ),
     },
     {
       field: "actions",
@@ -106,7 +106,8 @@ export default function Users() {
           color="error"
           size="small"
           variant="contained"
-          onClick={() => remove(params.row.id)}
+          onClick={() => remove(params.row)}
+          disabled={busyId === params.row.id || params.row.id === me?.id}
         >
           Delete
         </Button>
@@ -118,9 +119,15 @@ export default function Users() {
     <Box sx={{ minHeight: "100vh", bgcolor: "#F6F7FB", py: 3, px: 2 }}>
       <Navbar
         title="Users"
-        subtitle="Manage users and their roles"
+        subtitle="Approved users — deactivate accounts or view ID cards"
         links={navLinks}
       />
+
+      {error && (
+        <Alert severity="error" sx={{ mt: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
       <div style={{ height: 600, padding: 3 }}>
         <DataGrid
@@ -132,26 +139,17 @@ export default function Users() {
         />
       </div>
 
-      {/* Dialog to show ID card */}
-      <Dialog
-        open={openImage}
-        onClose={handleCloseImage}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>ID Card</DialogTitle>
-        <DialogContent>
-          {selectedImage ? (
-            <img
-              src={selectedImage}
-              alt="ID Card"
-              style={{ width: "100%", height: "auto" }}
-            />
-          ) : (
-            <Typography>No image available</Typography>
-          )}
-        </DialogContent>
-      </Dialog>
+      <IdCardDialog
+        userId={idCardUserId}
+        onClose={() => setIdCardUserId(null)}
+      />
+
+      <Snackbar
+        open={Boolean(notice)}
+        autoHideDuration={4000}
+        onClose={() => setNotice(null)}
+        message={notice ?? ""}
+      />
     </Box>
   );
 }

@@ -1,5 +1,5 @@
 // frontend/src/pages/PatientProfile.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
@@ -30,7 +30,17 @@ import {
   ExpandLess as ExpandLessIcon,
 } from "@mui/icons-material";
 import Drawer from "@mui/material/Drawer";
-import { api } from "../services/api";
+import {
+  api,
+  facilityMatches,
+  fetchAdvisoryAnalysis,
+  getErrorMessage,
+  isForbidden,
+  isNotFound,
+  type AdvisoryAnalysis,
+  type ReferralOut,
+} from "../services/api";
+import { useUser } from "../hooks/useUser";
 import AIPatientSummary from "../components/AIPatientSummary";
 import AIReferralRecommendation from "../components/AIReferralRecommendation";
 
@@ -51,7 +61,19 @@ type PatientOut = {
   municipality?: string | null;
   ward?: string | null;
   address_line?: string | null;
+  registered_facility_name?: string | null;
+  registered_facility_type?: string | null;
   created_at: string;
+};
+
+/** Structured event value as stored by the backend (`{type, value, unit, ...}`). */
+type EventValue = {
+  type?: string;
+  value?: unknown;
+  unit?: string | null;
+  display?: string | null;
+  code?: string | null;
+  [key: string]: unknown;
 };
 
 type ClinicalEventOut = {
@@ -61,7 +83,7 @@ type ClinicalEventOut = {
   event_time: string;
   section: string;
   factor: string;
-  value: Record<string, any>;
+  value: EventValue | null;
   note?: string | null;
   referral_id?: string | null;
   created_at: string;
@@ -81,14 +103,22 @@ type SectionSchema = {
   fields: FieldDefinition[];
 };
 
-function formatValue(v: any): string {
+function pickLabel(obj: Record<string, unknown>): string | null {
+  for (const key of ["display", "name", "label"]) {
+    const v = obj[key];
+    if (typeof v === "string" && v) return v;
+  }
+  return null;
+}
+
+function formatValue(v: EventValue | null | undefined): string {
   if (!v) return "-";
   const t = v.type;
   const val = v.value;
 
   const unit = v.unit ? ` ${v.unit}` : "";
 
-  if (t === "boolean") return Boolean(val) ? "Yes" : "No";
+  if (t === "boolean") return val ? "Yes" : "No";
   if (t === "enum") return v.display ?? humanizeLabel(String(val));
   if (t === "code")
     return v.display
@@ -107,7 +137,7 @@ function formatValue(v: any): string {
           if (typeof item === "object" && item !== null) {
             // For objects in array, try to extract meaningful value
             return (
-              item.display || item.name || item.label || JSON.stringify(item)
+              pickLabel(item as Record<string, unknown>) ?? JSON.stringify(item)
             );
           }
           return String(item);
@@ -115,14 +145,17 @@ function formatValue(v: any): string {
         .join(", ");
     }
     // For regular objects, try to extract meaningful properties
-    if (val.display) return val.display;
-    if (val.name) return val.name;
-    if (val.label) return val.label;
-    if (val.value) return String(val.value);
+    const obj = val as Record<string, unknown>;
+    const label = pickLabel(obj);
+    if (label) return label;
+    if (obj.value !== undefined && obj.value !== null && obj.value !== "")
+      return String(obj.value);
     // Format as readable key-value pairs
-    const entries = Object.entries(val).slice(0, 5); // Limit to 5 entries
+    const entries = Object.entries(obj).slice(0, 5); // Limit to 5 entries
     if (entries.length === 0) return "-";
-    return entries.map(([k, v]) => `${humanizeLabel(k)}: ${v}`).join(", ");
+    return entries
+      .map(([k, item]) => `${humanizeLabel(k)}: ${String(item)}`)
+      .join(", ");
   }
   return `${val ?? "-"}${unit}`;
 }
@@ -138,16 +171,24 @@ function humanizeLabel(input: string): string {
 function PatientProfile() {
   const { patientId } = useParams();
   const navigate = useNavigate();
+  const { user } = useUser();
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accessDenied, setAccessDenied] = useState<
+    "forbidden" | "not_found" | null
+  >(null);
 
   const [patient, setPatient] = useState<PatientOut | null>(null);
   const [events, setEvents] = useState<ClinicalEventOut[]>([]);
-  const [referrals, setReferrals] = useState<any[]>([]);
-  const [userFacility, setUserFacility] = useState<string | null>(null);
-  const [canEdit, setCanEdit] = useState<boolean>(true); // Default to true, will be calculated
+  const [referrals, setReferrals] = useState<ReferralOut[]>([]);
   const [schemas, setSchemas] = useState<Record<string, SectionSchema>>({});
+
+  // Advisory (rule-based) analysis: fetched ONCE here and shared by both cards.
+  const [analysis, setAnalysis] = useState<AdvisoryAnalysis | null>(null);
+  const [analysisLoading, setAnalysisLoading] = useState(true);
+  const [analysisRegenerating, setAnalysisRegenerating] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [notesDrawer, setNotesDrawer] = useState<boolean>(false);
   const [referralsDrawer, setReferralsDrawer] = useState<boolean>(false);
   const [expandedSections, setExpandedSections] = useState<
@@ -170,55 +211,69 @@ function PatientProfile() {
     setExpandedSections(newState);
   };
 
+  const loadAnalysis = useCallback(
+    async (force = false) => {
+      if (!patientId) return;
+      if (force) setAnalysisRegenerating(true);
+      else setAnalysisLoading(true);
+      setAnalysisError(null);
+      try {
+        const data = await fetchAdvisoryAnalysis(patientId, {
+          forceRegenerate: force,
+        });
+        setAnalysis(data);
+      } catch (err) {
+        if (isNotFound(err)) {
+          // Nothing stored yet and the caller may not generate (e.g. viewer): empty state, not an error.
+          setAnalysis(null);
+        } else {
+          setAnalysisError(
+            getErrorMessage(err, "Failed to load advisory analysis"),
+          );
+        }
+      } finally {
+        setAnalysisLoading(false);
+        setAnalysisRegenerating(false);
+      }
+    },
+    [patientId],
+  );
+
   async function load() {
     if (!patientId) return;
     setBusy(true);
     setError(null);
+    setAccessDenied(null);
     try {
-      // Load user facility info
-      const userResp = await api.get<any>("/auth/me");
-      const userFacilityName = userResp.data.facility_name;
-      setUserFacility(userFacilityName);
-
+      // Patient first: a 403/404 here means there's nothing else to show.
       const p = await api.get<PatientOut>(`/patients/${patientId}`);
       setPatient(p.data);
 
-      const e = await api.get<ClinicalEventOut[]>(`/events`, {
-        params: { patient_id: patientId, limit: 1000, offset: 0 },
-      });
+      const [e, r, sectionsResponse] = await Promise.all([
+        api.get<ClinicalEventOut[]>(`/events`, {
+          params: { patient_id: patientId, limit: 1000, offset: 0 },
+        }),
+        api.get<ReferralOut[]>(`/referrals`, {
+          params: { patient_id: patientId, limit: 100 },
+        }),
+        api.get<SectionSchema[]>("/schema/sections?updates_only=true"),
+      ]);
       setEvents(e.data);
-
-      // Load referrals for this patient
-      const r = await api.get<any[]>(`/referrals`, {
-        params: { patient_id: patientId, limit: 100 },
-      });
       setReferrals(r.data);
 
-      // Determine if user can edit: only if user is from the referring facility
-      // Check if there's any referral where this facility is the receiver (to_facility)
-      const isReceivingFacility = r.data.some(
-        (ref: any) => ref.to_facility === userFacilityName,
-      );
-      const isReferringFacility = r.data.some(
-        (ref: any) => ref.from_facility === userFacilityName,
-      );
-
-      // Can edit only if they are the referring facility, or if no referrals exist
-      setCanEdit(
-        !isReceivingFacility || isReferringFacility || r.data.length === 0,
-      );
-
-      // Load schemas for sections
-      const sectionsResponse = await api.get(
-        "/schema/sections?updates_only=true",
-      );
       const schemasMap: Record<string, SectionSchema> = {};
       for (const section of sectionsResponse.data) {
         schemasMap[section.section_key] = section;
       }
       setSchemas(schemasMap);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Failed to load patient");
+    } catch (err) {
+      if (isForbidden(err)) {
+        setAccessDenied("forbidden");
+      } else if (isNotFound(err)) {
+        setAccessDenied("not_found");
+      } else {
+        setError(getErrorMessage(err, "Failed to load patient"));
+      }
     } finally {
       setBusy(false);
     }
@@ -226,8 +281,36 @@ function PatientProfile() {
 
   useEffect(() => {
     load();
+    void loadAnalysis(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId]);
+
+  // UX-only edit gate (the backend enforces authorization). Defaults to
+  // read-only until user + patient + referrals are known, so it never
+  // silently fails open while loading.
+  const canEdit = useMemo(() => {
+    if (!user || !patient) return false;
+    if (user.role === "viewer") return false;
+    if (user.role === "admin") return true;
+    const mine = user.facility_name;
+    if (!mine) return false;
+    const isRegisteredHere = facilityMatches(
+      patient.registered_facility_name,
+      mine,
+    );
+    const isReferring = referrals.some((ref) =>
+      facilityMatches(ref.from_facility, mine),
+    );
+    const isReceiving = referrals.some((ref) =>
+      facilityMatches(ref.to_facility, mine),
+    );
+    if (isRegisteredHere || isReferring) return true;
+    if (isReceiving) return false;
+    return referrals.length === 0;
+  }, [user, patient, referrals]);
+
+  // Advisory (re)generation is a clinical write on the backend: viewers may only read a stored analysis.
+  const canRegenerateAdvisory = Boolean(user && user.role !== "viewer");
 
   const sections = useMemo(() => {
     const s = new Set<string>();
@@ -344,11 +427,62 @@ function PatientProfile() {
   }, [sortedEvents]);
 
   const referralList = useMemo(() => {
-    return referrals.sort(
+    return [...referrals].sort(
       (a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
   }, [referrals]);
+
+  if (accessDenied) {
+    return (
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "#F6F7FB",
+          py: { xs: 2, md: 3 },
+          px: { xs: 0.5, sm: 1, md: 1.5 },
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+      >
+        <Card
+          sx={{
+            borderRadius: 3,
+            border: "1px solid rgba(15, 23, 42, 0.10)",
+            boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+            <Stack spacing={2} alignItems="flex-start">
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 800, color: "#0F172A" }}
+              >
+                {accessDenied === "forbidden"
+                  ? "No access to this patient"
+                  : "Patient not found"}
+              </Typography>
+              <Alert
+                severity={accessDenied === "forbidden" ? "warning" : "info"}
+                sx={{ width: "100%" }}
+              >
+                {accessDenied === "forbidden"
+                  ? "You don't have access to this patient. Records are visible to the registering facility, facilities involved in a referral for the patient, and administrators."
+                  : "This patient record could not be found."}
+              </Alert>
+              <Button
+                variant="contained"
+                onClick={() => navigate("/patients")}
+                sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2 }}
+              >
+                Back to patients
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -467,9 +601,11 @@ function PatientProfile() {
               <CardContent sx={{ p: { xs: 2.5, md: 3.5 }, bgcolor: "white" }}>
                 <Alert severity="info" sx={{ borderRadius: 2 }}>
                   <strong>Read-Only Access:</strong> You are viewing this
-                  patient's record as a receiving facility. You can view all
-                  information and update referral status, but cannot edit
-                  patient vitals or medical records.
+                  patient's record in read-only mode (for example as a
+                  receiving facility or a viewer). You can view all information
+                  and, if your facility is party to a referral, update its
+                  status — but you cannot edit patient details or medical
+                  records here.
                 </Alert>
               </CardContent>
             )}
@@ -641,7 +777,7 @@ function PatientProfile() {
           </CardContent>
         </Card>
 
-        {/* AI Summary Section */}
+        {/* Advisory Summary Section (rule-based) */}
         <Card
           sx={{
             borderRadius: 3,
@@ -652,11 +788,18 @@ function PatientProfile() {
           }}
         >
           <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
-            <AIPatientSummary patientId={patientId!} />
+            <AIPatientSummary
+              analysis={analysis}
+              loading={analysisLoading}
+              regenerating={analysisRegenerating}
+              error={analysisError}
+              canRegenerate={canRegenerateAdvisory}
+              onRefresh={(force) => void loadAnalysis(Boolean(force))}
+            />
           </CardContent>
         </Card>
 
-        {/* AI Referral Recommendation Section */}
+        {/* Referral Advisory Section (rule-based) */}
         <Card
           sx={{
             borderRadius: 3,
@@ -667,7 +810,14 @@ function PatientProfile() {
           }}
         >
           <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
-            <AIReferralRecommendation patientId={patientId!} />
+            <AIReferralRecommendation
+              analysis={analysis}
+              loading={analysisLoading}
+              regenerating={analysisRegenerating}
+              error={analysisError}
+              canRegenerate={canRegenerateAdvisory}
+              onRefresh={(force) => void loadAnalysis(Boolean(force))}
+            />
           </CardContent>
         </Card>
 
@@ -1056,8 +1206,8 @@ function PatientProfile() {
                                 : ref.status === "closed"
                                   ? "Closed Case"
                                   : ref.status === "cancelled"
-                                    ? "Admitted Case"
-                                    : "Closed Case"
+                                    ? "Cancelled"
+                                    : ref.status
                           }
                           size="small"
                           color={
@@ -1068,7 +1218,7 @@ function PatientProfile() {
                                 : ref.status === "closed"
                                   ? "default"
                                   : ref.status === "cancelled"
-                                    ? "success"
+                                    ? "error"
                                     : "default"
                           }
                         />

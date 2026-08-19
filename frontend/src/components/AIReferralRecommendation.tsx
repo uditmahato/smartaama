@@ -1,5 +1,6 @@
-// Simplified AI Referral Recommendation Component
-import { useEffect, useState } from "react";
+// frontend/src/components/AIReferralRecommendation.tsx
+// Advisory (rule-based) referral recommendation card. Data is fetched once by
+// the parent (PatientProfile) and passed down; this component only renders it.
 import {
   Alert,
   Box,
@@ -18,80 +19,17 @@ import {
   ThumbUp as ThumbUpIcon,
   ThumbDown as ThumbDownIcon,
 } from "@mui/icons-material";
-import { api } from "../services/api";
-
-interface AIReferralRecommendationProps {
-  patientId: string;
-}
-
-interface DetectedRisk {
-  name: string;
-  weight: number;
-  value: string;
-}
-
-interface RiskFactors {
-  detected_risks?: DetectedRisk[];
-  confidence_calculation?: string;
-  data_points_analyzed?: number;
-}
-
-interface ReferralRecommendation {
-  referral_needed: boolean;
-  urgency: string;
-  confidence: number;
-  reasons: string[];
-  risk_factors: RiskFactors;
-  clinical_indicators: any;
-}
-
-interface AIAnalysisResponse {
-  patient_id: string;
-  referral_recommendation?: ReferralRecommendation;
-  last_analyzed_at: string;
-  data_version: number;
-  model_used?: string;
-}
+import type { DetectedRisk } from "../services/types";
+import { ADVISORY_DISCLAIMER, type AdvisoryCardProps } from "./AIPatientSummary";
 
 function AIReferralRecommendation({
-  patientId,
-}: AIReferralRecommendationProps) {
-  const [analysis, setAnalysis] = useState<AIAnalysisResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [regenerating, setRegenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchAnalysis = async (forceRegenerate = false) => {
-    try {
-      if (forceRegenerate) {
-        setRegenerating(true);
-      } else {
-        setLoading(true);
-      }
-
-      const params = new URLSearchParams({
-        auto_generate: "true",
-        ...(forceRegenerate && { force_regenerate: "true" }),
-      });
-
-      const response = await api.get(
-        `/ai-analysis/patients/${patientId}/analysis?${params}`,
-      );
-      setAnalysis(response.data);
-      setError(null);
-    } catch (err: any) {
-      console.error("Failed to fetch AI analysis:", err);
-      setError(err.response?.data?.detail || "Failed to load AI analysis");
-    } finally {
-      setLoading(false);
-      setRegenerating(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAnalysis();
-  }, [patientId]);
-
+  analysis,
+  loading,
+  regenerating,
+  error,
+  onRefresh,
+  canRegenerate = true,
+}: AdvisoryCardProps) {
   const getUrgencyColor = (urgency: string) => {
     switch (urgency.toLowerCase()) {
       case "critical":
@@ -105,10 +43,12 @@ function AIReferralRecommendation({
     }
   };
 
-  const getConfidenceLabel = (confidence: number) => {
-    if (confidence >= 0.8) return "High Confidence";
-    if (confidence >= 0.6) return "Moderate Confidence";
-    return "Low Confidence";
+  // `confidence` is the capped sum of triggered rule weights (a transparency score), not a probability.
+  const getScoreLabel = (score: number) => {
+    if (score >= 0.8) return "Many / severe findings";
+    if (score >= 0.6) return "Several findings";
+    if (score > 0) return "Few findings";
+    return "No findings";
   };
 
   if (loading && !regenerating) {
@@ -116,7 +56,7 @@ function AIReferralRecommendation({
       <Stack alignItems="center" spacing={2} sx={{ py: 4 }}>
         <CircularProgress sx={{ color: "white" }} />
         <Typography variant="body2" sx={{ opacity: 0.9 }}>
-          Analyzing referral needs...
+          Evaluating referral rules...
         </Typography>
       </Stack>
     );
@@ -139,7 +79,7 @@ function AIReferralRecommendation({
         severity="info"
         sx={{ bgcolor: "rgba(255,255,255,0.15)", color: "white" }}
       >
-        No referral recommendation available yet.
+        No referral advisory available yet.
       </Alert>
     );
   }
@@ -187,7 +127,7 @@ function AIReferralRecommendation({
                   letterSpacing: "-0.5px",
                 }}
               >
-                Referral Decision
+                Referral Advisory (rule-based)
               </Typography>
               <Typography
                 variant="body2"
@@ -197,30 +137,34 @@ function AIReferralRecommendation({
                   mt: 0.5,
                 }}
               >
-                Based on clinical data analysis
+                Rule-based advisory derived from the recorded clinical data
               </Typography>
             </Box>
           </Stack>
-          <Tooltip title="Regenerate recommendation">
-            <IconButton
-              size="small"
-              onClick={() => fetchAnalysis(true)}
-              disabled={regenerating}
-              sx={{
-                color: "white",
-                bgcolor: "rgba(255, 255, 255, 0.1)",
-                "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 0.2)",
-                },
-              }}
-            >
-              {regenerating ? (
-                <CircularProgress size={18} sx={{ color: "white" }} />
-              ) : (
-                <RefreshIcon fontSize="small" />
-              )}
-            </IconButton>
-          </Tooltip>
+          {canRegenerate && (
+            <Tooltip title="Regenerate referral advisory">
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={() => onRefresh(true)}
+                  disabled={regenerating}
+                  sx={{
+                    color: "white",
+                    bgcolor: "rgba(255, 255, 255, 0.1)",
+                    "&:hover": {
+                      bgcolor: "rgba(255, 255, 255, 0.2)",
+                    },
+                  }}
+                >
+                  {regenerating ? (
+                    <CircularProgress size={18} sx={{ color: "white" }} />
+                  ) : (
+                    <RefreshIcon fontSize="small" />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
         </Stack>
       </Box>
 
@@ -262,14 +206,16 @@ function AIReferralRecommendation({
                 mb: 0.5,
               }}
             >
-              {rec.referral_needed ? "Referral Needed" : "No Referral Needed"}
+              {rec.referral_needed
+                ? "Referral Suggested"
+                : "No Referral Suggested"}
             </Typography>
             <Typography
               variant="body1"
               sx={{ color: "#7f8c8d", fontSize: "1rem" }}
             >
-              Confidence: {Math.round(rec.confidence * 100)}% •{" "}
-              {getConfidenceLabel(rec.confidence)}
+              Referral score: {Math.round(rec.confidence * 100)}% •{" "}
+              {getScoreLabel(rec.confidence)}
             </Typography>
           </Box>
           <Chip
@@ -279,17 +225,17 @@ function AIReferralRecommendation({
           />
         </Stack>
 
-        {/* Confidence Bar */}
+        {/* Referral score bar (sum of rule weights, capped) */}
         <Box sx={{ mt: 3, p: 2, bgcolor: "#f8f9fa", borderRadius: 2 }}>
           <LinearProgress
             variant="determinate"
-            value={rec.confidence * 100}
+            value={Math.max(0, Math.min(100, rec.confidence * 100))}
             sx={{
               height: 8,
               borderRadius: 4,
               bgcolor: "#e9ecef",
               "& .MuiLinearProgress-bar": {
-                bgcolor: "linear-gradient(90deg, #e91e63, #ad1457)",
+                background: "linear-gradient(90deg, #e91e63, #ad1457)",
                 borderRadius: 4,
               },
             }}
@@ -415,7 +361,7 @@ function AIReferralRecommendation({
               sx={{ color: "#2c3e50", textAlign: "center" }}
             >
               {rec.confidence > 0
-                ? "Analysis based on clinical data review"
+                ? "Advisory based on rule checks over the recorded clinical data"
                 : "No specific risk factors detected"}
             </Typography>
           </Box>
@@ -446,7 +392,7 @@ function AIReferralRecommendation({
             </Typography>
             {analysis.model_used && (
               <Chip
-                label={`AI: ${analysis.model_used}`}
+                label={`Engine: ${analysis.model_used}`}
                 size="small"
                 sx={{
                   bgcolor: "rgba(255, 255, 255, 0.2)",
@@ -456,6 +402,17 @@ function AIReferralRecommendation({
               />
             )}
           </Stack>
+          <Typography
+            variant="caption"
+            sx={{
+              display: "block",
+              mt: 1.5,
+              color: "rgba(255, 255, 255, 0.85)",
+              lineHeight: 1.5,
+            }}
+          >
+            {ADVISORY_DISCLAIMER}
+          </Typography>
         </Box>
       </Box>
     </Box>

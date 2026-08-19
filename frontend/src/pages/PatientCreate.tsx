@@ -4,7 +4,6 @@ import {
   Alert,
   Box,
   Button,
-  Card,
   CardContent,
   CircularProgress,
   FormControlLabel,
@@ -16,7 +15,7 @@ import {
   Checkbox,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { api } from "../services/api";
+import { api, getErrorMessage } from "../services/api";
 import Navbar, { navLinks } from "../components/Navbar";
 
 type PatientCreate = {
@@ -143,8 +142,8 @@ export default function PatientCreate() {
       const resp = await api.post<PatientOut>("/patients", payload);
       setSuccess("Patient created successfully");
       navigate(`/patients/${resp.data.id}`);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Create patient failed");
+    } catch (err) {
+      setError(getErrorMessage(err, "Create patient failed"));
     } finally {
       setBusy(false);
     }
