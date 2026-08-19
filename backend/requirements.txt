@@ -1,18 +1,21 @@
-fastapi
-uvicorn
-sqlalchemy
-psycopg2-binary
-alembic
-pydantic
-python-jose
+# SmartAama backend — runtime dependencies (Python 3.11+, verified on 3.13)
+# Install:  pip install -r requirements.txt
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
+sqlalchemy>=2.0,<3.0
+alembic>=1.13,<2.0
+psycopg2-binary>=2.9,<3.0
+pydantic>=2.7,<3.0
+pydantic-settings>=2.3,<3.0
+python-jose[cryptography]>=3.3,<4.0
+# passlib 1.7.4 + bcrypt 3.2.2 is the known-good pair on Python 3.13:
+# bcrypt>=4 removed the `__about__` attribute passlib probes and passlib
+# 1.7.4 is the last release, so newer bcrypt logs errors / can fail hashing.
 passlib[bcrypt]==1.7.4
 bcrypt==3.2.2
-python-dotenv
-langchain
-qdrant-client
-sentence-transformers
-celery
-redis
-pydantic-settings
-python-multipart
-openai
+python-dotenv>=1.0,<2.0
+python-multipart>=0.0.9,<1.0
+
+# test (only needed to run `pytest`; kept here so one install covers dev + CI)
+pytest>=8.0,<10.0
+httpx>=0.27,<1.0

@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class PatientBase(BaseModel):
@@ -53,8 +53,24 @@ class PatientCreate(PatientBase):
     """
     Create a patient master record.
     Note: clinical data is not created here; use clinical events for clinical history.
+
+    `registered_facility_name` is normally derived from the creating user's facility and is
+    ignored for non-admin callers. Admins without a facility must supply it; it must name an
+    existing facility (400 "Unknown facility: X" otherwise). `registered_facility_type` is
+    accepted for backwards compatibility but the stored type always mirrors the facility's kind.
     """
-    pass
+    registered_facility_name: Optional[str] = Field(default=None, max_length=255)
+    registered_facility_type: Optional[str] = Field(default=None, max_length=32)
+
+    @field_validator("registered_facility_name", "registered_facility_type", mode="before")
+    @classmethod
+    def strip_facility(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, str):
+            v = " ".join(v.strip().split())
+            return v or None
+        return v
 
 
 class PatientUpdate(PatientBase):
@@ -62,9 +78,25 @@ class PatientUpdate(PatientBase):
     Patient updates should be rare and limited to demographics/identity corrections.
     If you want strict non-overwrite even for demographics, handle corrections as events
     instead and keep Patient immutable; for now, allow controlled updates via RBAC.
+
+    `registered_facility_name` may only be changed by admins (ignored for other roles) and must
+    name an existing facility (400 "Unknown facility: X" otherwise); the FK and the type snapshot
+    follow it. `registered_facility_type` on its own is ignored.
     """
     first_name: Optional[str] = Field(default=None, max_length=120)
     last_name: Optional[str] = Field(default=None, max_length=120)
+    registered_facility_name: Optional[str] = Field(default=None, max_length=255)
+    registered_facility_type: Optional[str] = Field(default=None, max_length=32)
+
+    @field_validator("registered_facility_name", "registered_facility_type", mode="before")
+    @classmethod
+    def strip_facility(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, str):
+            v = " ".join(v.strip().split())
+            return v or None
+        return v
 
 
 class PatientOut(BaseModel):
@@ -88,10 +120,17 @@ class PatientOut(BaseModel):
     district: Optional[str] = None
     province: Optional[str] = None
 
+    # Facility that registered the patient (drives facility-level access).
+    # `registered_facility_id` is the FK into /facilities (NULL only for legacy rows whose name
+    # matched no facility); name/type are display snapshots of that facility.
+    registered_facility_id: Optional[UUID] = None
+    registered_facility_name: Optional[str] = None
+    registered_facility_type: Optional[str] = None
+    created_by_user_id: Optional[UUID] = None
+
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PatientSearchParams(BaseModel):

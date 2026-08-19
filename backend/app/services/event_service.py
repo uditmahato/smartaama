@@ -20,6 +20,27 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def invalidate_ai_analysis(db: Session, patient_id: UUID) -> None:
+    """
+    Invalidate the stored advisory analysis for a patient (it is regenerated on next access).
+    Called on every clinical write path. Imported lazily to keep the AI service optional.
+    """
+    from app.services.ai_update_service import mark_ai_analysis_for_update
+
+    mark_ai_analysis_for_update(db, patient_id)
+
+
+def _validate_referral_link(db: Session, patient_id, referral_id) -> None:
+    """A referral tag on an event must belong to the same patient (prevents cross-patient linkage)."""
+    if referral_id is None:
+        return
+    from app.models.referral import Referral
+
+    ref = db.get(Referral, referral_id)
+    if not ref or ref.patient_id != patient_id:
+        raise ValueError("referral_id does not belong to this patient")
+
+
 class EventService:
     @staticmethod
     def create_event(
@@ -30,9 +51,14 @@ class EventService:
         ip: Optional[str] = None,
         user_agent: Optional[str] = None,
     ) -> ClinicalEvent:
+        """
+        Append one immutable clinical event. Callers are responsible for authorization
+        (patient access is checked in the endpoint via get_accessible_patient_or_404).
+        """
         patient = db.get(Patient, payload.patient_id)
         if not patient:
             raise ValueError("Patient not found")
+        _validate_referral_link(db, payload.patient_id, payload.referral_id)
 
         evt = ClinicalEvent(
             patient_id=payload.patient_id,
@@ -64,6 +90,8 @@ class EventService:
             )
         )
 
+        invalidate_ai_analysis(db, payload.patient_id)
+
         db.commit()
         db.refresh(evt)
         return evt
@@ -80,6 +108,7 @@ class EventService:
         patient = db.get(Patient, payload.patient_id)
         if not patient:
             raise ValueError("Patient not found")
+        _validate_referral_link(db, payload.patient_id, payload.referral_id)
 
         event_time = payload.event_time or _utcnow()
 
@@ -116,6 +145,8 @@ class EventService:
                 },
             )
         )
+
+        invalidate_ai_analysis(db, payload.patient_id)
 
         db.commit()
         for e in events:

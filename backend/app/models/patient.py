@@ -5,8 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import List, Optional
 
-from sqlalchemy import Integer, Index, String, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import ForeignKey, Integer, Index, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -50,6 +49,26 @@ class Patient(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     district: Mapped[Optional[str]] = mapped_column(String(128), nullable=True, index=True)
     province: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
 
+    # Facility that registered the patient (drives facility-level access control).
+    # `registered_facility_id` is the authoritative FK (id-first matching in app/core/authz.py);
+    # `registered_facility_name` / `_type` are display snapshots and the legacy fallback used
+    # only when the FK is NULL (rows created before revision 0002_facilities whose name did
+    # not match any facility). NULL id AND NULL name -> admin-only until an admin assigns one.
+    registered_facility_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("facilities.id", ondelete="SET NULL", name="fk_patients_registered_facility_id"),
+        nullable=True,
+        index=True,
+    )
+    registered_facility_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
+    registered_facility_type: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    created_by_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     # Relationships (defined as strings to avoid circular imports)
     clinical_events: Mapped[List["ClinicalEvent"]] = relationship(
         "ClinicalEvent",
@@ -64,6 +83,8 @@ class Patient(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+
+    registered_facility: Mapped[Optional["Facility"]] = relationship("Facility", lazy="select")
 
     ai_analysis: Mapped[Optional["AIPatientAnalysis"]] = relationship(
         "AIPatientAnalysis",

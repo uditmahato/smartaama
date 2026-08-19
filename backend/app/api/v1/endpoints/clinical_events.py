@@ -9,6 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.core.authz import get_accessible_patient_or_404
 from app.core.permissions import require_any_authenticated, require_clinician_or_admin
 from app.db.session import get_db
 from app.models.user import User
@@ -19,14 +20,19 @@ from app.schemas.clinical_event import (
     ClinicalEventQuery,
 )
 from app.services.event_service import EventService
+from app.core.rate_limit import normalize_client_ip
 
 router = APIRouter()
 
 
 def _client_ip(x_forwarded_for: Optional[str]) -> Optional[str]:
-    if not x_forwarded_for:
-        return None
-    return x_forwarded_for.split(",")[0].strip() or None
+    # Shared, length-bounded, validated helper (see app.core.rate_limit).
+    return normalize_client_ip(x_forwarded_for)
+
+
+def _value_error_status(exc: ValueError) -> int:
+    """Service ValueErrors: 'not found' -> 404, anything else (bad linkage, bad input) -> 400."""
+    return status.HTTP_404_NOT_FOUND if "not found" in str(exc).lower() else status.HTTP_400_BAD_REQUEST
 
 
 @router.post("", response_model=ClinicalEventOut, status_code=status.HTTP_201_CREATED)
@@ -37,6 +43,8 @@ def create_event(
     x_forwarded_for: Optional[str] = Header(default=None, alias="X-Forwarded-For"),
     user_agent: Optional[str] = Header(default=None, alias="User-Agent"),
 ) -> ClinicalEventOut:
+    # 404 if patient unknown, 403 if caller's facility has no access
+    get_accessible_patient_or_404(db, current_user, payload.patient_id)
     try:
         evt = EventService.create_event(
             db,
@@ -47,7 +55,7 @@ def create_event(
         )
         return evt
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=_value_error_status(e), detail=str(e))
 
 
 @router.post("/batch", response_model=List[ClinicalEventOut], status_code=status.HTTP_201_CREATED)
@@ -58,6 +66,7 @@ def create_events_batch(
     x_forwarded_for: Optional[str] = Header(default=None, alias="X-Forwarded-For"),
     user_agent: Optional[str] = Header(default=None, alias="User-Agent"),
 ) -> List[ClinicalEventOut]:
+    get_accessible_patient_or_404(db, current_user, payload.patient_id)
     try:
         events = EventService.create_events_batch(
             db,
@@ -68,7 +77,7 @@ def create_events_batch(
         )
         return events
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=_value_error_status(e), detail=str(e))
 
 
 @router.get("", response_model=List[ClinicalEventOut])
@@ -83,6 +92,7 @@ def query_events(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_any_authenticated),
 ) -> List[ClinicalEventOut]:
+    get_accessible_patient_or_404(db, current_user, patient_id)
     q = ClinicalEventQuery(
         patient_id=patient_id,
         section=section,

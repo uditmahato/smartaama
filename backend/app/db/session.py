@@ -2,38 +2,35 @@
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
 from typing import Generator
-
-from dotenv import load_dotenv
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
-# Load env early so DATABASE_URL is available during module import
-BASE_DIR = Path(__file__).resolve().parents[2]
-load_dotenv(BASE_DIR / ".env")
+# DATABASE_URL comes from ONE place: app.core.config.settings (which loads backend/.env).
+from app.core.config import settings
 
-
-def _require_database_url() -> str:
-    url = os.getenv("DATABASE_URL")
-    if not url:
-        raise RuntimeError(
-            "DATABASE_URL environment variable is not set. "
-            "Example: postgresql+psycopg2://user:pass@localhost:5432/smartaama"
-        )
-    return url
+DATABASE_URL: str = settings.DATABASE_URL
 
 
-DATABASE_URL = _require_database_url()
+def _is_sqlite_memory(url: str) -> bool:
+    return url in ("sqlite://", "sqlite:///", "sqlite:///:memory:") or ":memory:" in url
 
-engine: Engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    future=True,
-)
+
+def _engine_kwargs(url: str) -> dict:
+    kwargs: dict = {"pool_pre_ping": True, "future": True}
+    if url.startswith("sqlite"):
+        # SQLite (tests / quick local runs): allow use across threads (TestClient) and keep a
+        # single connection for in-memory DBs so all sessions see the same schema.
+        kwargs["connect_args"] = {"check_same_thread": False}
+        if _is_sqlite_memory(url):
+            kwargs["poolclass"] = StaticPool
+    return kwargs
+
+
+engine: Engine = create_engine(DATABASE_URL, **_engine_kwargs(DATABASE_URL))
 
 SessionLocal = sessionmaker(
     bind=engine,

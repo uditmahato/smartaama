@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any
 
-from sqlalchemy import DateTime
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import JSON, DateTime, Uuid
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -16,21 +15,29 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
-# Export utcnow for use in other models
-__all__ = ['Base', 'UUIDPrimaryKeyMixin', 'TimestampMixin', 'utcnow']
+# Dialect-portable column types (PostgreSQL in production, SQLite in tests):
+# - Uuid: SQLAlchemy 2.x generic UUID (native `uuid` on PG, CHAR(32) elsewhere)
+# - JSONVariant: JSONB on PostgreSQL, plain JSON everywhere else
+UUIDType = Uuid(as_uuid=True)
+JSONVariant = JSON().with_variant(JSONB(), "postgresql")
+
+
+# Export for use in other models
+__all__ = ["Base", "UUIDPrimaryKeyMixin", "TimestampMixin", "utcnow", "UUIDType", "JSONVariant"]
 
 
 class Base(DeclarativeBase):
     """Root SQLAlchemy Declarative Base for all ORM models."""
     type_annotation_map = {
         datetime: DateTime(timezone=True),
+        uuid.UUID: Uuid(as_uuid=True),
     }
 
 
 class UUIDPrimaryKeyMixin:
     """Provides a UUID primary key named `id`."""
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+        Uuid(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
         index=True,
