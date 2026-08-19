@@ -2,7 +2,16 @@
 __pycache__/
 *.pyc
 .env
+.env.*
+!.env.example
 venv/
+.venv/
+.pytest_cache/
+*.db
+
+# Backend uploads (private ID cards) — never commit
+backend/uploads/
+uploads/
 
 # Node
 node_modules/
@@ -16,6 +25,8 @@ Thumbs.db
 # Logs
 *.log
 
-alembic.ini
-alembic/
-uploads/
+# Playwright end-to-end tests (frontend/e2e) — throw-away backend state + reports
+e2e_smartaama.db*
+e2e_uploads/
+playwright-report/
+test-results/
