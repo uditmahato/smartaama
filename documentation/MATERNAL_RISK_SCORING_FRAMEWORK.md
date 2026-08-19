@@ -1,9 +1,29 @@
-# Maternal Health Risk Scoring Framework
+# Maternal Health Risk Scoring Framework (design reference)
 
-## Overview
-The AI referral confidence is now calculated based on **10 major maternal health risk factors**, each weighted at **10%** (total 100%).
+> **STATUS: DESIGN REFERENCE — NOT IMPLEMENTED IN CODE.**
+>
+> The 10-factor / 10%-each scoring scheme described below is a clinical design
+> proposal. It is **not** what the backend runs. The former `MATERNAL_RISK_FACTORS`
+> constant that mirrored this table was never wired into any scoring and has been
+> removed from `app/services/ai_patient_service.py`.
+>
+> What the application actually implements is a smaller, deterministic
+> **rule-based advisory engine** (`backend/app/services/advisory_rules.py`) that
+> evaluates the latest recorded vitals, investigations, ANC symptom booleans and
+> a few history fields against fixed thresholds. Its inputs, thresholds, weights,
+> risk levels (`unknown | low | medium | high | critical`), urgency
+> (`low | medium | high | critical`) and referral logic are documented in
+> **`documentation/AI_FEATURES_README.md`**. No LLM/RAG is used.
+>
+> The clinical content below is kept as domain reference for a possible future
+> implementation. Wiring it would require most of the listed sub-factors to be
+> captured as structured fields first (many — e.g. multiple gestation, ART,
+> prior PPH, cervical surgery — do not exist in `app/models/medical_schema.py`).
 
-## How It Works
+## Overview (proposal)
+The proposed referral score would be calculated from **10 major maternal health risk factors**, each weighted at **10%** (total 100%).
+
+## How It Would Work
 
 ### Risk Factor Scoring
 1. **Major Risk Factor Weight**: Each of the 10 maternal health risk factors = 10%
@@ -151,9 +171,9 @@ If a patient has:
 
 ---
 
-## Referral Decision Tree
+## Referral Decision Tree (proposal — not implemented)
 
-### Confidence Score Thresholds
+### Confidence Score Thresholds (proposal)
 
 | Confidence Range | Urgency | Referral Status | Action |
 |-----------------|---------|-----------------|--------|
@@ -163,11 +183,15 @@ If a patient has:
 | 15-34% | **LOW** | **YES** | Consider referral based on clinical judgment |
 | <15% | **LOW** | **NO** | Continue routine care with regular monitoring |
 
+> In the implemented engine, urgency is derived from the overall risk level
+> (which comes from flag severity and combination rules), **not** from score
+> bands. See `AI_FEATURES_README.md`.
+
 ---
 
-## Clinical Indicators Provided
+## Clinical Indicators (proposal)
 
-The system also provides detailed clinical indicators:
+The proposal also envisaged these indicators:
 - **High Risk**: Total confidence ≥55%
 - **Medium Risk**: Total confidence 35-54%
 - **Low Risk**: Total confidence <35%
@@ -176,18 +200,18 @@ The system also provides detailed clinical indicators:
 
 ---
 
-## Risk Factor Breakdown Display
+## Risk Factor Breakdown Display (proposal)
 
-The referral recommendation shows:
+The proposed referral card would show:
 1. **Overall Confidence Score** (percentage)
 2. **Top 3 Active Risk Factors** with individual scores
 3. **Sub-factors Present** for each detected risk factor
 4. **Clinical Indicators** summary
-5. **Recommended Facility & Specialties**
+5. **Recommended Facility & Specialties** (not implemented; the API returns `recommended_facility: null`)
 
 ---
 
-## Example Output
+## Example Output (proposal — illustrative only)
 
 ```
 Referral Recommendation:
@@ -208,18 +232,19 @@ Clinical Indicators:
 
 ---
 
-## Integration Points
+## Integration Points (current code)
 
-- **Backend Service**: `ai_patient_service.py`
-- **Risk Framework**: `MATERNAL_RISK_FACTORS` constant
-- **API Response**: `/ai-analysis/patient/{patient_id}`
-- **Frontend Display**: `AIReferralRecommendation.tsx`
+- **Implemented rules**: `backend/app/services/advisory_rules.py` (shared by `risk_engine.py` and `ai_patient_service.py`)
+- **This 10-factor framework**: not wired; no constant in code
+- **API Response**: `GET /api/v1/ai-analysis/patients/{patient_id}/analysis` and `POST /api/v1/ai/risk`
+- **Frontend Display**: `frontend/src/components/AIReferralRecommendation.tsx`
 
 ---
 
 ## Notes
 
-- Confidence scores are capped at 95% maximum
-- Minimum confidence for any detected risk is 15%
-- Sub-factors are normalized for case-insensitive matching
-- New risk factors can be easily added to the framework
+- The implemented engine caps its referral score at 0.95 (95%) — the score is a
+  sum of rule weights, not a probability (see `AI_FEATURES_README.md`).
+- Everything else in this document is a proposal awaiting structured data
+  capture for the listed sub-factors.
+- Last updated: 2026-08-18 (status header added; clinical content unchanged).

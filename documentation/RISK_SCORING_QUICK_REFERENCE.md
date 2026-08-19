@@ -1,6 +1,20 @@
-# Quick Reference: Maternal Health Risk Factors
+# Quick Reference: Maternal Health Risk Factors (design reference)
 
-## The 10 Major Risk Categories
+> **STATUS: DESIGN REFERENCE — NOT IMPLEMENTED IN CODE.**
+>
+> This quick reference summarises the 10-factor scoring *proposal* in
+> `MATERNAL_RISK_SCORING_FRAMEWORK.md`. The backend does **not** compute this
+> score. What runs is the rule-based advisory engine in
+> `backend/app/services/advisory_rules.py`, documented in
+> **`documentation/AI_FEATURES_README.md`** (fixed thresholds on the latest
+> recorded BP, pulse, temperature, Hb, glucose, platelets, proteinuria, fetal
+> heart rate, ANC symptom booleans, consciousness and a few history fields;
+> risk levels `unknown | low | medium | high | critical`; urgency
+> `low | medium | high | critical`; referral score = capped sum of rule
+> weights). No LLM/RAG is used. The percentages, examples and screen mock-up
+> below are illustrative of the proposal only.
+
+## The 10 Major Risk Categories (proposal)
 
 | # | Risk Factor | Weight | Key Sub-factors | Total Sub-factors |
 |---|------------|--------|-----------------|-------------------|
@@ -104,9 +118,9 @@ Patient presents with clinical data
 
 ---
 
-## How to Read the Output
+## How to Read the Output (proposal mock-up — the real card is described in AI_FEATURES_README.md)
 
-### What You'll See
+### What You'd See (proposal)
 
 ```
 AI Referral Solution
@@ -183,10 +197,10 @@ Risk Factors Analysis:
 ## Contact & Updates
 
 For questions about the scoring system:
-- Review: `MATERNAL_RISK_SCORING_FRAMEWORK.md`
-- Implementation: `AI_RISK_SCORING_IMPLEMENTATION.md`
-- Code: `app/services/ai_patient_service.py`
+- Proposal: `MATERNAL_RISK_SCORING_FRAMEWORK.md`
+- What is actually implemented: `AI_FEATURES_README.md`
+- Code (implemented rules): `backend/app/services/advisory_rules.py`
 
-**Last Updated**: January 31, 2026
-**Version**: 1.0
-**Status**: Production Ready
+**Last Updated**: 2026-08-18
+**Version**: 1.1 (status clarified)
+**Status**: Design reference — NOT implemented in code
