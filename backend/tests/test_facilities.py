@@ -17,7 +17,7 @@ from app.models.facility import Facility
 from app.models.patient import Patient
 from app.models.referral import Referral, ReferralStatus
 from app.models.user import User
-from tests.conftest import FACILITY_A, FACILITY_B, HOSPITAL_X, bearer, create_patient
+from tests.conftest import FACILITY_A, FACILITY_B, HOSPITAL_X, bearer, create_patient, REGISTER_PASSWORD, BOOTSTRAP_PASSWORD
 
 FACILITIES = "/api/v1/facilities"
 PATIENTS = "/api/v1/patients"
@@ -90,7 +90,7 @@ def test_list_facilities_shape_and_filters(client, seeded_facilities):
 def test_register_requires_matching_kind(client, seeded_facilities):
     form = {
         "email": "kind.mismatch@example.test",
-        "password": "LongEnough123!",
+        "password": REGISTER_PASSWORD,
         "full_name": "Kind Mismatch",
         "phone_number": "9800000000",
         "nmc_number": "NMC-2",
@@ -108,7 +108,7 @@ def test_register_requires_matching_kind(client, seeded_facilities):
 
 
 def test_bootstrap_requires_matching_kind(client, seeded_facilities):
-    payload = {"username": "boot", "password": "BootstrapPass1!", "facility_kind": "phc", "facility_id": str(seeded_facilities[HOSPITAL_X])}
+    payload = {"username": "boot", "password": BOOTSTRAP_PASSWORD, "facility_kind": "phc", "facility_id": str(seeded_facilities[HOSPITAL_X])}
     assert client.post(BOOTSTRAP, json=payload, headers={"X-Bootstrap-Token": "test-bootstrap-token"}).status_code == 404
     payload["facility_kind"] = "hospital"
     resp = client.post(BOOTSTRAP, json=payload, headers={"X-Bootstrap-Token": "test-bootstrap-token"})

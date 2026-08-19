@@ -19,7 +19,7 @@ from app.models.ai_patient_analysis import AIPatientAnalysis
 from app.models.audit_log import AuditLog
 from app.models.user import UserRole
 from app.services.advisory_rules import ENGINE_VERSION
-from tests.conftest import FACILITY_A, FACILITY_B, HOSPITAL_X, bearer, create_patient
+from tests.conftest import FACILITY_A, FACILITY_B, HOSPITAL_X, bearer, create_patient, REGISTER_PASSWORD
 
 ADMIN = "/api/v1/admin/users"
 REFERRALS = "/api/v1/referrals"
@@ -75,7 +75,7 @@ def test_viewer_after_role_change_cannot_write(client, admin_user, clinician_a, 
 def test_register_hospital_facility_gets_hospital_role(client, seeded_facilities, db):
     form = {
         "email": "hosp.doc@example.test",
-        "password": "LongEnough123!",
+        "password": REGISTER_PASSWORD,
         "full_name": "Hospital Doctor",
         "phone_number": "9800000000",
         "nmc_number": "NMC-9",

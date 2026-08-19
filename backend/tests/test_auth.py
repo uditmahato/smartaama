@@ -10,7 +10,7 @@ import pytest
 
 from app.core.config import settings
 from app.models.user import User, UserRole
-from tests.conftest import FACILITY_A, TEST_PASSWORD, bearer
+from tests.conftest import FACILITY_A, TEST_PASSWORD, bearer, WRONG_PASSWORD, REGISTER_PASSWORD, BOOTSTRAP_PASSWORD, TOO_SHORT_PASSWORD
 
 LOGIN = "/api/v1/auth/login"
 ME = "/api/v1/auth/me"
@@ -33,7 +33,7 @@ def test_login_success_and_me_has_no_password_hash(client, clinician_a, login):
 
 
 def test_login_wrong_password(client, clinician_a):
-    resp = client.post(LOGIN, data={"username": "clin-a", "password": "nope-nope-nope"})
+    resp = client.post(LOGIN, data={"username": "clin-a", "password": WRONG_PASSWORD})
     assert resp.status_code == 401
 
 
@@ -97,7 +97,7 @@ def test_bad_token_rejected(client):
 def _register_form(facility_id, **overrides):
     form = {
         "email": "new.doc@example.test",
-        "password": "LongEnough123!",
+        "password": REGISTER_PASSWORD,
         "full_name": "New Doctor",
         "phone_number": "9800000000",
         "nmc_number": "NMC-1",
@@ -110,7 +110,7 @@ def _register_form(facility_id, **overrides):
 
 
 def test_register_short_password_422(client, seeded_facilities):
-    resp = client.post(REGISTER, data=_register_form(seeded_facilities[FACILITY_A], password="short"))
+    resp = client.post(REGISTER, data=_register_form(seeded_facilities[FACILITY_A], password=TOO_SHORT_PASSWORD))
     assert resp.status_code == 422
 
 
@@ -126,7 +126,7 @@ def test_register_success_pending_and_user_out(client, seeded_facilities, db):
     assert "password_hash" not in user
 
     # cannot log in until approved
-    resp = client.post(LOGIN, data={"username": "new.doc@example.test", "password": "LongEnough123!"})
+    resp = client.post(LOGIN, data={"username": "new.doc@example.test", "password": REGISTER_PASSWORD})
     assert resp.status_code == 403
 
 
@@ -183,7 +183,7 @@ def test_register_id_card_stored_as_uuid_name(client, seeded_facilities, db):
 def test_bootstrap_requires_matching_token(client, seeded_facilities):
     payload = {
         "username": "boot-admin",
-        "password": "BootstrapPass1!",
+        "password": BOOTSTRAP_PASSWORD,
         "full_name": "Boot",
         "facility_kind": "hospital",
         "facility_id": str(seeded_facilities["Hospital X"]),
@@ -205,7 +205,7 @@ def test_bootstrap_disabled_when_token_empty(client, seeded_facilities, monkeypa
     monkeypatch.setattr(settings, "BOOTSTRAP_TOKEN", "")
     payload = {
         "username": "boot-admin",
-        "password": "BootstrapPass1!",
+        "password": BOOTSTRAP_PASSWORD,
         "facility_kind": "hospital",
         "facility_id": str(seeded_facilities["Hospital X"]),
     }
@@ -217,7 +217,7 @@ def test_bootstrap_disabled_outside_dev(client, seeded_facilities, monkeypatch):
     monkeypatch.setattr(settings, "ENV", "prod")
     payload = {
         "username": "boot-admin",
-        "password": "BootstrapPass1!",
+        "password": BOOTSTRAP_PASSWORD,
         "facility_kind": "hospital",
         "facility_id": str(seeded_facilities["Hospital X"]),
     }
@@ -228,7 +228,7 @@ def test_bootstrap_disabled_outside_dev(client, seeded_facilities, monkeypatch):
 def test_bootstrap_short_password_422(client, seeded_facilities):
     payload = {
         "username": "boot-admin",
-        "password": "short",
+        "password": TOO_SHORT_PASSWORD,
         "facility_kind": "hospital",
         "facility_id": str(seeded_facilities["Hospital X"]),
     }
@@ -245,8 +245,8 @@ def test_login_rate_limited_per_ip(client, clinician_a, monkeypatch):
     auth_rate_limiter.reset()
 
     for _ in range(3):
-        assert client.post(LOGIN, data={"username": "clin-a", "password": "bad-bad-bad"}).status_code == 401
-    resp = client.post(LOGIN, data={"username": "clin-a", "password": "bad-bad-bad"})
+        assert client.post(LOGIN, data={"username": "clin-a", "password": WRONG_PASSWORD}).status_code == 401
+    resp = client.post(LOGIN, data={"username": "clin-a", "password": WRONG_PASSWORD})
     assert resp.status_code == 429
     assert "Retry-After" in resp.headers
 
@@ -262,4 +262,4 @@ def test_login_rate_limited_per_ip(client, clinician_a, monkeypatch):
 
 def test_rate_limit_disabled_by_default_in_tests(client, clinician_a):
     for _ in range(15):
-        assert client.post(LOGIN, data={"username": "clin-a", "password": "bad-bad-bad"}).status_code == 401
+        assert client.post(LOGIN, data={"username": "clin-a", "password": WRONG_PASSWORD}).status_code == 401

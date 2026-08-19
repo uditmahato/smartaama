@@ -18,7 +18,7 @@ from sqlalchemy import func, select
 from app.core.config import settings
 from app.core.rate_limit import DBSlidingWindowRateLimiter, auth_rate_limiter
 from app.models.rate_limit import AuthRateLimitHit
-from tests.conftest import TEST_PASSWORD, TestingSessionLocal
+from tests.conftest import TEST_PASSWORD, TestingSessionLocal, WRONG_PASSWORD
 
 LOGIN = "/api/v1/auth/login"
 REGISTER = "/api/v1/auth/register"
@@ -107,8 +107,8 @@ def test_two_independent_sessions_share_the_budget():
 def test_login_429_after_budget_and_retry_after_header(client, clinician_a, limiter_enabled, monkeypatch, db):
     monkeypatch.setattr(limiter_enabled, "max_requests", 3)
     for _ in range(3):
-        assert client.post(LOGIN, data={"username": "clin-a", "password": "bad-bad-bad"}).status_code == 401
-    resp = client.post(LOGIN, data={"username": "clin-a", "password": "bad-bad-bad"})
+        assert client.post(LOGIN, data={"username": "clin-a", "password": WRONG_PASSWORD}).status_code == 401
+    resp = client.post(LOGIN, data={"username": "clin-a", "password": WRONG_PASSWORD})
     assert resp.status_code == 429
     assert 1 <= int(resp.headers["Retry-After"]) <= settings.RATE_LIMIT_WINDOW_SECONDS
     # even correct credentials are refused while blocked
@@ -130,5 +130,5 @@ def test_register_and_refresh_are_guarded(client, seeded_facilities, limiter_ena
 def test_disabled_limiter_writes_nothing(client, clinician_a, db):
     assert settings.RATE_LIMIT_DISABLED is True
     for _ in range(12):
-        assert client.post(LOGIN, data={"username": "clin-a", "password": "bad-bad-bad"}).status_code == 401
+        assert client.post(LOGIN, data={"username": "clin-a", "password": WRONG_PASSWORD}).status_code == 401
     assert _hits(db) == 0

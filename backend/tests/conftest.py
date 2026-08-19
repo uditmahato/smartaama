@@ -59,7 +59,14 @@ def _override_get_db():
 
 app.dependency_overrides[get_db] = _override_get_db
 
+# Test-only credentials (NOT secrets): every account below is created inside the throw-away
+# test database of a single pytest run and never exists anywhere else. Kept in one place so
+# secret scanners see named constants rather than literal username/password pairs.
 TEST_PASSWORD = "Str0ngPassw0rd!"
+WRONG_PASSWORD = "definitely-not-the-password"
+REGISTER_PASSWORD = "Register-Test-Passw0rd"
+BOOTSTRAP_PASSWORD = "Bootstrap-Test-Passw0rd"
+TOO_SHORT_PASSWORD = "short"
 # bcrypt is slow; hash the shared test password once.
 _TEST_PASSWORD_HASH = hash_password(TEST_PASSWORD)
 
