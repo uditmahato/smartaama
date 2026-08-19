@@ -1,305 +1,184 @@
-# SmartAAMA Facility-Based Permission System - Testing Guide
+# Testing Guide
 
-## Quick Start Testing
+Three layers:
 
-### Setup Requirements
-1. Backend running on `http://localhost:8000`
-2. Frontend running on `http://localhost:5174`
-3. Database initialized with `python -m app.db.init_db`
-4. Two test users created: one in PHC facility, one in Hospital facility
+1. **Automated backend tests** - `backend/tests/` (pytest, SQLite by default,
+   `TEST_DATABASE_URL` for PostgreSQL). Coverage is intentionally focused: the app boots
+   and core routes respond, security/authorization (role and facility boundaries, no
+   `password_hash` leakage, bootstrap/rate-limit gates, refresh-token rotation and
+   revocation), referral state machines and history, migration parity (`alembic check`),
+   and pure-function tests for the rule-based advisory engine.
+2. **Frontend checks and browser end-to-end tests** - `npm run typecheck`, `npm run build`
+   and the Playwright suite `npm run test:e2e` (`frontend/e2e/`, see its README): five
+   user journeys (login, signup + approval, patient creation, record update -> advisory,
+   referral flow) against a throw-away SQLite backend and the Vite dev server.
+3. **Manual QA scenarios** - the walkthroughs below, for anything the automated tests do
+   not exercise (edge UI states, multi-user flows).
 
-### Test Scenario 1: PHC User Creates and Refers Patient
+## 1. Automated tests
 
-**Step 1: Create PHC User (if not exists)**
-```bash
-# Send to http://localhost:8000/auth/bootstrap-admin
-Header: X-Bootstrap-Token: 12345678
-
-{
-  "username": "phc_user",
-  "password": "password123",
-  "full_name": "PHC Doctor",
-  "facility_kind": "phc",
-  "facility_id": "<phc_facility_id>"
-}
+```powershell
+cd backend
+.venv\Scripts\python.exe -m pytest -q
 ```
 
-**Step 2: Login as PHC User**
-- Navigate to login page
-- Username: `phc_user`
-- Password: `password123`
-- Verify bootstrap token auto-fills from VITE_BOOTSTRAP_TOKEN
+- Runs against SQLite by default (no PostgreSQL required). Set `TEST_DATABASE_URL` to a
+  PostgreSQL URL to run the same suite against Postgres.
+- `backend/pytest.ini` sets `pythonpath = .` and `testpaths = tests`.
+- `tests/conftest.py` builds the schema with `Base.metadata.create_all`, overrides
+  `get_db`, and provides fixtures for users of each role in facilities such as
+  "PHC A", "PHC B", "Hospital X" plus a login helper returning bearer headers.
+- The pure rule tests (`tests/test_risk_rules.py`) need no database; the service/endpoint
+  risk tests use the same SQLite fixtures as the rest of the suite.
 
-**Step 3: Create Patient**
-- Click "Add Patient" or similar
-- Fill in patient details
-- Note the patient ID
+Frontend:
 
-**Step 4: Create Referral**
-- Navigate to patient profile
-- Click "Refer Patient" button
-- Select "Hospital" as receiving facility
-- Enter referral reason
-- Submit referral
-- Verify referral appears in dashboard
-
-**Step 5: Verify Edit Access**
-- Patient profile should show "Update Record" button
-- No read-only alert should appear
-- Should be able to edit patient vitals
-
-### Test Scenario 2: Hospital User Receives Referral
-
-**Step 1: Create Hospital User**
-```bash
-# Send to http://localhost:8000/auth/bootstrap-admin
-Header: X-Bootstrap-Token: 12345678
-
-{
-  "username": "hospital_user",
-  "password": "password123",
-  "full_name": "Hospital Doctor",
-  "facility_kind": "hospital",
-  "facility_id": "<hospital_facility_id>"
-}
+```powershell
+cd frontend
+npm run typecheck      # tsc --noEmit
+npm run build          # tsc --noEmit && vite build
 ```
 
-**Step 2: Login as Hospital User**
-- Navigate to login page
-- Username: `hospital_user`
-- Password: `password123`
+Both must pass before a change is considered done. There are no frontend unit tests;
+browser coverage comes from the Playwright suite:
 
-**Step 3: Verify Referral Visibility**
-- Dashboard should show the referral created by PHC
-- Referral card should show status "Referred to Here"
-- Should only see referrals involving Hospital facility
-
-**Step 4: Access Patient Profile**
-- Click on referral or patient in dashboard
-- Patient profile should load
-- Verify read-only alert appears: "You are viewing this patient's record as a receiving facility..."
-- "Update Record" button should NOT be visible
-- "Refer Patient" button should still be visible
-
-**Step 5: Update Referral Status**
-- Click on referral history row or "Refer Patient" button
-- Navigate to referral details page
-- In "Update Status" section:
-  - Select new status (e.g., "Referred to Here")
-  - Enter note in text area: "Patient has been assessed and admitted"
-  - Click status dropdown to update
-- Verify status changes and note is appended
-
-**Step 6: Verify Timestamped Notes**
-- In referral details, check "Clinician Note" field
-- Should contain: `[2026-01-25 10:30 UTC] Status: <status>\nPatient has been assessed and admitted`
-
-### Test Scenario 3: PHC User Sees Updates
-
-**Step 1: Switch Back to PHC User**
-- Logout Hospital user
-- Login as PHC user again
-
-**Step 2: View Referral**
-- Go to patient profile
-- Click on referral history row
-- Should see:
-  - Status changed to "Referred to Here"
-  - received_facility_status showing hospital's update
-  - Timestamped note from hospital user
-
-**Step 3: Make Counter-Referral**
-- From hospital referral details, can create new referral back to PHC
-- Click "Refer Patient" button
-- Select PHC as receiving facility
-- This starts a bidirectional referral chain
-
-### Test Scenario 4: Permission Boundaries
-
-**Test 4a: Receiving Facility Cannot Edit Patient**
-```javascript
-// Try calling this from Hospital user's console after login:
-// Should fail with 403 Forbidden
-
-fetch('http://localhost:5174/api/patients/{patient_id}', {
-  method: 'PATCH',
-  headers: { 'Authorization': 'Bearer <token>' },
-  body: JSON.stringify({ 
-    age: 35,
-    // ... other patient fields
-  })
-});
+```
+npx playwright install chromium   # once
+npm run test:e2e                  # starts backend (SQLite) + frontend itself; see frontend/e2e/README.md
 ```
 
-**Test 4b: Users Cannot See Foreign Referrals**
-- Create referral between Facility A and Facility B
-- Login as user from Facility C
-- Dashboard should not show this referral
-- Verify /referrals endpoint returns empty list
+## 2. Manual QA setup
 
-**Test 4c: Cannot Access Patient Without Referral**
-- Hospital user tries to access patient not referred to them
-- Frontend should not load referral data
-- Backend should reject if permission check added
+- Backend on `http://localhost:8000`, frontend on `http://localhost:5173`.
+- Database initialised: `python -m app.db.init_db`.
+- `backend/.env` has `ENV=dev`, a `SECRET_KEY` (>= 32 chars), `DATABASE_URL`, and a
+  `BOOTSTRAP_TOKEN` (needed once, to create the first admin).
+- Users: create at least one admin (via `/auth/bootstrap-admin` with header
+  `X-Bootstrap-Token: <BOOTSTRAP_TOKEN>`, or `python -m app.scripts.create_super_admin`
+  with `SUPER_ADMIN_USERNAME/EMAIL/PASSWORD` set), then register and approve:
+  - `phc_user` - role `clinician`, facility "PHC A"
+  - `hospital_user` - role `hospital`, facility "Hospital X"
+  - `other_user` - role `clinician`, facility "PHC B"
+  - optionally `viewer_user` - role `viewer`, facility "PHC A"
+- Passwords must be at least 10 characters. Approve new users under Admin > Pending.
 
-## UI Verification Checklist
+Handy curl (replace `<token>`):
 
-### PatientProfile Component
-- [ ] Read-only alert visible for receiving facility
-- [ ] Alert contains helpful message about edit restrictions
-- [ ] "Update Record" button hidden for receiving facility
-- [ ] "Refer Patient" button visible for both facilities
-- [ ] Referral history table shows all referrals
-- [ ] Clicking referral navigates to detail page
-
-### Referral Component
-- [ ] Status dropdown visible and functional
-- [ ] Note textarea appears below status dropdown
-- [ ] Note field optional (can be empty)
-- [ ] Submitting status update includes note in request
-- [ ] Clinician Note section displays timestamped notes
-- [ ] Referral details show both status fields
-
-### Dashboard Component
-- [ ] Status labels show human-readable text
-  - "Referred from Here" (blue)
-  - "Referred to Here" (green)
-  - "Closed Case" (gray)
-  - "Admitted Case" (green)
-- [ ] Only showing referrals for user's facility
-- [ ] Clicking referral navigates to details
-
-## API Testing with curl/Postman
-
-### 1. Login
 ```bash
-curl -X POST http://localhost:8000/auth/login \
+curl -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=phc_user&password=password123"
+  -d "username=phc_user&password=<password>"
 
-# Response:
-# {"access_token": "eyJ...", "token_type": "bearer"}
+curl http://localhost:8000/api/v1/auth/me -H "Authorization: Bearer <token>"
+curl "http://localhost:8000/api/v1/referrals?direction=incoming" -H "Authorization: Bearer <token>"
 ```
 
-### 2. Get Current User
-```bash
-curl http://localhost:8000/auth/me \
-  -H "Authorization: Bearer <token>"
+## 3. Scenarios: facility access and referrals
 
-# Response:
-# {
-#   "id": "user-id",
-#   "username": "phc_user",
-#   "facility_name": "PHC Facility Name",
-#   "facility_type": "phc",
-#   ...
-# }
+### S1 - PHC registers a patient and refers to hospital
+
+1. Log in as `phc_user`. Create a patient. Confirm the patient appears in the patient
+   list and `GET /patients/{id}` returns `registered_facility_name = "PHC A"`.
+2. Add clinical data (Update Record) - e.g. vitals and blood investigations.
+3. Refer the patient to "Hospital X" with a reason. `from_facility` must be the user's
+   own facility (the API rejects other values for non-admins).
+4. Dashboard shows the referral under "Referred from Here" (`direction=outgoing`).
+5. Patient profile still shows the "Update Record" button.
+
+### S2 - Hospital receives the referral
+
+1. Log in as `hospital_user`. Dashboard shows the referral under "Referred to Here"
+   (`direction=incoming`).
+2. Open the patient: full profile and clinical data are visible. The read-only banner
+   is shown and "Update Record" is hidden (UX convention for a receiving-only facility).
+3. Open the referral. Set the receiving status to "Admitted Here" (`received`) with a
+   note. Verify:
+   - `received_facility_status = received`, `status` unchanged (`submitted`).
+   - `GET /referrals/{id}/history` contains a `received_status` entry with the note and
+     actor.
+   - Dashboard filter "Admitted Case" now lists it.
+4. Try to change the *referring* status from this account (`POST /referrals/{id}/status`)
+   - expect 403.
+
+### S3 - PHC sees the update and closes
+
+1. Log in as `phc_user`, open the referral. The receiving status, note and history are
+   visible.
+2. Note that after the hospital marked the case admitted (S2), the PHC's own `status`
+   already shows `received` - the receiving facility's acknowledgement is mirrored into
+   the referring-side status. From the PHC, use "Your status" to move `received -> closed`
+   (or, while still `submitted`, to `cancelled`). Verify timestamps and history entries
+   (mirrored rows carry the note "Updated automatically from the receiving facility's
+   status"). Attempt an invalid transition via the API (e.g. `closed -> submitted`) -
+   expect 400.
+3. As `hospital_user`, try `received_facility_status: submitted` - expect 400 (not an
+   allowed value); `closed` after `received` succeeds (and mirrors `status=closed`);
+   anything after `closed` - 400.
+
+### S4 - Boundaries
+
+1. `other_user` (PHC B): patient list does not include the patient; `GET /patients/{id}`
+   returns 403; `GET /referrals` does not include the referral; `GET /referrals/{id}`
+   returns 403; `POST /referrals` for that patient returns 403.
+2. `viewer_user`: can read the patient and referrals, but `POST /medical-data/...`,
+   `POST /events`, `POST /referrals`, advisory generate/delete all return 403.
+3. `GET /referrals?from_facility=PHC%20A` as `other_user` still returns nothing (facility
+   filters never widen a non-admin's scope).
+4. Admin sees everything and may `PATCH /patients/{id}` `registered_facility_name`.
+
+### S5 - Auth and admin
+
+1. Register with a 6-character password - expect 422. Register properly - the account
+   is pending; login returns 401/403 until approved.
+2. `GET /admin/users` as admin: no `password_hash` in the JSON. Approve/reject/delete
+   each create an audit log row; deleted users disappear from lists (soft delete). An
+   admin cannot delete themselves; only a super-admin can delete another admin.
+3. ID card: `GET /admin/users/{id}/id-card` returns the image for admins, 403 for
+   others, 404 when none was uploaded. Upload a `.exe` or a 6 MB image at registration
+   - expect 400.
+4. With `ENV=prod` or empty `BOOTSTRAP_TOKEN`, `/auth/bootstrap-admin` is refused.
+5. Hit `/auth/login` more than `RATE_LIMIT_MAX_REQUESTS` times in the window - expect 429.
+
+## 4. Scenarios: rule-based advisory cards
+
+The "Advisory Summary (rule-based)" and "Referral Advisory (rule-based)" cards are
+produced by a deterministic, rule-based advisory engine
+(`backend/app/services/advisory_rules.py`, used by `risk_engine.py` and
+`ai_patient_service.py`). There is no external model. The exact inputs, thresholds and
+outputs are documented in `AI_FEATURES_README.md`; check expected outputs against that
+file (the two `*RISK_SCORING*` files are a design reference that is **not** what the
+code runs).
+
+Open a patient profile, scroll to the two cards, and verify:
+
+| Case | Expect |
+|---|---|
+| Patient with **no** clinical events | Summary states plainly that no clinical data has been recorded; referral card says no referral suggested; risk level `unknown` |
+| Only a *previous referral*, still no clinical data | Same as above - past referrals alone must not trigger a recommendation |
+| Normal vitals/labs recorded | No referral needed or low urgency; findings list the actual recorded values |
+| Abnormal values (e.g. BP >= 140/90, Hb < 10, proteinuria) | Referral suggested; the reasons name the specific abnormal values and the rule(s) they map to; urgency and the referral score rise with the number/severity of triggers (BP >= 160/110 with proteinuria -> `critical`) |
+| Danger-sign / critical rule triggered | Highest urgency; referral required |
+| After adding new clinical data | The stored analysis is invalidated and regenerates on next view (or via the refresh button); `last analyzed` timestamp updates |
+| Model label | Card / API `model_used` reads as a rule-based advisory version string (e.g. `rule-based-advisory-v2`), never GPT/OpenAI; `/ai/risk` never reports `rag_used: true` |
+
+API spot checks:
+
+```
+GET  /api/v1/ai-analysis/patients/{patient_id}/analysis
+POST /api/v1/ai-analysis/generate            {"patient_id": "..."}   (clinician/hospital/admin)
+GET  /api/v1/ai-analysis/patients/{patient_id}/status
+DELETE /api/v1/ai-analysis/patients/{patient_id}                    (clinician/hospital/admin)
 ```
 
-### 3. List Referrals (Filtered by Facility)
-```bash
-curl http://localhost:8000/referrals \
-  -H "Authorization: Bearer <token>"
+A user without access to the patient gets 403 on all of them.
 
-# Should only return referrals where:
-# - from_facility = user's facility OR
-# - to_facility = user's facility
-```
+## 5. Sign-off checklist
 
-### 4. Update Referral Status with Note
-```bash
-curl -X POST http://localhost:8000/referrals/<referral_id>/status \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "status": "received",
-    "note": "Patient assessed and admitted"
-  }'
-
-# Verify clinician_note contains timestamped update
-```
-
-## Common Issues and Solutions
-
-### Issue: "Read-only alert appears for referring facility"
-- **Solution**: Check permission calculation in load() function
-  - Ensure `isReceivingFacility` correctly identifies receiving facility
-  - Verify API returns correct `to_facility` value
-
-### Issue: "Update Record button still visible for receiving facility"
-- **Solution**: Check canEdit state logic
-  - Should be: `setCanEdit(!isReceivingFacility || isReferringFacility || r.data.length === 0)`
-  - Verify state updates before rendering buttons
-
-### Issue: "Cannot see referral from other facility"
-- **Solution**: Check list_referrals backend filtering
-  - Verify user.facility_name is correctly loaded
-  - Check both query1 and query2 are being executed
-  - Verify deduplication logic doesn't remove valid results
-
-### Issue: "Note not appearing in referral history"
-- **Solution**: Check note appending in backend
-  - Verify transition_status() calls append_timestamped_note()
-  - Check clinician_note field is being saved to database
-  - Verify UI reads clinician_note, not separate note field
-
-### Issue: "Frontend showing JWT_SECRET validation error"
-- **Solution**: Verify backend CORS configuration
-  - Check CORS_ORIGINS in .env includes 5174
-  - Restart backend after .env changes
-  - Clear browser cache and cookies
-
-## Performance Notes
-
-1. **Referral Filtering**: Two database queries may impact performance with large datasets
-   - Future optimization: Add compound index on (from_facility, to_facility, patient_id)
-
-2. **User Factory Calls**: Each page load calls /auth/me
-   - Optimization: Cache user info in localStorage after login
-   - Current implementation uses userStore which caches locally
-
-3. **Referral History**: Loading all referrals on patient profile
-   - Current: Limited to 100 referrals per query
-   - Future: Add pagination or infinite scroll
-
-## Debug Tips
-
-### To inspect frontend state:
-```javascript
-// In browser console on PatientProfile:
-console.log({ userFacility, canEdit, referrals });
-```
-
-### To check backend logs:
-```bash
-# Backend console should show:
-# - User login timestamp
-# - Referral query filters applied
-# - Audit log entries for status changes
-```
-
-### To verify database state:
-```sql
--- Check referral details:
-SELECT id, from_facility, to_facility, status, received_facility_status, clinician_note 
-FROM referrals 
-WHERE id = '<referral_id>';
-
--- Check user facility assignments:
-SELECT username, facility_name, facility_type 
-FROM users 
-WHERE username IN ('phc_user', 'hospital_user');
-```
-
-## Sign-Off Checklist
-
-- [ ] Frontend compiles without errors
-- [ ] Backend starts without errors
-- [ ] Login works for multiple users
-- [ ] Referrals filtered by facility in dashboard
-- [ ] Patient profile shows read-only alert for receiving facility
-- [ ] Edit buttons conditionally rendered
-- [ ] Referral status updates with notes work
-- [ ] Notes appear with timestamps
-- [ ] Referral history clickable and navigates correctly
-- [ ] No permission leaks (users only see their facility's referrals)
+- [ ] `pytest -q` passes (SQLite) and, if available, against `TEST_DATABASE_URL`.
+- [ ] `npm run typecheck` and `npm run build` pass.
+- [ ] Backend boots on a fresh clone with only `.env` configured (uploads dir is created
+      automatically).
+- [ ] S1-S5 pass with the four test users.
+- [ ] Advisory table in section 4 holds; no UI text claims GPT/LLM output.
+- [ ] No `password_hash` or `id_card_image_path` in any API response.
+- [ ] Browser console free of errors on Dashboard, Patient Profile, Referral, Admin.

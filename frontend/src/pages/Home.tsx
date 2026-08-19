@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -15,7 +15,8 @@ import {
   Divider,
   Link,
 } from "@mui/material";
-import { api, tokenStore, userStore } from "../services/api";
+import { tokenStore } from "../services/api";
+import { useUser } from "../hooks/useUser";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -23,45 +24,10 @@ import LogoutIcon from "@mui/icons-material/Logout";
 export default function Home() {
   const navigate = useNavigate();
   const isLoggedIn = !!tokenStore.get();
-  const [userName, setUserName] = useState<string>("User");
+  const { user } = useUser();
+  const userName = user?.full_name || user?.username || "User";
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      loadUserInfo();
-    }
-  }, [isLoggedIn]);
-
-  async function loadUserInfo() {
-    const cached = userStore.get();
-    if (cached) {
-      setUserName(cached.full_name || cached.username);
-      return;
-    }
-    try {
-      const resp = await api.get("/auth/me");
-      userStore.set(resp.data);
-      setUserName(resp.data.full_name || resp.data.username);
-    } catch (err) {
-      console.error("Failed to load user info", err);
-    }
-  }
-
-  async function loadUserInfo() {
-    const cached = userStore.get();
-    if (cached) {
-      setUserName(cached.full_name || cached.username);
-      return;
-    }
-    try {
-      const resp = await api.get("/auth/me");
-      userStore.set(resp.data);
-      setUserName(resp.data.full_name || resp.data.username);
-    } catch (err) {
-      console.error("Failed to load user info", err);
-    }
-  }
 
   const features = [
     {
@@ -237,7 +203,7 @@ export default function Home() {
                 <Button
                   color="inherit"
                   variant="outlined"
-                  onClick={() => navigate("/admin")}
+                  onClick={() => navigate("/login")}
                   sx={{
                     textTransform: "none",
                     borderColor: "rgba(255,255,255,0.55)",
@@ -320,7 +286,7 @@ export default function Home() {
                       px: 3,
                       "&:hover": { background: "rgba(255,255,255,0.92)" },
                     }}
-                    onClick={() => navigate("/admin")}
+                    onClick={() => navigate("/login")}
                   >
                     Sign in
                   </Button>
@@ -541,12 +507,12 @@ export default function Home() {
               <Grid item xs={12} sm={6} md={3}>
                 <Card sx={{ height: "100%", borderRadius: 3, border: `1px solid ${BRAND.border}`, boxShadow: "none" }}>
                   <CardContent sx={{ textAlign: "center", p: 3 }}>
-                    <Box sx={{ fontSize: 28, mb: 1.5 }}>📞</Box>
+                    <Box sx={{ fontSize: 28, mb: 1.5 }}>🛟</Box>
                     <Typography variant="subtitle1" sx={{ fontWeight: 750, color: BRAND.ink, mb: 0.5 }}>
-                      Phone
+                      Support
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      +977-1-XXX-XXXX
+                      Contact your facility administrator for access and support.
                     </Typography>
                   </CardContent>
                 </Card>

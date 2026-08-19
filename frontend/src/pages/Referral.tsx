@@ -1,5 +1,5 @@
 // frontend/src/pages/Referral.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
@@ -13,48 +13,90 @@ import {
   Grid,
   MenuItem,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
 } from "@mui/material";
-import { api, userStore } from "../services/api";
+import {
+  api,
+  facilityMatches,
+  fetchReferralHistory,
+  getErrorMessage,
+  isForbidden,
+  isNotFound,
+  type ReferralHistoryOut,
+  type ReferralOut,
+  type ReferralStatus,
+} from "../services/api";
+import type { FacilityOption } from "../services/types";
+import { useUser } from "../hooks/useUser";
 
-type ReferralOut = {
-  id: string;
-  patient_id: string;
-  from_facility: string;
-  to_facility: string;
-  status: "draft" | "submitted" | "received" | "closed" | "cancelled";
-  received_facility_status?:
-    | "draft"
-    | "submitted"
-    | "received"
-    | "closed"
-    | "cancelled"
-    | null;
-  reason: string;
-  clinician_decision?: string | null;
-  clinician_note?: string | null;
-  created_at: string;
+type ChipColor = "default" | "warning" | "success" | "info" | "error";
+
+const HISTORY_KIND_LABELS: Record<ReferralHistoryOut["kind"], string> = {
+  created: "Created",
+  status: "Referring status",
+  received_status: "Receiving status",
+  decision: "Clinician decision",
 };
 
-type FacilityOption = {
-  id: string;
-  name: string;
-  kind: "phc" | "hospital";
+const RECEIVED_STATUS_LABELS: Record<string, string> = {
+  received: "Admitted Here",
+  closed: "Closed Case",
+  cancelled: "Referred Elsewhere",
 };
 
-type UserInfo = {
-  id: string;
-  username: string;
-  full_name?: string | null;
-  role: string;
-  facility_name?: string | null;
-  facility_id?: string | null;
+const REFERRING_STATUS_LABELS: Record<string, string> = {
+  draft: "Draft",
+  submitted: "Referred from Here",
+  received: "Referred to Here",
+  closed: "Closed Case",
+  cancelled: "Cancelled",
 };
+
+/** Referring-side state machine (mirrors backend `_ALLOWED_TRANSITIONS`). */
+const SENDER_NEXT_STATUSES: Record<ReferralStatus, ReferralStatus[]> = {
+  draft: ["submitted", "cancelled"],
+  submitted: ["received", "cancelled"],
+  received: ["closed"],
+  closed: [],
+  cancelled: [],
+};
+
+function historyStatusLabel(row: ReferralHistoryOut): string {
+  const to = row.to_status ?? "";
+  if (!to) return HISTORY_KIND_LABELS[row.kind] ?? row.kind;
+  if (row.kind === "received_status") return RECEIVED_STATUS_LABELS[to] ?? to;
+  if (row.kind === "status" || row.kind === "created")
+    return REFERRING_STATUS_LABELS[to] ?? to;
+  return to;
+}
+
+function historyStatusColor(row: ReferralHistoryOut): ChipColor {
+  switch (row.to_status) {
+    case "submitted":
+      return "warning";
+    case "received":
+      return "success";
+    case "closed":
+      return "default";
+    case "cancelled":
+      return "error";
+    default:
+      return row.kind === "created" ? "info" : "default";
+  }
+}
 
 export default function Referral() {
   const { patientId, referralId } = useParams();
   const navigate = useNavigate();
+  const { user } = useUser();
+  const userFacilityName = user?.facility_name ?? null;
+  const isAdmin = user?.role === "admin";
 
   const [fromFacility, setFromFacility] = useState("");
   const [toFacility, setToFacility] = useState("");
@@ -63,21 +105,20 @@ export default function Referral() {
 
   const [facilityOptions, setFacilityOptions] = useState<FacilityOption[]>([]);
   const [facilityError, setFacilityError] = useState<string | null>(null);
-  const [userFacilityName, setUserFacilityName] = useState<string | null>(null);
 
   const [referral, setReferral] = useState<ReferralOut | null>(null);
+  const [history, setHistory] = useState<ReferralHistoryOut[]>([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [accessDenied, setAccessDenied] = useState<"forbidden" | "not_found" | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(!!referralId);
+  const [isCreating, setIsCreating] = useState(false);
   const [statusUpdateNote, setStatusUpdateNote] = useState("");
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [selectedReceivedStatus, setSelectedReceivedStatus] =
     useState<string>("");
-
-  const isFromHospital = useMemo(() => {
-    return facilityOptions.some(
-      (f) => f.name === fromFacility && f.kind === "hospital",
-    );
-  }, [fromFacility, facilityOptions]);
 
   const canCreate = useMemo(() => {
     return (
@@ -88,19 +129,19 @@ export default function Referral() {
     );
   }, [patientId, fromFacility, toFacility, reason]);
 
-  const isReceivingFacility = useMemo(() => {
-    return (
-      referral && userFacilityName && referral.to_facility === userFacilityName
-    );
-  }, [referral, userFacilityName]);
+  const isReceivingFacility = useMemo(
+    () =>
+      Boolean(referral && facilityMatches(referral.to_facility, userFacilityName)),
+    [referral, userFacilityName],
+  );
 
   const getStatusChip = (
-    status: ReferralOut["status"],
+    status: ReferralStatus,
     ref?: ReferralOut | null,
-  ) => {
-    const userFacility = userFacilityName;
-
-    const isSender = ref && userFacility && ref.from_facility === userFacility;
+  ): { color: ChipColor; label: string } => {
+    const isSender = Boolean(
+      ref && facilityMatches(ref.from_facility, userFacilityName),
+    );
 
     switch (status) {
       case "submitted":
@@ -121,27 +162,24 @@ export default function Referral() {
         return { color: "default", label: "Closed Case" };
 
       case "cancelled":
-        return { color: "success", label: "Admitted Case" };
+        return { color: "error", label: "Cancelled" };
 
       default:
         return { color: "default", label: status };
     }
   };
 
-  async function loadUserInfo() {
-    const cached = userStore.get() as UserInfo | null;
-    if (cached) {
-      setUserFacilityName(cached.facility_name ?? null);
-      return;
+  /** Chip colour for the receiving facility's own status (received_facility_status). */
+  const receivedStatusColor = (status: ReferralStatus): ChipColor => {
+    switch (status) {
+      case "received":
+        return "success";
+      case "cancelled":
+        return "error";
+      default:
+        return "default";
     }
-    try {
-      const resp = await api.get<UserInfo>("/auth/me");
-      userStore.set(resp.data);
-      setUserFacilityName(resp.data.facility_name ?? null);
-    } catch (err) {
-      console.error("Failed to load user info", err);
-    }
-  }
+  };
 
   async function loadFacilities() {
     try {
@@ -151,64 +189,92 @@ export default function Referral() {
           params: { kind: "hospital" },
         }),
       ]);
-      const combined = [...phcResp.data, ...hospitalResp.data];
-      setFacilityOptions(combined);
-    } catch (err: any) {
-      setFacilityError(
-        err?.response?.data?.detail ?? "Failed to load facilities",
-      );
+      setFacilityOptions([...phcResp.data, ...hospitalResp.data]);
+    } catch (err) {
+      setFacilityError(getErrorMessage(err, "Failed to load facilities"));
     }
   }
 
   useEffect(() => {
     void loadFacilities();
-    void loadUserInfo();
   }, []);
+
+  const loadHistory = useCallback(async (id: string) => {
+    setHistoryError(null);
+    try {
+      const rows = await fetchReferralHistory(id);
+      setHistory(rows);
+    } catch (err) {
+      setHistory([]);
+      setHistoryError(getErrorMessage(err, "Failed to load referral history"));
+    }
+  }, []);
+
+  const loadReferralById = useCallback(
+    async (id: string) => {
+      setIsLoading(true);
+      setError(null);
+      setAccessDenied(null);
+      try {
+        const resp = await api.get<ReferralOut>(`/referrals/${id}`);
+        const data = resp.data;
+        setReferral(data);
+        // Populate form fields from loaded referral
+        setFromFacility(data.from_facility);
+        setToFacility(data.to_facility);
+        setReason(data.reason);
+        setClinicianNote(data.clinician_note || "");
+        // Derived from the response (not from state that hasn't updated yet).
+        setSelectedReceivedStatus(data.received_facility_status || "");
+        await loadHistory(data.id);
+      } catch (err) {
+        if (isForbidden(err)) {
+          setAccessDenied("forbidden");
+        } else if (isNotFound(err)) {
+          setAccessDenied("not_found");
+        } else {
+          setError(getErrorMessage(err, "Failed to load referral"));
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [loadHistory],
+  );
 
   useEffect(() => {
     if (referralId) {
       void loadReferralById(referralId);
     }
-  }, [referralId]);
+  }, [referralId, loadReferralById]);
 
-  async function loadReferralById(id: string) {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const resp = await api.get<ReferralOut>(`/referrals/${id}`);
-      setReferral(resp.data);
-      // Populate form fields from loaded referral
-      setFromFacility(resp.data.from_facility);
-      setToFacility(resp.data.to_facility);
-      setReason(resp.data.reason);
-      setClinicianNote(resp.data.clinician_note || "");
-      // Initialize selected received status
-      if (isReceivingFacility) {
-        setSelectedReceivedStatus(resp.data.received_facility_status || "");
-      }
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Failed to load referral");
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
+  // Pre-fill "From facility": non-admins are locked to their own facility
+  // (backend rejects anything else); admins default to it but may change it.
   useEffect(() => {
-    if (!fromFacility && facilityOptions.length) {
-      const preferred =
-        userFacilityName &&
-        facilityOptions.find((f) => f.name === userFacilityName);
-      if (preferred) {
-        setFromFacility(preferred.name);
-      } else {
-        setFromFacility(facilityOptions[0].name);
-      }
+    if (referral) return; // display mode: fields come from the referral
+    if (userFacilityName) {
+      if (!isAdmin || !fromFacility) setFromFacility(userFacilityName);
+      return;
     }
-  }, [fromFacility, facilityOptions, userFacilityName]);
+    if (!fromFacility && facilityOptions.length && isAdmin) {
+      setFromFacility(facilityOptions[0].name);
+    }
+  }, [referral, userFacilityName, isAdmin, facilityOptions, fromFacility]);
+
+  // Make sure the locked "from" value is always selectable even if the
+  // facility list doesn't contain it (e.g. name mismatch).
+  const fromFacilityOptions = useMemo(() => {
+    if (!fromFacility) return facilityOptions;
+    if (facilityOptions.some((f) => f.name === fromFacility)) return facilityOptions;
+    const kind: FacilityOption["kind"] =
+      user?.facility_type === "hospital" ? "hospital" : "phc";
+    return [{ id: "__own__", name: fromFacility, kind }, ...facilityOptions];
+  }, [facilityOptions, fromFacility, user?.facility_type]);
 
   async function create() {
     if (!patientId) return;
     setError(null);
+    setIsCreating(true);
     try {
       const resp = await api.post<ReferralOut>("/referrals", {
         patient_id: patientId,
@@ -219,38 +285,35 @@ export default function Referral() {
         status: "submitted",
       });
       setReferral(resp.data);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Failed to create referral");
+      setSelectedReceivedStatus(resp.data.received_facility_status || "");
+      await loadHistory(resp.data.id);
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to create referral"));
+    } finally {
+      setIsCreating(false);
     }
   }
 
-  async function setStatus(status: ReferralOut["status"]) {
+  async function setStatus(status: ReferralStatus) {
     if (!referral) return;
     setError(null);
     setIsUpdatingStatus(true);
     try {
       const resp = await api.post<ReferralOut>(
         `/referrals/${referral.id}/status`,
-        {
-          status,
-          // Only include note if user is the receiving facility
-          note: isReceivingFacility
-            ? statusUpdateNote.trim() || undefined
-            : undefined,
-        },
+        { status },
       );
       setReferral(resp.data);
       setStatusUpdateNote("");
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Failed to update status");
+      await loadHistory(resp.data.id);
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to update status"));
     } finally {
       setIsUpdatingStatus(false);
     }
   }
 
-  async function setReceivedFacilityStatus(
-    status: ReferralOut["received_facility_status"],
-  ) {
+  async function setReceivedFacilityStatus(status: ReferralStatus) {
     if (!referral) return;
     setError(null);
     setIsUpdatingStatus(true);
@@ -265,10 +328,10 @@ export default function Referral() {
       setReferral(resp.data);
       setStatusUpdateNote("");
       setSelectedReceivedStatus(resp.data.received_facility_status || "");
-    } catch (err: any) {
+      await loadHistory(resp.data.id);
+    } catch (err) {
       setError(
-        err?.response?.data?.detail ??
-          "Failed to update received facility status",
+        getErrorMessage(err, "Failed to update received facility status"),
       );
     } finally {
       setIsUpdatingStatus(false);
@@ -277,9 +340,13 @@ export default function Referral() {
 
   const handleSaveReceivedStatus = () => {
     if (selectedReceivedStatus) {
-      setReceivedFacilityStatus(selectedReceivedStatus as any);
+      setReceivedFacilityStatus(selectedReceivedStatus as ReferralStatus);
     }
   };
+
+  const receivedStatusIsTerminal =
+    referral?.received_facility_status === "closed" ||
+    referral?.received_facility_status === "cancelled";
 
   if (isLoading && referralId) {
     return (
@@ -297,83 +364,121 @@ export default function Referral() {
     );
   }
 
-  return (
-    <Box
+  const pageSx = {
+    minHeight: "100vh",
+    bgcolor: "#F6F7FB",
+    py: { xs: 2, md: 3 },
+    px: { xs: 0.5, sm: 1, md: 1.5 },
+    width: "100%",
+    boxSizing: "border-box",
+  } as const;
+
+  const topBar = (
+    <Card
       sx={{
-        minHeight: "100vh",
-        bgcolor: "#F6F7FB",
-        py: { xs: 2, md: 3 },
-        px: { xs: 0.5, sm: 1, md: 1.5 },
-        width: "100%",
-        boxSizing: "border-box",
+        borderRadius: 3,
+        border: "1px solid rgba(15, 23, 42, 0.10)",
+        boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
+        overflow: "hidden",
       }}
     >
-      <Stack spacing={3}>
-        {/* Top Bar */}
-        <Card
-          sx={{
-            borderRadius: 3,
-            border: "1px solid rgba(15, 23, 42, 0.10)",
-            boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
-            overflow: "hidden",
-          }}
+      <Box
+        sx={{
+          px: { xs: 2.5, md: 3.5 },
+          py: { xs: 2.5, md: 3 },
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          color: "white",
+        }}
+      >
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={{ xs: 2, md: 3 }}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", md: "center" }}
         >
-          <Box
+          <Stack spacing={0.5}>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 800, letterSpacing: -0.2 }}
+            >
+              Patient Referral
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ opacity: 0.9, lineHeight: 1.7 }}
+            >
+              Create and manage referral requests with clinical details and
+              notes.
+            </Typography>
+          </Stack>
+
+          <Stack direction="row" spacing={1.25} alignItems="center">
+            <Button
+              variant="contained"
+              onClick={() => navigate(`/patients/${patientId}`)}
+              sx={{
+                textTransform: "none",
+                fontWeight: 700,
+                borderRadius: 2,
+                background: "rgba(255,255,255,0.95)",
+                color: "#4C51BF",
+                "&:hover": { background: "white" },
+                px: 2.25,
+              }}
+            >
+              Back
+            </Button>
+          </Stack>
+        </Stack>
+      </Box>
+
+      {error && (
+        <CardContent sx={{ p: { xs: 2.5, md: 3.5 }, bgcolor: "white" }}>
+          <Alert severity="error">{error}</Alert>
+        </CardContent>
+      )}
+    </Card>
+  );
+
+  if (accessDenied) {
+    return (
+      <Box sx={pageSx}>
+        <Stack spacing={3}>
+          {topBar}
+          <Card
             sx={{
-              px: { xs: 2.5, md: 3.5 },
-              py: { xs: 2.5, md: 3 },
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              color: "white",
+              borderRadius: 3,
+              border: "1px solid rgba(15, 23, 42, 0.10)",
+              boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
             }}
           >
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              spacing={{ xs: 2, md: 3 }}
-              justifyContent="space-between"
-              alignItems={{ xs: "flex-start", md: "center" }}
-            >
-              <Stack spacing={0.5}>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 800, letterSpacing: -0.2 }}
-                >
-                  Patient Referral
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ opacity: 0.9, lineHeight: 1.7 }}
-                >
-                  Create and manage referral requests with clinical details and
-                  notes.
-                </Typography>
-              </Stack>
-
-              <Stack direction="row" spacing={1.25} alignItems="center">
-                <Button
-                  variant="contained"
-                  onClick={() => navigate(`/patients/${patientId}`)}
-                  sx={{
-                    textTransform: "none",
-                    fontWeight: 700,
-                    borderRadius: 2,
-                    background: "rgba(255,255,255,0.95)",
-                    color: "#4C51BF",
-                    "&:hover": { background: "white" },
-                    px: 2.25,
-                  }}
-                >
-                  Back
-                </Button>
-              </Stack>
-            </Stack>
-          </Box>
-
-          {error && (
-            <CardContent sx={{ p: { xs: 2.5, md: 3.5 }, bgcolor: "white" }}>
-              <Alert severity="error">{error}</Alert>
+            <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+              <Alert
+                severity={accessDenied === "forbidden" ? "warning" : "info"}
+              >
+                {accessDenied === "forbidden"
+                  ? "You don't have access to this referral. Only the referring or receiving facility (or an administrator) can view it."
+                  : "This referral could not be found."}
+              </Alert>
+              <Button
+                variant="outlined"
+                onClick={() => navigate(`/patients/${patientId}`)}
+                sx={{ mt: 2, textTransform: "none", fontWeight: 700 }}
+              >
+                Back to patient
+              </Button>
             </CardContent>
-          )}
-        </Card>
+          </Card>
+        </Stack>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={pageSx}>
+      <Stack spacing={3}>
+        {/* Top Bar */}
+        {topBar}
 
         {/* Form or Display */}
         <Card
@@ -403,11 +508,18 @@ export default function Referral() {
                       fullWidth
                       size="small"
                       required
-                      helperText={facilityError ?? "Select referring facility"}
-                      error={Boolean(facilityError)}
-                      disabled={Boolean(userFacilityName)}
+                      helperText={
+                        facilityError ??
+                        (isAdmin
+                          ? "Select referring facility"
+                          : userFacilityName
+                            ? "Your facility (referrals are sent from here)"
+                            : "Your account has no facility assigned — contact an administrator")
+                      }
+                      error={Boolean(facilityError) || (!isAdmin && !userFacilityName)}
+                      disabled={!isAdmin}
                     >
-                      {facilityOptions.map((opt) => (
+                      {fromFacilityOptions.map((opt) => (
                         <MenuItem key={opt.id} value={opt.name}>
                           {opt.name}{" "}
                           {opt.kind === "hospital" ? "(Hos)" : "(PHC)"}
@@ -468,7 +580,7 @@ export default function Referral() {
                       <Button
                         variant="contained"
                         onClick={create}
-                        disabled={!canCreate}
+                        disabled={!canCreate || isCreating}
                         sx={{
                           textTransform: "none",
                           fontWeight: 700,
@@ -478,7 +590,11 @@ export default function Referral() {
                           px: 3,
                         }}
                       >
-                        Create Referral
+                        {isCreating ? (
+                          <CircularProgress size={20} sx={{ color: "white" }} />
+                        ) : (
+                          "Create Referral"
+                        )}
                       </Button>
                       <Button
                         variant="outlined"
@@ -528,10 +644,7 @@ export default function Referral() {
                       <Box sx={{ mt: 0.75 }}>
                         <Chip
                           label={getStatusChip(referral.status, referral).label}
-                          color={
-                            getStatusChip(referral.status, referral)
-                              .color as any
-                          }
+                          color={getStatusChip(referral.status, referral).color}
                           variant="outlined"
                         />
                       </Box>
@@ -544,15 +657,16 @@ export default function Referral() {
                         <Chip
                           label={
                             referral.received_facility_status
-                              ? getStatusChip(referral.received_facility_status)
-                                  .label
+                              ? RECEIVED_STATUS_LABELS[
+                                  referral.received_facility_status
+                                ] ?? referral.received_facility_status
                               : "Pending"
                           }
                           color={
                             referral.received_facility_status
-                              ? (getStatusChip(
+                              ? receivedStatusColor(
                                   referral.received_facility_status,
-                                ).color as any)
+                                )
                               : "default"
                           }
                           variant="outlined"
@@ -608,7 +722,10 @@ export default function Referral() {
                         <Typography variant="caption" color="text.secondary">
                           Clinician Note
                         </Typography>
-                        <Typography variant="body2" sx={{ mt: 0.5 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ mt: 0.5, whiteSpace: "pre-wrap" }}
+                        >
                           {referral.clinician_note}
                         </Typography>
                       </Grid>
@@ -641,8 +758,12 @@ export default function Referral() {
                           }
                           fullWidth
                           size="small"
-                          disabled={isUpdatingStatus}
-                          helperText="Update your facility's acknowledgment of this referral"
+                          disabled={isUpdatingStatus || receivedStatusIsTerminal}
+                          helperText={
+                            receivedStatusIsTerminal
+                              ? "This referral is closed on your side"
+                              : "Update your facility's acknowledgment of this referral"
+                          }
                         >
                           <MenuItem value="received">Admitted Here</MenuItem>
                           <MenuItem value="closed">Closed Case</MenuItem>
@@ -658,6 +779,7 @@ export default function Referral() {
                           fullWidth
                           disabled={
                             isUpdatingStatus ||
+                            receivedStatusIsTerminal ||
                             !selectedReceivedStatus ||
                             selectedReceivedStatus ===
                               (referral.received_facility_status || "")
@@ -684,36 +806,41 @@ export default function Referral() {
                           minRows={2}
                           size="small"
                           placeholder="Add clinical notes about this patient's status update"
-                          disabled={isUpdatingStatus}
+                          disabled={isUpdatingStatus || receivedStatusIsTerminal}
                         />
                       </Grid>
                     </Grid>
                   ) : (
-                    // Referring facility: View their status (read-only)
+                    // Referring facility: manage their own status
                     <Grid container spacing={2}>
                       <Grid item xs={12} md={6}>
                         <TextField
                           select
                           label="Your status"
                           value={referral.status}
-                          onChange={(e) => setStatus(e.target.value as any)}
+                          onChange={(e) =>
+                            setStatus(e.target.value as ReferralStatus)
+                          }
                           fullWidth
                           size="small"
                           disabled={
-                            referral.status === "submitted" || isUpdatingStatus
+                            isUpdatingStatus ||
+                            SENDER_NEXT_STATUSES[referral.status].length === 0
                           }
                           helperText={
-                            referral.status === "submitted"
-                              ? "Locked until received"
-                              : ""
+                            SENDER_NEXT_STATUSES[referral.status].length === 0
+                              ? "Final state — no further changes"
+                              : "Updated automatically when the receiving facility admits or closes the case; you can also change it here."
                           }
                         >
-                          <MenuItem value="submitted">
-                            Referred from Here
-                          </MenuItem>
-                          <MenuItem value="received">Referred to Here</MenuItem>
-                          <MenuItem value="closed">Closed Case</MenuItem>
-                          <MenuItem value="cancelled">Cancelled</MenuItem>
+                          {[
+                            referral.status,
+                            ...SENDER_NEXT_STATUSES[referral.status],
+                          ].map((s) => (
+                            <MenuItem key={s} value={s}>
+                              {REFERRING_STATUS_LABELS[s] ?? s}
+                            </MenuItem>
+                          ))}
                         </TextField>
                       </Grid>
                       <Grid item xs={12} md={6}>
@@ -733,9 +860,9 @@ export default function Referral() {
                             sx={{ fontWeight: 600, mt: 0.5 }}
                           >
                             {referral.received_facility_status
-                              ? getStatusChip(
-                                  referral.received_facility_status as any,
-                                ).label
+                              ? RECEIVED_STATUS_LABELS[
+                                  referral.received_facility_status
+                                ] ?? referral.received_facility_status
                               : "Pending acknowledgment"}
                           </Typography>
                         </Box>
@@ -743,162 +870,63 @@ export default function Referral() {
                     </Grid>
                   )}
 
-                  {referral.clinician_note && (
-                    <>
-                      <Divider sx={{ my: 2 }} />
-                      <Typography
-                        variant="subtitle2"
-                        sx={{ fontWeight: 700, color: "#0F172A", mb: 2 }}
-                      >
-                        {isReceivingFacility
-                          ? "Updates Submitted"
-                          : "Facility Updates"}
-                      </Typography>
-                      <Box sx={{ overflowX: "auto" }}>
-                        <table
-                          style={{ width: "100%", borderCollapse: "collapse" }}
-                        >
-                          <thead>
-                            <tr
-                              style={{
-                                backgroundColor: "#f3f4f6",
-                                borderBottom: "2px solid #e5e7eb",
-                              }}
-                            >
-                              <th
-                                style={{
-                                  padding: "12px",
-                                  textAlign: "left",
-                                  fontWeight: 600,
-                                  color: "#374151",
-                                }}
-                              >
-                                Date & Time
-                              </th>
-                              <th
-                                style={{
-                                  padding: "12px",
-                                  textAlign: "left",
-                                  fontWeight: 600,
-                                  color: "#374151",
-                                }}
-                              >
-                                Status
-                              </th>
-                              <th
-                                style={{
-                                  padding: "12px",
-                                  textAlign: "left",
-                                  fontWeight: 600,
-                                  color: "#374151",
-                                }}
-                              >
-                                Notes
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(() => {
-                              const lines = referral.clinician_note.split("\n");
-                              const updates = [];
+                  <Divider sx={{ my: 2 }} />
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 700, color: "#0F172A" }}
+                  >
+                    Status History
+                  </Typography>
 
-                              for (let i = 0; i < lines.length; i++) {
-                                const line = lines[i].trim();
-                                // Check if this is a status update header line
-                                if (
-                                  line.includes("[") &&
-                                  line.includes("Received facility status:")
-                                ) {
-                                  const timestampMatch =
-                                    line.match(/\[(.*?)\]/);
-                                  const statusMatch =
-                                    line.match(/status: (\w+)/i);
-                                  const timestamp = timestampMatch
-                                    ? timestampMatch[1]
-                                    : "";
-                                  let statusValue = statusMatch
-                                    ? statusMatch[1]
-                                    : "";
-
-                                  // Map status values to display labels
-                                  let displayStatus = statusValue;
-                                  if (statusValue === "closed")
-                                    displayStatus = "Closed Case";
-                                  else if (statusValue === "received")
-                                    displayStatus = "Admitted Here";
-                                  else if (statusValue === "referred")
-                                    displayStatus = "Referred Elsewhere";
-
-                                  // Get the note from the next non-empty line
-                                  let noteText = "-";
-                                  for (let j = i + 1; j < lines.length; j++) {
-                                    const nextLine = lines[j].trim();
-                                    // Stop if we hit another status line
-                                    if (
-                                      nextLine.includes("[") &&
-                                      nextLine.includes(
-                                        "Received facility status:",
-                                      )
-                                    ) {
-                                      break;
-                                    }
-                                    if (nextLine) {
-                                      noteText = nextLine;
-                                      i = j; // Skip processed lines
-                                      break;
-                                    }
-                                  }
-
-                                  updates.push({
-                                    timestamp,
-                                    status: displayStatus,
-                                    note: noteText,
-                                  });
-                                }
-                              }
-
-                              return updates.map((update, idx) => (
-                                <tr
-                                  key={idx}
-                                  style={{ borderBottom: "1px solid #e5e7eb" }}
-                                >
-                                  <td
-                                    style={{
-                                      padding: "12px",
-                                      color: "#6b7280",
-                                    }}
-                                  >
-                                    {update.timestamp}
-                                  </td>
-                                  <td style={{ padding: "12px" }}>
-                                    <Chip
-                                      label={
-                                        getStatusChip(referral.status, referral)
-                                          .label
-                                      }
-                                      color={
-                                        getStatusChip(referral.status, referral)
-                                          .color as any
-                                      }
-                                      variant="outlined"
-                                    />
-                                  </td>
-                                  <td
-                                    style={{
-                                      padding: "12px",
-                                      color: "#374151",
-                                    }}
-                                  >
-                                    {update.note}
-                                  </td>
-                                </tr>
-                              ));
-                            })()}
-                          </tbody>
-                        </table>
-                      </Box>
-                    </>
+                  {historyError && (
+                    <Alert severity="warning">{historyError}</Alert>
                   )}
+
+                  {history.length === 0 && !historyError ? (
+                    <Typography variant="body2" color="text.secondary">
+                      No status updates recorded yet.
+                    </Typography>
+                  ) : history.length > 0 ? (
+                    <Box sx={{ overflowX: "auto" }}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow sx={{ backgroundColor: "#f3f4f6" }}>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              Date &amp; Time
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Event</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>By</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Notes</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {history.map((row) => (
+                            <TableRow key={row.id} hover>
+                              <TableCell sx={{ whiteSpace: "nowrap" }}>
+                                {new Date(row.created_at).toLocaleString()}
+                              </TableCell>
+                              <TableCell>
+                                {HISTORY_KIND_LABELS[row.kind] ?? row.kind}
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={historyStatusLabel(row)}
+                                  color={historyStatusColor(row)}
+                                  variant="outlined"
+                                  size="small"
+                                />
+                              </TableCell>
+                              <TableCell>{row.actor_name ?? "-"}</TableCell>
+                              <TableCell sx={{ whiteSpace: "pre-wrap" }}>
+                                {row.note ?? "-"}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </Box>
+                  ) : null}
 
                   <Typography
                     variant="caption"

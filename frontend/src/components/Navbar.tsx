@@ -2,7 +2,6 @@ import {
   Box,
   Button,
   Card,
-  CardContent,
   IconButton,
   Menu,
   MenuItem,
@@ -14,15 +13,17 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate } from "react-router-dom";
-import { tokenStore, userStore } from "../services/api";
+import { logout as logoutSession } from "../services/api";
+import { useUser } from "../hooks/useUser";
 import { useMemo, useState } from "react";
-import { GridSearchIcon } from "@mui/x-data-grid";
 
 type NavLink = {
   label: string;
   link: string;
   variant?: "contained" | "outlined";
   adminOnly?: boolean;
+  /** Hidden for the read-only `viewer` role. */
+  writeOnly?: boolean;
   icon?: React.ReactNode;
 };
 
@@ -38,7 +39,15 @@ export default function Navbar({ title, subtitle, links }: NavbarProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
 
-  const user = userStore.get();
+  const { user } = useUser();
+
+  const logout = () => {
+    setAnchorEl(null);
+    // Clears the local session synchronously and revokes the refresh token on
+    // the server in the background (best effort).
+    void logoutSession();
+    navigate("/login", { replace: true });
+  };
 
   const facilityLabel = useMemo(() => {
     if (!user) return "Healthcare Provider";
@@ -51,8 +60,10 @@ export default function Navbar({ title, subtitle, links }: NavbarProps) {
 
   const filteredLinks = useMemo(() => {
     return links.filter((l) => {
-      if (!l.adminOnly) return true;
-      return user?.role === "admin";
+      if (l.adminOnly && user?.role !== "admin") return false;
+      // Viewers are read-only on the backend; don't offer them write entry points.
+      if (l.writeOnly && user?.role === "viewer") return false;
+      return true;
     });
   }, [links, user]);
 
@@ -189,13 +200,7 @@ export default function Navbar({ title, subtitle, links }: NavbarProps) {
                 anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                 transformOrigin={{ vertical: "top", horizontal: "right" }}
               >
-                <MenuItem
-                  onClick={() => {
-                    setAnchorEl(null);
-                    tokenStore.clear();
-                    navigate("/login", { replace: true });
-                  }}
-                >
+                <MenuItem onClick={logout}>
                   <LogoutIcon sx={{ mr: 1.5 }} />
                   Logout
                 </MenuItem>
@@ -203,10 +208,8 @@ export default function Navbar({ title, subtitle, links }: NavbarProps) {
             </Box>
 
             <IconButton
-              onClick={() => {
-                tokenStore.clear();
-                navigate("/login", { replace: true });
-              }}
+              onClick={logout}
+              aria-label="Logout"
               sx={{
                 display: { xs: "flex", sm: "none" },
                 color: "white",
@@ -225,7 +228,7 @@ export const navLinks = [
   { label: "Dashboard", link: "/dashboard" },
   { label: "All Users", link: "/admin/users", adminOnly: true },
   { label: "Pending Users", link: "/admin/pending", adminOnly: true },
-  { label: "Add patient", link: "/patients/new" },
+  { label: "Add patient", link: "/patients/new", writeOnly: true },
   {
     label: "Patients",
     link: "/patients",

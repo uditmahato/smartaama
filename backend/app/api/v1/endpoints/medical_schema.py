@@ -6,8 +6,9 @@ Provides frontend with structured field definitions, data types, units, and vali
 
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.core.permissions import require_any_authenticated
 from app.models.medical_schema import (
     MEDICAL_SCHEMA,
     SectionDefinition,
@@ -16,7 +17,9 @@ from app.models.medical_schema import (
     get_sections_by_category,
 )
 
-router = APIRouter()
+# Schema metadata contains no patient data, but every consumer is an authenticated page,
+# so keep it behind login for consistency (least surprise, no anonymous surface).
+router = APIRouter(dependencies=[Depends(require_any_authenticated)])
 
 
 @router.get("/sections", response_model=List[SectionDefinition])

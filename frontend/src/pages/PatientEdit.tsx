@@ -12,7 +12,8 @@ import {
   MenuItem,
 } from '@mui/material';
 import { ArrowBack, Save } from '@mui/icons-material';
-import { api } from '../services/api';
+import { api, getErrorMessage } from '../services/api';
+import Navbar, { navLinks } from '../components/Navbar';
 
 interface Municipality {
   local_level_name: string;
@@ -23,20 +24,29 @@ interface Municipality {
 interface Patient {
   id: string;
   patient_id: string;
-  facility_mrn?: string;
-  national_id?: string;
+  facility_mrn?: string | null;
+  national_id?: string | null;
   first_name: string;
-  middle_name?: string;
+  middle_name?: string | null;
   last_name: string;
-  age_in_years?: number;
-  sex?: string;
-  phone_number?: string;
-  address_line?: string;
-  ward?: string;
-  municipality?: string;
-  district?: string;
-  province?: string;
+  age_in_years?: number | null;
+  sex?: string | null;
+  phone_number?: string | null;
+  address_line?: string | null;
+  ward?: string | null;
+  municipality?: string | null;
+  district?: string | null;
+  province?: string | null;
 }
+
+const PAGE_SX = {
+  minHeight: '100vh',
+  bgcolor: '#F6F7FB',
+  py: { xs: 2, md: 3 },
+  px: { xs: 0.5, sm: 1, md: 1.5 },
+  width: '100%',
+  boxSizing: 'border-box',
+} as const;
 
 const PatientEdit: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
@@ -46,14 +56,13 @@ const PatientEdit: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  
+
   const [provinces, setProvinces] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
   const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
   const [wards, setWards] = useState<number>(0);
-  
+
   const [formData, setFormData] = useState({
-    facility_mrn: '',
     national_id: '',
     first_name: '',
     middle_name: '',
@@ -71,11 +80,12 @@ const PatientEdit: React.FC = () => {
   useEffect(() => {
     loadProvinces();
     loadPatient();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId]);
 
   const loadProvinces = async () => {
     try {
-      const response = await api.get('/locations/provinces');
+      const response = await api.get<string[]>('/locations/provinces');
       setProvinces(response.data);
     } catch (err) {
       console.error('Failed to load provinces:', err);
@@ -84,7 +94,7 @@ const PatientEdit: React.FC = () => {
 
   const loadDistricts = async (province: string) => {
     try {
-      const response = await api.get('/locations/districts', {
+      const response = await api.get<string[]>('/locations/districts', {
         params: { province },
       });
       setDistricts(response.data);
@@ -96,7 +106,7 @@ const PatientEdit: React.FC = () => {
 
   const loadMunicipalities = async (province: string, district: string) => {
     try {
-      const response = await api.get('/locations/municipalities', {
+      const response = await api.get<Municipality[]>('/locations/municipalities', {
         params: { province, district },
       });
       setMunicipalities(response.data);
@@ -108,7 +118,7 @@ const PatientEdit: React.FC = () => {
 
   const loadWards = async (province: string, district: string, municipality: string) => {
     try {
-      const response = await api.get('/locations/wards', {
+      const response = await api.get<number>('/locations/wards', {
         params: { province, district, municipality },
       });
       setWards(response.data);
@@ -121,11 +131,10 @@ const PatientEdit: React.FC = () => {
   const loadPatient = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/patients/${patientId}`);
+      const response = await api.get<Patient>(`/patients/${patientId}`);
       setPatient(response.data);
       const patientData = response.data;
       setFormData({
-        facility_mrn: patientData.facility_mrn || '',
         national_id: patientData.national_id || '',
         first_name: patientData.first_name || '',
         middle_name: patientData.middle_name || '',
@@ -139,7 +148,7 @@ const PatientEdit: React.FC = () => {
         district: patientData.district || '',
         province: patientData.province || '',
       });
-      
+
       // Load cascading data if patient has province set
       if (patientData.province) {
         await loadDistricts(patientData.province);
@@ -150,31 +159,31 @@ const PatientEdit: React.FC = () => {
           }
         }
       }
-    } catch (err: any) {
-      setError('Failed to load patient information');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to load patient information'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
-    const { name, value } = e.target as any;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
+
     // Handle cascading dropdowns
     if (name === 'province' && value) {
-      loadDistricts(value as string);
+      loadDistricts(value);
       setFormData((prev) => ({ ...prev, district: '', municipality: '', ward: '' }));
       setDistricts([]);
       setMunicipalities([]);
       setWards(0);
     } else if (name === 'district' && value && formData.province) {
-      loadMunicipalities(formData.province, value as string);
+      loadMunicipalities(formData.province, value);
       setFormData((prev) => ({ ...prev, municipality: '', ward: '' }));
       setMunicipalities([]);
       setWards(0);
     } else if (name === 'municipality' && value && formData.province && formData.district) {
-      loadWards(formData.province, formData.district, value as string);
+      loadWards(formData.province, formData.district, value);
       setFormData((prev) => ({ ...prev, ward: '' }));
       setWards(0);
     }
@@ -187,12 +196,9 @@ const PatientEdit: React.FC = () => {
     setSuccess(false);
 
     try {
-      const payload: any = {};
-      
+      const payload: Record<string, string | number | null> = {};
+
       // Only include fields that have changed
-      if (formData.facility_mrn !== (patient?.facility_mrn || '')) {
-        payload.facility_mrn = formData.facility_mrn || null;
-      }
       if (formData.national_id !== (patient?.national_id || '')) {
         payload.national_id = formData.national_id || null;
       }
@@ -235,8 +241,8 @@ const PatientEdit: React.FC = () => {
       setTimeout(() => {
         navigate(`/patients/${patientId}`);
       }, 1500);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to update patient information');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to update patient information'));
     } finally {
       setSaving(false);
     }
@@ -244,24 +250,32 @@ const PatientEdit: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-        <CircularProgress />
+      <Box sx={PAGE_SX}>
+        <Navbar title="Edit Patient" subtitle="Update patient information." links={navLinks} />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <CircularProgress />
+        </Box>
       </Box>
     );
   }
 
   if (!patient) {
     return (
-      <Alert severity="error">Patient not found</Alert>
+      <Box sx={PAGE_SX}>
+        <Navbar title="Edit Patient" subtitle="Update patient information." links={navLinks} />
+        <Alert severity="error" sx={{ mt: 2 }}>{error ?? 'Patient not found'}</Alert>
+      </Box>
     );
   }
 
   return (
-    <Box sx={{ py: 4 }}>
+    <Box sx={PAGE_SX}>
+      <Navbar title="Edit Patient" subtitle="Update patient information." links={navLinks} />
+
       <Button
         startIcon={<ArrowBack />}
         onClick={() => navigate(`/patients/${patientId}`)}
-        sx={{ mb: 3 }}
+        sx={{ my: 2 }}
       >
         Back to Patient Profile
       </Button>
@@ -286,7 +300,7 @@ const PatientEdit: React.FC = () => {
                 Identifiers
               </Typography>
             </Grid>
-            
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -303,7 +317,7 @@ const PatientEdit: React.FC = () => {
                 Personal Details
               </Typography>
             </Grid>
-            
+
             <Grid item xs={12} sm={4}>
               <TextField
                 fullWidth
@@ -314,7 +328,7 @@ const PatientEdit: React.FC = () => {
                 onChange={handleChange}
               />
             </Grid>
-            
+
             <Grid item xs={12} sm={4}>
               <TextField
                 fullWidth
@@ -324,7 +338,7 @@ const PatientEdit: React.FC = () => {
                 onChange={handleChange}
               />
             </Grid>
-            
+
             <Grid item xs={12} sm={4}>
               <TextField
                 fullWidth
@@ -335,7 +349,7 @@ const PatientEdit: React.FC = () => {
                 onChange={handleChange}
               />
             </Grid>
-            
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -347,7 +361,7 @@ const PatientEdit: React.FC = () => {
                 inputProps={{ min: 0, max: 150 }}
               />
             </Grid>
-            
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -370,7 +384,7 @@ const PatientEdit: React.FC = () => {
                 Contact Information
               </Typography>
             </Grid>
-            
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -387,7 +401,7 @@ const PatientEdit: React.FC = () => {
                 Address
               </Typography>
             </Grid>
-            
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -405,7 +419,7 @@ const PatientEdit: React.FC = () => {
                 ))}
               </TextField>
             </Grid>
-            
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -424,7 +438,7 @@ const PatientEdit: React.FC = () => {
                 ))}
               </TextField>
             </Grid>
-            
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -443,7 +457,7 @@ const PatientEdit: React.FC = () => {
                 ))}
               </TextField>
             </Grid>
-            
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -462,7 +476,7 @@ const PatientEdit: React.FC = () => {
                 ))}
               </TextField>
             </Grid>
-            
+
             <Grid item xs={12}>
               <TextField
                 fullWidth

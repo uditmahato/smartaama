@@ -1,14 +1,16 @@
 import json
+from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 LOCATIONS_FILE = Path(__file__).parent.parent.parent / "nepal_admin_structure_province_names.json"
 
 
+@lru_cache(maxsize=1)
 def load_locations() -> Dict:
-    """Load Nepal administrative structure from JSON file"""
+    """Load Nepal administrative structure from JSON file (cached for the process lifetime)."""
     try:
-        with open(LOCATIONS_FILE, 'r', encoding='utf-8') as f:
+        with open(LOCATIONS_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
         return {}

@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.referral import ReferralStatus
 
@@ -14,6 +14,8 @@ from app.models.referral import ReferralStatus
 class ReferralBase(BaseModel):
     patient_id: UUID
 
+    # Facility NAMES (what the frontend sends); each must resolve to a row of the facility
+    # directory (case-insensitive, trimmed) or the request fails with 400 "Unknown facility: X".
     from_facility: str = Field(..., min_length=2, max_length=200)
     to_facility: str = Field(..., min_length=2, max_length=200)
 
@@ -46,8 +48,18 @@ class ReferralBase(BaseModel):
 
 
 class ReferralCreate(ReferralBase):
-    status: Optional[ReferralStatus] = Field(default=None, description="Optional initial status (e.g., submitted for hospital referrals)")
-    pass
+    status: Optional[ReferralStatus] = Field(
+        default=None,
+        description="Optional initial status: draft or submitted (default submitted). "
+        "received/closed/cancelled are reached only through the status endpoints.",
+    )
+
+    @field_validator("status")
+    @classmethod
+    def initial_status_only(cls, v):
+        if v is not None and v not in (ReferralStatus.DRAFT, ReferralStatus.SUBMITTED):
+            raise ValueError("Initial status must be 'draft' or 'submitted'")
+        return v
 
 
 class ReferralUpdate(BaseModel):
@@ -99,11 +111,17 @@ class ReceivedFacilityStatusUpdate(BaseModel):
 
 
 class ReferralOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     patient_id: UUID
 
     created_by_user_id: Optional[UUID] = None
 
+    # Facility FKs (into /facilities). NULL only for legacy rows whose name matched no facility;
+    # the name columns are the display snapshots the frontend uses.
+    from_facility_id: Optional[UUID] = None
+    to_facility_id: Optional[UUID] = None
     from_facility: str
     to_facility: str
 
@@ -124,13 +142,30 @@ class ReferralOut(BaseModel):
 
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+
+class ReferralHistoryOut(BaseModel):
+    """One row of GET /referrals/{id}/history (append-only)."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    referral_id: UUID
+    kind: str  # created | status | received_status | decision
+    from_status: Optional[str] = None
+    to_status: Optional[str] = None
+    note: Optional[str] = None
+    actor_user_id: Optional[UUID] = None
+    actor_name: Optional[str] = None
+    created_at: datetime
+
+
+ReferralDirection = Literal["incoming", "outgoing"]
 
 
 class ReferralQuery(BaseModel):
     patient_id: Optional[UUID] = None
     status: Optional[ReferralStatus] = None
+    received_status: Optional[ReferralStatus] = None
+    direction: Optional[ReferralDirection] = None
     from_facility: Optional[str] = None
     to_facility: Optional[str] = None
     limit: int = Field(default=50, ge=1, le=200)

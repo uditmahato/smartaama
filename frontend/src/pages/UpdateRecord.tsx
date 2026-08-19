@@ -1,6 +1,6 @@
 // frontend/src/pages/UpdateRecord.tsx
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   Alert,
   Button,
@@ -16,7 +16,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { api } from "../services/api";
+import { api, getErrorMessage } from "../services/api";
 
 interface FieldDefinition {
   name: string;
@@ -43,16 +43,21 @@ interface SectionOption {
   label: string;
 }
 
+type FormValue = string | number | boolean | null | undefined;
+
 export default function UpdateRecord() {
   const { patientId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // `?section=<key>` (from the profile's per-section edit button) preselects a section.
+  const requestedSection = searchParams.get("section")?.trim() || "";
 
   const [sections, setSections] = useState<SectionOption[]>([]);
   const [selectedSection, setSelectedSection] = useState<string>("");
   const [schema, setSchema] = useState<SectionSchema | null>(null);
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, FormValue>>({});
   const [note, setNote] = useState<string>("");
-  
+
   const [loading, setLoading] = useState(false);
   const [schemaLoading, setSchemaLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +66,7 @@ export default function UpdateRecord() {
   // Load available sections on mount
   useEffect(() => {
     loadSections();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load schema when section changes
@@ -73,19 +79,24 @@ export default function UpdateRecord() {
   async function loadSections() {
     try {
       // Fetch only sections that should appear in clinical updates
-      const response = await api.get("/schema/sections?updates_only=true");
-      const sectionList = response.data.map((s: SectionSchema) => ({
+      const response = await api.get<SectionSchema[]>(
+        "/schema/sections?updates_only=true",
+      );
+      const sectionList: SectionOption[] = response.data.map((s) => ({
         key: s.section_key,
         label: s.section_label,
       }));
       setSections(sectionList);
-      
-      // Pre-select first section
+
+      // Pre-select the requested section (fall back to the first one).
       if (sectionList.length > 0) {
-        setSelectedSection(sectionList[0].key);
+        const match = requestedSection
+          ? sectionList.find((s) => s.key === requestedSection)
+          : undefined;
+        setSelectedSection((match ?? sectionList[0]).key);
       }
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Failed to load sections");
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to load sections"));
     }
   }
 
@@ -93,23 +104,23 @@ export default function UpdateRecord() {
     setSchemaLoading(true);
     setError(null);
     try {
-      const response = await api.get(`/schema/sections/${sectionKey}`);
+      const response = await api.get<SectionSchema>(
+        `/schema/sections/${sectionKey}`,
+      );
       setSchema(response.data);
-      
+
       // Initialize form data with default values
-      const initialData: Record<string, any> = {};
-      response.data.fields.forEach((field: FieldDefinition) => {
+      const initialData: Record<string, FormValue> = {};
+      response.data.fields.forEach((field) => {
         if (field.field_type === "boolean") {
           initialData[field.name] = false;
-        } else if (field.field_type === "integer" || field.field_type === "float") {
-          initialData[field.name] = "";
         } else {
           initialData[field.name] = "";
         }
       });
       setFormData(initialData);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Failed to load schema");
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to load schema"));
       setSchema(null);
     } finally {
       setSchemaLoading(false);
@@ -118,38 +129,38 @@ export default function UpdateRecord() {
 
   const canSubmit = useMemo(() => {
     if (!patientId || !selectedSection || !schema) return false;
-    
+
     // Check if at least one field has a value
     const hasData = schema.fields.some((field) => {
       const value = formData[field.name];
       if (field.field_type === "boolean") return true; // Booleans always have a value
       return value !== "" && value !== null && value !== undefined;
     });
-    
+
     return hasData;
   }, [patientId, selectedSection, schema, formData]);
 
   async function submit() {
     if (!patientId || !selectedSection || !schema) return;
-    
+
     setLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
       // Filter out empty values for nullable fields
-      const dataPoints: Record<string, any> = {};
+      const dataPoints: Record<string, FormValue> = {};
       schema.fields.forEach((field) => {
         const value = formData[field.name];
-        
+
         if (field.field_type === "boolean") {
-          dataPoints[field.name] = value;
+          dataPoints[field.name] = Boolean(value);
         } else if (value !== "" && value !== null && value !== undefined) {
           // Convert to proper type
           if (field.field_type === "integer") {
-            dataPoints[field.name] = parseInt(value, 10);
+            dataPoints[field.name] = parseInt(String(value), 10);
           } else if (field.field_type === "float") {
-            dataPoints[field.name] = parseFloat(value);
+            dataPoints[field.name] = parseFloat(String(value));
           } else {
             dataPoints[field.name] = value;
           }
@@ -168,17 +179,23 @@ export default function UpdateRecord() {
       });
 
       setSuccess(`${schema.section_label} data saved successfully!`);
-      
+
       // Navigate back after a brief delay
       setTimeout(() => {
         navigate(`/patients/${patientId}`, { replace: true });
       }, 1500);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? err.message ?? "Failed to save data");
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to save data"));
     } finally {
       setLoading(false);
     }
   }
+
+  const textValue = (name: string): string | number => {
+    const v = formData[name];
+    if (v === null || v === undefined || typeof v === "boolean") return "";
+    return v;
+  };
 
   const renderField = (field: FieldDefinition) => {
     const fieldLabel = field.unit ? `${field.label} (${field.unit})` : field.label;
@@ -207,7 +224,7 @@ export default function UpdateRecord() {
             <TextField
               select
               label={fieldLabel}
-              value={formData[field.name] || ""}
+              value={textValue(field.name)}
               onChange={(e) =>
                 setFormData({ ...formData, [field.name]: e.target.value })
               }
@@ -233,7 +250,7 @@ export default function UpdateRecord() {
             <TextField
               label={fieldLabel}
               type="number"
-              value={formData[field.name] || ""}
+              value={textValue(field.name)}
               onChange={(e) =>
                 setFormData({ ...formData, [field.name]: e.target.value })
               }
@@ -254,7 +271,7 @@ export default function UpdateRecord() {
             <TextField
               label={fieldLabel}
               type="date"
-              value={formData[field.name] || ""}
+              value={textValue(field.name)}
               onChange={(e) =>
                 setFormData({ ...formData, [field.name]: e.target.value })
               }
@@ -271,7 +288,7 @@ export default function UpdateRecord() {
           <Grid item xs={12} sm={6} key={field.name}>
             <TextField
               label={fieldLabel}
-              value={formData[field.name] || ""}
+              value={textValue(field.name)}
               onChange={(e) =>
                 setFormData({ ...formData, [field.name]: e.target.value })
               }

@@ -1,278 +1,254 @@
-# AI Patient Analysis Feature
+# Advisory Engine (rule-based) — Patient Summary & Referral Suggestion
 
-## Overview
+**Status: implemented.** This document describes what the code actually does.
 
-The AI Patient Analysis feature provides automated patient summaries and referral recommendations using OpenAI's GPT models. This feature enhances clinical decision-making by analyzing patient data and providing intelligent insights.
+> There is **no LLM, no OpenAI/GPT, no retrieval-augmented generation (RAG), no
+> vector database and no background worker** in SmartAama. The "AI" cards on the
+> patient profile are produced by a small, deterministic, **rule-based advisory
+> engine** that reads the *latest recorded value* of a fixed set of clinical
+> data points and applies fixed thresholds. `model_used` / `model_version` is
+> always `"rule-based-advisory-v2"`. LLM-based summarisation and guideline
+> retrieval are possible future work and are **not** present in the codebase.
 
-## Features
+## Safety statement
 
-### 1. **AI Patient Summary**
-- Generates natural language summaries of patient clinical condition
-- Identifies key findings from clinical events
-- Assesses overall risk level (low, medium, high, critical)
-- Updates automatically when patient data changes
+Every output is **advisory only**. It is not a diagnosis, it does not replace
+clinical assessment, and clinical decisions rest with the responsible qualified
+clinician. Every human-readable string the engine emits is checked at runtime by
+`app/ai/validators.py::validate_advisory_language`, which rejects imperative or
+autonomous wording ("must", "administer", "diagnose", "patient has
+pre-eclampsia", ...). Responses carry an explicit `disclaimer` field.
 
-### 2. **AI Referral Recommendation**
-- Analyzes patient data to determine if referral is needed
-- Provides urgency level (low, medium, high, critical)
-- Calculates confidence score (0-100%)
-- Suggests recommended facilities and specialties
-- Estimates distance to recommended facility
-- Lists specific reasons for recommendation
+The engine only sees what has been recorded. Missing, stale or mistyped data
+means missing or wrong flags. A `low`/`unknown` result never excludes risk.
 
-## Setup Instructions
+---
 
-### 1. Install OpenAI Package (Optional)
+## Where the code lives
 
-```bash
-cd backend
-.\venv\Scripts\activate  # Windows
-source venv/bin/activate  # Linux/Mac
+| File | Role |
+|------|------|
+| `backend/app/services/advisory_rules.py` | **Single source of truth.** Pure function `evaluate_latest_values(latest, patient_age=None) -> RuleResult`; all input keys, thresholds, weights, wording, risk-level and referral logic. No DB, no settings. |
+| `backend/app/services/risk_engine.py` | `RiskEngine` (used by `POST /ai/risk`). Loads latest event per `(section, factor)` (`load_latest_events`, `latest_per_factor`), runs the shared rules, returns `AdvisoryRiskRecommendation` with evidence. |
+| `backend/app/services/ai_patient_service.py` | `AIPatientService` (used by `/ai-analysis/*`, the patient-profile cards). Same shared rules; shapes the result into summary + referral suggestion and caches it in `ai_patient_analyses`. |
+| `backend/app/services/ai_update_service.py` | `mark_ai_analysis_for_update(db, patient_id)` — deletes the cached row; called from every clinical write path. |
+| `backend/app/ai/validators.py` | Advisory-language guardrail. |
+| `backend/app/schemas/ai.py`, `backend/app/schemas/ai_analysis.py` | Response schemas. |
+| `backend/app/models/ai_patient_analysis.py` | Cache table (`JSON` with `JSONB` variant on PostgreSQL; portable to SQLite for tests). |
+| `backend/tests/test_risk_rules.py`, `test_risk_engine_service.py`, `test_risk_endpoints.py` | Tests. |
 
-pip install openai
-```
+---
 
-### 2. Configure OpenAI API Key
+## What the engine reads (exact `section.factor` keys from `app/models/medical_schema.py`)
 
-1. Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Add to your `.env` file:
+Only the **latest** value per key is used (latest by `event_time`, then
+`created_at`). Where the same finding is captured in several sections, the most
+recent across the group is used.
 
-```env
-# OpenAI Configuration
-OPENAI_API_KEY=your-openai-api-key-here
-OPENAI_MODEL=gpt-4
-```
+| Domain | Key(s) | Notes |
+|--------|--------|-------|
+| Blood pressure | `vitals.blood_pressure_systolic`, `vitals.blood_pressure_diastolic` | mmHg |
+| Maternal pulse | `vitals.pulse_rate` | **maternal only** — fetal heart rate is never read as maternal pulse |
+| Temperature | `vitals.temperature` | °C |
+| Respiratory rate | `vitals.respiratory_rate` | breaths/min |
+| BMI | `vitals.body_mass_index` | context only |
+| Hemoglobin | `blood_investigations.hemoglobin` | g/dL |
+| Blood glucose | `blood_investigations.blood_glucose` | mg/dL (fasting status unknown → conservative) |
+| Platelets | `blood_investigations.platelet_count` | /mm³ |
+| Proteinuria | `urine_examination.dipstick_protein` (`Negative/Trace/+/++/+++/++++`), `urine_examination.urine_protein_24hr`, `urine_examination.protein_creatinine_ratio` | |
+| Fetal heart rate | `per_abdominal_examination.fetal_heart_rate`, `ultrasonography.fetal_heart_rate` (most recent) | labelled **fetal**, fetal thresholds |
+| Placenta | `ultrasonography.placental_location` | Low-lying / Previa |
+| Symptoms | `second_trimester_anc.headache_epigastric_visual_symptoms`, `third_trimester_anc.headache_epigastric_visual_symptoms`; `first_trimester_anc.vaginal_bleeding_or_discharge`, `third_trimester_anc.vaginal_bleeding_or_discharge`; `*_trimester_anc.fever_or_urinary_symptoms`; `third_trimester_anc.fetal_movement_normal` (`false` → reduced fetal movement) | booleans |
+| General signs / exam | `general_signs.pallor`, `general_signs.edema`, `general_examination.level_of_consciousness` | |
+| History (context) | `past_medical_history.hypertension`, `past_medical_history.diabetes`, `obstetric_history.pregnancy_loss_history`, `obstetric_history.previous_complications`, patient `age_in_years` | info-level only |
 
-**Note:** The system works without OpenAI configured - it will use mock data for testing.
+Anything else recorded is ignored (and legacy keys such as `vitals.bp_systolic`
+or `lab_investigations.hemoglobin` are **not** read — they were never written by
+the schema).
 
-### 3. Database Migration
+## Thresholds and flags
 
-The migration has already been applied. To verify:
+Severity: `info` < `warning` < `severe` < `critical`. Weight = contribution to
+the referral score. (Table generated from `advisory_rules.py`; edit the code, not
+the table.)
 
-```bash
-cd backend
-.\venv\Scripts\python.exe -m alembic current
-```
+| Rule code | Trigger | Severity | Weight |
+|-----------|---------|----------|--------|
+| `severe_hypertension` | SBP ≥160 or DBP ≥110 | severe | 0.35 |
+| `hypertension` | SBP ≥140 or DBP ≥90 | warning | 0.20 |
+| `hypotension` | SBP <90 | warning | 0.15 |
+| `maternal_tachycardia_severe` | pulse ≥120 | severe | 0.20 |
+| `maternal_tachycardia` | pulse 100–119 | warning | 0.10 |
+| `maternal_bradycardia` | pulse <50 | warning | 0.10 |
+| `fever` | temperature ≥38.0 °C | warning | 0.15 |
+| `tachypnoea_severe` / `tachypnoea` | RR ≥30 / RR ≥21 | severe / warning | 0.20 / 0.10 |
+| `bmi_high` / `bmi_low` | BMI ≥30 / <18.5 | info | 0.05 |
+| `severe_anemia` | Hb <7.0 | severe | 0.30 |
+| `moderate_anemia` | Hb 7.0–9.9 | warning | 0.15 |
+| `mild_anemia` | Hb 10.0–10.9 | info | 0.05 |
+| `hyperglycaemia_marked` / `hyperglycaemia` | glucose ≥200 / ≥140 mg/dL | warning | 0.20 / 0.10 |
+| `thrombocytopenia_severe` / `thrombocytopenia` | platelets <50,000 / <100,000 | severe / warning | 0.25 / 0.15 |
+| `proteinuria_significant` / `proteinuria` / `proteinuria_trace` | dipstick ≥`++` / `+` / `Trace` | warning / warning / info | 0.20 / 0.15 / 0 |
+| `proteinuria_24h` / `proteinuria_pcr` | ≥300 mg/24h / PCR ≥0.3 | warning | 0.15 |
+| `preeclampsia_symptoms` | headache/epigastric/visual = true | warning | 0.15 |
+| `vaginal_bleeding` | bleeding/discharge = true | warning | 0.20 |
+| `fever_or_urinary_symptoms` | = true | warning | 0.10 |
+| `reduced_fetal_movement` | fetal_movement_normal = false | warning (fetal) | 0.15 |
+| `fetal_bradycardia` / `fetal_tachycardia` | FHR <110 / >160 bpm | warning (fetal) | 0.20 / 0.15 |
+| `unconscious` | level_of_consciousness = Unconscious | **critical** | 0.50 |
+| `altered_consciousness` | Drowsy / Confused | severe | 0.30 |
+| `pallor`, `edema` | = true | info | 0.05 |
+| `placenta_previa_or_low_lying` | Low-lying / Previa | warning | 0.10 |
+| `history_hypertension`, `history_diabetes`, `history_pregnancy_loss`, `history_previous_complications`, `age_advanced` (≥35), `age_young` (<18) | | info | 0.05 |
 
-## API Endpoints
+### Combination rules (escalate the overall level)
 
-### Get AI Analysis
-```http
-GET /api/v1/ai-analysis/patient/{patient_id}?auto_generate=true
-```
+| Combination | Minimum level |
+|-------------|---------------|
+| severe hypertension **and** (any proteinuria **or** headache/epigastric/visual symptoms) | **critical** |
+| severe hypertension **and** low platelets | **critical** |
+| elevated (non-severe) hypertension **and** (proteinuria **or** symptoms) | high |
+| vaginal bleeding **and** (maternal tachycardia **or** hypotension) | high |
+| fever **and** maternal tachycardia | high |
+| ≥3 concurrent maternal `warning`-or-worse flags | high |
 
-**Response:**
+### Overall risk level
+
+`unknown` (no evaluable data recorded) · `low` (only info flags / nothing
+crossed) · `medium` (any warning) · `high` (any severe, or a high combination) ·
+`critical` (any critical flag / critical combination).
+
+### Referral suggestion
+
+* `referral_needed` / `referral_recommended` = level ∈ {medium, high, critical}
+* `urgency` = the level (`low` when not recommended) — vocabulary `low | medium | high | critical`
+* `confidence` / `referral_score` = **sum of triggered rule weights, capped at 0.95**.
+  This is a *transparency score* kept for the UI's percentage display; it is
+  **not** a probability and not a model confidence.
+* `reasons` = combination reasons first, then per-flag reasons (warning or worse).
+
+---
+
+## Endpoints
+
+All routes require a valid JWT and **facility-level access to the patient**
+(`app/core/authz.py::get_accessible_patient_or_404`: admins see all; others need
+the patient registered at their facility or a referral involving their facility;
+403 otherwise, 404 if the patient does not exist).
+
+| Method & path | Who | What |
+|---------------|-----|------|
+| `GET /api/v1/ai-analysis/patients/{patient_id}/analysis?auto_generate=true&force_regenerate=false` | any authenticated user with access (**read**); generation (auto or forced) only for `clinician` / `hospital` / `admin` | Returns the stored analysis. A viewer whose patient has no stored analysis gets **404** (nothing is generated); a viewer passing `force_regenerate=true` gets **403**. |
+| `POST /api/v1/ai-analysis/generate` `{patient_id, force_regenerate}` | clinician / hospital / admin | Generate or regenerate and return the analysis. |
+| `GET /api/v1/ai-analysis/patients/{patient_id}/status` | any authenticated user with access | `has_analysis`, `last_analyzed_at`, `data_version`, `needs_update` (true when nothing stored **or** an event/referral was recorded after `last_analyzed_at`), `last_data_change_at`, `model_used`. |
+| `DELETE /api/v1/ai-analysis/patients/{patient_id}` | clinician / hospital / admin | Delete the stored analysis. |
+| `POST /api/v1/ai/risk` `{patient_id, clinical_question?, referral_id?}` | clinician / hospital / admin | Explainable assessment with per-flag `evidence`; writes an `AuditLog` row (`AI_RISK_ASSESSMENT_RUN`). |
+
+### `GET /ai-analysis/patients/{id}/analysis` response
+
 ```json
 {
   "patient_id": "uuid",
   "summary": {
-    "summary": "Natural language summary...",
-    "key_findings": ["Finding 1", "Finding 2"],
-    "risk_level": "medium"
+    "summary": "Patient (29 years): 2 finding(s) outside advisory rule thresholds ... Overall advisory risk level: critical. Clinician review is advised.",
+    "key_findings": [
+      "Blood pressure: 165/100 mmHg (⚠️ Severely Elevated, ≥160/110)",
+      "Urine dipstick protein: ++ (⚠️ Elevated, ++ or more)",
+      "Maternal pulse rate: 82 bpm (Normal range)"
+    ],
+    "risk_level": "critical",
+    "metadata": { "engine": "rule-based-advisory-v2", "clinical_events": 4, "data_points_evaluated": 3, "flag_count": 2, "disclaimer": "..." }
   },
   "referral_recommendation": {
     "referral_needed": true,
-    "urgency": "medium",
-    "confidence": 0.75,
-    "reasons": ["Reason 1", "Reason 2"],
-    "recommended_facility": "District Hospital",
-    "recommended_specialties": ["Obstetrics", "Gynecology"],
-    "estimated_distance_km": 15.5
+    "urgency": "critical",
+    "confidence": 0.55,
+    "reasons": ["Severe-range blood pressure together with proteinuria ... may indicate severe pre-eclampsia features; urgent clinician review and consideration of immediate referral is advised.", "..."],
+    "recommended_facility": null,
+    "recommended_specialties": [],
+    "risk_factors": {
+      "detected_risks": [{ "name": "Severe hypertension", "weight": 0.35, "value": "165/100 mmHg", "code": "severe_hypertension", "severity": "severe", "domain": "maternal" }],
+      "confidence_calculation": "Sum of rule weights: 55.0% (capped at 95%)",
+      "data_points_analyzed": 4
+    },
+    "clinical_indicators": { "engine": "rule-based-advisory-v2", "risk_level": "critical", "total_risk_factors": 2, "confidence_score": "55.0%", "severe_hypertension": "DETECTED: 165/100 mmHg" }
   },
-  "last_analyzed_at": "2026-01-29T00:00:00Z",
+  "last_analyzed_at": "2026-08-18T10:00:00Z",
   "data_version": 1,
-  "model_used": "gpt-4"
+  "model_used": "rule-based-advisory-v2",
+  "disclaimer": "This output is generated by a deterministic rule-based advisory engine ..."
 }
 ```
 
-### Force Regenerate Analysis
-```http
-POST /api/v1/ai-analysis/generate
-{
-  "patient_id": "uuid",
-  "force_regenerate": true
-}
+`key_findings` strings keep the `⚠️` / `Elevated` / `Low` / `Normal` markers the
+frontend uses for colouring. `recommended_facility` / `recommended_specialties`
+are reserved and always empty (facility suggestion is not implemented).
+
+### `POST /ai/risk` response
+
+`{patient_id, generated_at, model_version: "rule-based-advisory-v2", disclaimer, recommendation}` where
+`recommendation` = `{overall_risk_level, summary, recommended_actions[], referral_recommended, referral_urgency, referral_reason, referral_reasons[], referral_score, explanation, evidence[{section, factor, observed_value, event_time, note, code, severity, domain, finding}], citations: [] (always empty; retrieval not implemented), engine, safety_note}`.
+
+---
+
+## Caching & invalidation
+
+The result is cached one row per patient in `ai_patient_analyses`. Every clinical
+write path (`/events`, `/medical-data`, referrals) calls
+`mark_ai_analysis_for_update(db, patient_id)`, which deletes the row inside the
+same transaction; the next generation request rebuilds it and `data_version`
+increments on regeneration. `GET .../status` additionally compares the latest
+event/referral `created_at` with `last_analyzed_at` as a defensive check.
+
+## Database table `ai_patient_analyses`
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id, patient_id (unique FK) | UUID | |
+| summary | TEXT | |
+| summary_metadata | JSON (JSONB on PG) | key_findings, risk_level, counts, disclaimer |
+| referral_needed / referral_urgency / referral_confidence | bool / varchar(20) / float | urgency ∈ low, medium, high, critical |
+| referral_reasons, recommended_specialties | JSON | |
+| recommended_facility | varchar(255) | always NULL (reserved) |
+| risk_factors, clinical_indicators | JSON | |
+| model_used | varchar(100) | `rule-based-advisory-v2` |
+| data_version, last_analyzed_at, created_at | | |
+
+(Legacy databases may still contain a nullable `tokens_used` column; it is no
+longer mapped or written.)
+
+## Limitations (please read)
+
+* Rules are fixed thresholds on the latest value only — no trends, no gestational-age
+  awareness (e.g. BP thresholds are not adjusted for gestation), no unit conversion
+  (values are assumed to be in the schema's units), no free-text understanding.
+* Booleans in trimester ANC sections are read as recorded; a symptom stays flagged
+  until a newer entry (in any trimester section of the same group) records `false`.
+* Fetal presentation, gestational age, AFI, EFW, thyroid, LFT/RFT, serology are
+  **not** evaluated (they are recorded but no rule reads them yet).
+* The referral "confidence" is a weight sum, not a calibrated probability.
+* No guideline citations are produced (`citations` is always `[]`).
+
+## Tests
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m pytest tests/test_risk_rules.py tests/test_risk_engine_service.py tests/test_risk_endpoints.py -q
 ```
 
-### Get Analysis Status
-```http
-GET /api/v1/ai-analysis/patient/{patient_id}/status
-```
+`test_risk_rules.py` (pure rules: thresholds, fetal-vs-maternal, latest-per-factor,
+unknown/no-data, advisory-language validation), `test_risk_engine_service.py`
+(services on in-memory SQLite, caching/invalidation, response shape),
+`test_risk_endpoints.py` (authorization and HTTP shapes via the shared conftest).
 
-### Delete Analysis
-```http
-DELETE /api/v1/ai-analysis/patient/{patient_id}
-```
+## Frontend
 
-## Frontend Components
+`frontend/src/components/AIPatientSummary.tsx` and `AIReferralRecommendation.tsx`
+render the two cards from `GET /ai-analysis/patients/{id}/analysis` (fetched in
+`PatientProfile.tsx`). They present the output as "Advisory (rule-based)".
 
-### AIPatientSummary Component
-Located at: `frontend/src/components/AIPatientSummary.tsx`
+## Future work (not implemented)
 
-**Usage:**
-```tsx
-import AIPatientSummary from '../components/AIPatientSummary';
-
-<AIPatientSummary patientId={patientId} />
-```
-
-### AIReferralRecommendation Component
-Located at: `frontend/src/components/AIReferralRecommendation.tsx`
-
-**Usage:**
-```tsx
-import AIReferralRecommendation from '../components/AIReferralRecommendation';
-
-<AIReferralRecommendation patientId={patientId} />
-```
-
-## Automatic Updates
-
-The AI analysis automatically regenerates when:
-- New clinical events are added
-- Patient data is updated
-- Medical records are modified
-
-**Implementation:** The `mark_ai_analysis_for_update()` function in `app/services/ai_update_service.py` is called whenever patient data changes. It deletes the existing analysis, which triggers regeneration on next access.
-
-## Customizing AI Prompts
-
-Edit the prompts in `backend/app/services/ai_patient_service.py`:
-
-```python
-def _create_summary_prompt(self, patient_data: Dict[str, Any]) -> str:
-    """Customize this to change how AI analyzes patient data"""
-    return f"""Your custom prompt here..."""
-
-def _create_referral_prompt(self, patient_data: Dict[str, Any]) -> str:
-    """Customize referral recommendation logic"""
-    return f"""Your custom prompt here..."""
-```
-
-## Mock Data Mode
-
-When OpenAI is not configured, the system uses mock data:
-
-```python
-def _generate_mock_summary(self, patient_data: Dict[str, Any]) -> AIPatientSummary:
-    """Returns sample data for testing without API costs"""
-```
-
-This allows you to:
-- Test the UI without API costs
-- Develop and debug without API dependency
-- Demo the feature to stakeholders
-
-## OpenAI Integration
-
-To enable real AI analysis:
-
-1. **Update the service methods:**
-
-```python
-# In ai_patient_service.py
-async def generate_ai_summary(self, patient_data: Dict[str, Any]) -> AIPatientSummary:
-    prompt = self._create_summary_prompt(patient_data)
-    
-    response = await openai.ChatCompletion.acreate(
-        model=self.settings.OPENAI_MODEL,
-        messages=[
-            {"role": "system", "content": "You are a medical AI assistant..."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.3,
-        max_tokens=500
-    )
-    
-    # Parse response and return AIPatientSummary
-```
-
-2. **Handle response parsing:**
-
-```python
-result = response.choices[0].message.content
-# Parse JSON from result or extract structured data
-```
-
-## Database Schema
-
-**Table:** `ai_patient_analyses`
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| patient_id | UUID | Foreign key to patients (unique) |
-| summary | TEXT | Natural language summary |
-| summary_metadata | JSONB | Key findings and metadata |
-| referral_needed | BOOLEAN | Whether referral is recommended |
-| referral_urgency | VARCHAR(20) | Urgency level |
-| referral_confidence | FLOAT | Confidence score 0-1 |
-| referral_reasons | JSONB | List of reasons |
-| recommended_facility | VARCHAR(255) | Facility name |
-| recommended_specialties | JSONB | List of specialties |
-| risk_factors | JSONB | Identified risk factors |
-| clinical_indicators | JSONB | Key clinical indicators |
-| model_used | VARCHAR(100) | AI model used |
-| tokens_used | INTEGER | Token consumption |
-| data_version | INTEGER | Data version for tracking changes |
-| last_analyzed_at | TIMESTAMP | Last analysis time |
-
-## Performance Considerations
-
-1. **Caching:** Analysis is cached in database until patient data changes
-2. **Lazy Loading:** Analysis only generated when accessed
-3. **Background Processing:** Use Celery or BackgroundTasks for async generation
-4. **Token Limits:** Monitor OpenAI token usage and costs
-
-## Security & Privacy
-
-1. **Data Minimization:** Only send necessary clinical data to AI
-2. **Audit Logging:** All AI analysis requests are logged
-3. **API Key Security:** Never commit API keys to version control
-4. **PHI Protection:** Ensure OpenAI usage complies with HIPAA/local regulations
-
-## Troubleshooting
-
-### AI Analysis Not Showing
-- Check backend logs for errors
-- Verify patient has clinical events
-- Try forcing regeneration with refresh button
-
-### OpenAI API Errors
-- Verify API key is correct
-- Check API quota and billing
-- Review rate limits
-
-### Mock Data Showing Instead of Real Analysis
-- Confirm `OPENAI_API_KEY` is set in `.env`
-- Check `openai` package is installed
-- Review backend logs for initialization errors
-
-## Future Enhancements
-
-- [ ] Background task queue with Celery
-- [ ] Multiple AI model support (GPT-3.5, GPT-4, local models)
-- [ ] Batch analysis for multiple patients
-- [ ] Historical trend analysis
-- [ ] Explainable AI features
-- [ ] Integration with clinical guidelines databases
-- [ ] Real-time streaming responses
-- [ ] Cost tracking and optimization
-
-## Cost Estimation
-
-**Average costs per analysis (GPT-4):**
-- Summary generation: ~$0.03-0.05
-- Referral recommendation: ~$0.05-0.08
-- **Total per patient:** ~$0.08-0.13
-
-**For 1000 patients/month:** ~$80-130/month
-
-**Cost optimization:**
-- Use GPT-3.5-turbo for non-critical analysis
-- Implement smart caching (only regenerate when needed)
-- Batch process during off-hours
-
-## License
-
-This feature is part of the SmartAama maternal health system.
+* LLM-generated narrative summaries and guideline retrieval (RAG) with citations.
+* Gestational-age-aware and trend-aware rules; configurable thresholds per facility.
+* Facility / specialty suggestion for referrals.

@@ -77,15 +77,24 @@ class SectionDataCreate(BaseModel):
         return v
 
 
+class SectionDataWriteResult(BaseModel):
+    """Response of POST /medical-data/patients/{id}/sections/{key}."""
+    message: str
+    section_key: str
+    event_count: int
+    event_time: datetime
+
+
 class SectionDataOut(BaseModel):
-    """Output representation of section data."""
+    """Output of GET .../sections/{key}/latest (latest value per field)."""
     section_key: str
     section_label: str
     category: str
     data_points: Dict[str, Any]
     event_time: Optional[datetime] = None
-    recorded_at: datetime
+    recorded_at: Optional[datetime] = None
     note: Optional[str] = None
+    message: Optional[str] = None  # e.g. "No data recorded yet"
 
 
 class PatientProfileData(BaseModel):
@@ -113,6 +122,7 @@ class SectionTimeSeriesOut(BaseModel):
     section_key: str
     section_label: str
     entries: List[TimeSeriesDataPoint]
+    total_entries: int = 0
 
 
 class BulkSectionDataCreate(BaseModel):
@@ -120,3 +130,10 @@ class BulkSectionDataCreate(BaseModel):
     patient_id: UUID
     sections: List[SectionDataCreate]
     visit_note: Optional[str] = None
+
+
+class BulkSectionDataResult(BaseModel):
+    """Response of POST /medical-data/patients/{id}/bulk-entry."""
+    message: str
+    sections_processed: List[str]
+    total_events: int

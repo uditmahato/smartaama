@@ -1,0 +1,13 @@
+# GitGuardian / ggshield configuration.
+# The paths below contain ONLY throw-away credentials for automated tests: pytest creates the
+# accounts inside a temporary database on every run, and the Playwright suite bootstraps its
+# own admin/clinician into a throw-away SQLite file. None of these values exist in any real
+# environment. Real configuration lives in untracked .env files (see .env.example).
+version: 2
+
+secret:
+  ignored-paths:
+    - "backend/tests/**"
+    - "frontend/e2e/**"
+    - "backend/.env.example"
+    - "frontend/.env.example"

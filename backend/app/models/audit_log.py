@@ -5,11 +5,10 @@ from __future__ import annotations
 import uuid
 from typing import Any, Dict, Optional
 
-from sqlalchemy import ForeignKey, Index, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import ForeignKey, Index, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from app.models.base import Base, JSONVariant, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class AuditLog(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -18,17 +17,18 @@ class AuditLog(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     Do not update/delete rows; every action is append-only.
 
     Examples:
-    - LOGIN_SUCCESS / LOGIN_FAILURE
+    - USER_LOGIN
     - PATIENT_CREATED
     - CLINICAL_EVENT_CREATED
     - REFERRAL_SUBMITTED / REFERRAL_RECEIVED / REFERRAL_CLOSED
+    - USER_APPROVED / USER_REJECTED / USER_SOFT_DELETED
     - AI_RISK_REQUESTED / AI_RISK_RESULT_RECORDED
     """
 
     __tablename__ = "audit_logs"
 
     actor_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True),
+        Uuid(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
@@ -38,14 +38,14 @@ class AuditLog(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     # Target entity info (generic to support all modules)
     entity_type: Mapped[Optional[str]] = mapped_column(String(60), nullable=True, index=True)
-    entity_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    entity_id: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid(as_uuid=True), nullable=True, index=True)
 
     # Optional metadata for traceability
     ip_address: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     user_agent: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Structured details (avoid putting PHI unnecessarily; keep minimal)
-    details: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    details: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONVariant, nullable=True)
 
     actor: Mapped[Optional["User"]] = relationship("User", lazy="noload")
 

@@ -17,7 +17,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { api } from "../services/api";
+import { api, getErrorMessage } from "../services/api";
 
 type FacilityKind = "phc" | "hospital";
 
@@ -49,7 +49,6 @@ export default function Signup() {
 
   const [loadingFacilities, setLoadingFacilities] = useState(false);
   const [facilityError, setFacilityError] = useState<string | null>(null);
-  const [facilitiesLoaded, setFacilitiesLoaded] = useState(false);
 
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
 
@@ -96,11 +95,8 @@ export default function Signup() {
       ]);
 
       setFacilityOptions({ phc: phcResp.data, hospital: hospitalResp.data });
-      setFacilitiesLoaded(true);
-    } catch (err: any) {
-      setFacilityError(
-        err?.response?.data?.detail ?? "Could not load facilities",
-      );
+    } catch (err) {
+      setFacilityError(getErrorMessage(err, "Could not load facilities"));
     } finally {
       setLoadingFacilities(false);
     }
@@ -108,6 +104,7 @@ export default function Signup() {
 
   useEffect(() => {
     void loadFacilities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -145,8 +142,8 @@ export default function Signup() {
 
       setInfo("Registration successful! Awaiting approval by admin.");
       setTimeout(() => navigate("/login"), 1500);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Registration failed.");
+    } catch (err) {
+      setError(getErrorMessage(err, "Registration failed."));
     } finally {
       setBusy(false);
     }

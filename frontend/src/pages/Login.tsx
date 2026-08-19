@@ -1,5 +1,5 @@
 // frontend/src/pages/Login.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -8,218 +8,47 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  Collapse,
   Divider,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
-  MenuItem,
-  Radio,
-  RadioGroup,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import { api, tokenStore } from "../services/api";
-
-type TokenResponse = {
-  access_token: string;
-  token_type: "bearer";
-};
-
-type BootstrapAdminRequest = {
-  username: string;
-  password: string;
-  full_name?: string | null;
-  facility_kind: FacilityKind;
-  facility_id: string;
-};
-
-type bool = boolean;
-
-type UserMeResponse = {
-  id: string;
-  username: string;
-  full_name?: string | null;
-  role: string;
-  is_active: bool;
-  facility_type?: string | null;
-  facility_id?: string | null;
-  facility_name?: string | null;
-};
-
-export type FacilityKind = "phc" | "hospital";
-
-export type FacilityOption = {
-  id: string;
-  name: string;
-  kind: FacilityKind;
-};
+import { getErrorMessage, login } from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
 
-  // Login
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
-  // Bootstrap panel (DEV-only usage)
-  const [showBootstrap, setShowBootstrap] = useState(false);
-  const [bootstrapToken, setBootstrapToken] = useState(
-    //@ts-ignore
-    import.meta.env.VITE_BOOTSTRAP_TOKEN || "",
-  );
-  const [adminUsername, setAdminUsername] = useState("");
-  const [adminPassword, setAdminPassword] = useState("");
-  const [adminFullName, setAdminFullName] = useState("");
-  const [facilityKind, setFacilityKind] = useState<FacilityKind | "">("");
-  const [facilityId, setFacilityId] = useState("");
-  const [facilityOptions, setFacilityOptions] = useState<
-    Record<FacilityKind, FacilityOption[]>
-  >({
-    phc: [],
-    hospital: [],
-  });
-  const [loadingFacilities, setLoadingFacilities] = useState(false);
-  const [facilityError, setFacilityError] = useState<string | null>(null);
-  const [facilitiesLoaded, setFacilitiesLoaded] = useState(false);
-
-  // Separate busy flags to avoid "Login" and "Bootstrap" blocking each other unnecessarily
-  const [busyLogin, setBusyLogin] = useState(false);
-  const [busyBootstrap, setBusyBootstrap] = useState(false);
-
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
 
   const canLogin = useMemo(
     () => username.trim().length > 0 && password.length > 0,
     [username, password],
   );
 
-  const canBootstrap = useMemo(() => {
-    return (
-      bootstrapToken.trim().length > 0 &&
-      adminUsername.trim().length >= 3 &&
-      adminPassword.length >= 10 &&
-      Boolean(facilityKind && facilityId)
-    );
-  }, [bootstrapToken, adminUsername, adminPassword, facilityKind, facilityId]);
-
-  async function loadFacilities() {
-    if (loadingFacilities) return;
-    setFacilityError(null);
-    setLoadingFacilities(true);
-
-    try {
-      const [phcResp, hospitalResp] = await Promise.all([
-        api.get<FacilityOption[]>("/facilities", { params: { kind: "phc" } }),
-        api.get<FacilityOption[]>("/facilities", {
-          params: { kind: "hospital" },
-        }),
-      ]);
-
-      setFacilityOptions({ phc: phcResp.data, hospital: hospitalResp.data });
-      setFacilitiesLoaded(true);
-    } catch (err: any) {
-      setFacilityError(
-        err?.response?.data?.detail ?? "Could not load facilities",
-      );
-    } finally {
-      setLoadingFacilities(false);
-    }
-  }
-
-  useEffect(() => {
-    if (showBootstrap && !facilitiesLoaded) {
-      void loadFacilities();
-    }
-  }, [showBootstrap, facilitiesLoaded]);
-
-  useEffect(() => {
-    setFacilityId("");
-  }, [facilityKind]);
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canLogin || busyLogin) return;
+    if (!canLogin || busy) return;
 
     setError(null);
-    setInfo(null);
-    setBusyLogin(true);
+    setBusy(true);
 
     try {
-      const body = new URLSearchParams();
-      body.set("username", username.trim());
-      body.set("password", password);
-      // OAuth2PasswordRequestForm fields (safe defaults)
-      body.set("grant_type", "");
-      body.set("scope", "");
-      body.set("client_id", "");
-      body.set("client_secret", "");
-
-      const resp = await api.post<TokenResponse>("/auth/login", body, {
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      });
-
-      tokenStore.set(resp.data.access_token);
+      // Backend uses OAuth2PasswordRequestForm: `username` + `password`
+      // (registered users sign in with their email as the username). `login`
+      // stores the access token and the refresh token used to renew it.
+      await login(username, password);
       navigate("/", { replace: true });
-    } catch (err: any) {
+    } catch (err) {
       setError(
-        err?.response?.data?.detail ??
-          "Sign-in failed. Please check your credentials.",
+        getErrorMessage(err, "Sign-in failed. Please check your credentials."),
       );
     } finally {
-      setBusyLogin(false);
+      setBusy(false);
     }
   }
-
-  async function bootstrapAdmin() {
-    if (!canBootstrap || busyBootstrap) return;
-
-    if (!facilityKind || !facilityId) {
-      setError("Select facility type and facility name.");
-      return;
-    }
-
-    setError(null);
-    setInfo(null);
-    setBusyBootstrap(true);
-
-    try {
-      const payload: BootstrapAdminRequest = {
-        username: adminUsername.trim(),
-        password: adminPassword,
-        full_name: adminFullName.trim() || null,
-        facility_kind: facilityKind as FacilityKind,
-        facility_id: facilityId,
-      };
-
-      const resp = await api.post<UserMeResponse>(
-        "/auth/bootstrap-admin",
-        payload,
-        {
-          headers: { "X-Bootstrap-Token": bootstrapToken.trim() },
-        },
-      );
-
-      const facilityLabel = resp.data.facility_name || "selected facility";
-      setInfo(
-        `Admin account created for "${resp.data.username}" at ${facilityLabel}. You can now sign in.`,
-      );
-      // Pre-fill login fields for convenience (no auto-login)
-      setUsername(payload.username);
-      setPassword(payload.password);
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.detail ??
-          "Bootstrap failed. Verify token and server environment.",
-      );
-    } finally {
-      setBusyBootstrap(false);
-    }
-  }
-
-  const isBusy = busyLogin || busyBootstrap;
 
   return (
     <Box
@@ -260,23 +89,18 @@ export default function Login() {
               </Typography>
             </Stack>
 
-            {(error || info) && (
-              <Stack spacing={1}>
-                {error && <Alert severity="error">{error}</Alert>}
-                {info && <Alert severity="info">{info}</Alert>}
-              </Stack>
-            )}
+            {error && <Alert severity="error">{error}</Alert>}
 
             <Box component="form" onSubmit={onSubmit} noValidate>
               <Stack spacing={2}>
                 <TextField
-                  label="Email"
+                  label="Username or email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="email"
+                  autoComplete="username"
                   required
                   fullWidth
-                  disabled={isBusy}
+                  disabled={busy}
                 />
 
                 <TextField
@@ -287,14 +111,14 @@ export default function Login() {
                   type="password"
                   required
                   fullWidth
-                  disabled={isBusy}
+                  disabled={busy}
                 />
 
                 <Button
                   type="submit"
                   variant="contained"
                   size="large"
-                  disabled={!canLogin || isBusy}
+                  disabled={!canLogin || busy}
                   sx={{
                     textTransform: "none",
                     fontWeight: 700,
@@ -302,7 +126,7 @@ export default function Login() {
                     py: 1.1,
                   }}
                 >
-                  {busyLogin ? <CircularProgress size={20} /> : "Sign in"}
+                  {busy ? <CircularProgress size={20} /> : "Sign in"}
                 </Button>
 
                 <Typography
@@ -318,189 +142,9 @@ export default function Login() {
 
             <Divider sx={{ opacity: 0.7 }} />
 
-            <Stack spacing={1}>
-              {/* <Button
-                variant="text"
-                onClick={() => setShowBootstrap((v) => !v)}
-                disabled={busyLogin} // allow reading, but avoid toggling mid-login
-                sx={{
-                  textTransform: "none",
-                  justifyContent: "space-between",
-                  px: 1,
-                  borderRadius: 2,
-                }}
-              >
-                Admin boo
-                {showBootstrap
-                  ? "Hide admin bootstrap (DEV)"
-                  : "Admin bootstrap (DEV)"}
-              </Button> */}
-              <Button onClick={() => navigate("/signup")}>
-                Register your account
-              </Button>
-
-              <Collapse in={showBootstrap}>
-                Admin boo
-                <Card
-                  variant="outlined"
-                  sx={{
-                    borderRadius: 3,
-                    borderColor: "rgba(15, 23, 42, 0.12)",
-                    bgcolor: "rgba(15, 23, 42, 0.02)",
-                  }}
-                >
-                  <CardContent sx={{ p: 3 }}>
-                    <Stack spacing={1.75}>
-                      <Stack spacing={0.5}>
-                        <Typography
-                          variant="subtitle1"
-                          sx={{ fontWeight: 800 }}
-                        >
-                          Bootstrap admin account
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ lineHeight: 1.7 }}
-                        >
-                          Development-only action. Requires backend{" "}
-                          <b>ENV=dev</b> and a valid <b>BOOTSTRAP_TOKEN</b>.
-                        </Typography>
-                      </Stack>
-
-                      <TextField
-                        label="Bootstrap token"
-                        value={bootstrapToken}
-                        onChange={(e) => setBootstrapToken(e.target.value)}
-                        type="password"
-                        fullWidth
-                        disabled={isBusy}
-                      />
-
-                      <TextField
-                        label="Admin username"
-                        value={adminUsername}
-                        onChange={(e) => setAdminUsername(e.target.value)}
-                        fullWidth
-                        disabled={isBusy}
-                      />
-
-                      <TextField
-                        label="Admin password (min 10 characters)"
-                        value={adminPassword}
-                        onChange={(e) => setAdminPassword(e.target.value)}
-                        type="password"
-                        fullWidth
-                        disabled={isBusy}
-                      />
-
-                      <TextField
-                        label="Full name (optional)"
-                        value={adminFullName}
-                        onChange={(e) => setAdminFullName(e.target.value)}
-                        fullWidth
-                        disabled={isBusy}
-                      />
-
-                      <Stack spacing={1}>
-                        <FormControl
-                          component="fieldset"
-                          disabled={isBusy || loadingFacilities}
-                        >
-                          <FormLabel component="legend">Facility</FormLabel>
-                          <RadioGroup
-                            row
-                            value={facilityKind}
-                            onChange={(e) =>
-                              setFacilityKind(e.target.value as FacilityKind)
-                            }
-                          >
-                            <FormControlLabel
-                              value="phc"
-                              control={<Radio />}
-                              label="PHC"
-                            />
-                            <FormControlLabel
-                              value="hospital"
-                              control={<Radio />}
-                              label="Hospital"
-                            />
-                          </RadioGroup>
-                        </FormControl>
-
-                        {facilityKind && (
-                          <TextField
-                            select
-                            label={
-                              facilityKind === "phc"
-                                ? "Select PHC"
-                                : "Select hospital"
-                            }
-                            value={facilityId}
-                            onChange={(e) => setFacilityId(e.target.value)}
-                            fullWidth
-                            disabled={isBusy || loadingFacilities}
-                            helperText={
-                              facilityError
-                                ? facilityError
-                                : loadingFacilities
-                                  ? "Loading facilities..."
-                                  : "Choose from the seeded list"
-                            }
-                            error={Boolean(facilityError)}
-                          >
-                            {(facilityKind === "phc"
-                              ? facilityOptions.phc
-                              : facilityOptions.hospital
-                            ).map((opt) => (
-                              <MenuItem key={opt.id} value={opt.id}>
-                                {opt.name}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        )}
-
-                        {facilityError && (
-                          <Button
-                            variant="text"
-                            size="small"
-                            onClick={() => loadFacilities()}
-                            disabled={loadingFacilities || isBusy}
-                            sx={{
-                              alignSelf: "flex-start",
-                              textTransform: "none",
-                            }}
-                          >
-                            {loadingFacilities
-                              ? "Refreshing..."
-                              : "Reload facilities"}
-                          </Button>
-                        )}
-                      </Stack>
-
-                      <Button
-                        variant="outlined"
-                        size="large"
-                        onClick={bootstrapAdmin}
-                        disabled={!canBootstrap || isBusy || loadingFacilities}
-                        sx={{
-                          textTransform: "none",
-                          fontWeight: 700,
-                          borderRadius: 2,
-                          py: 1.05,
-                        }}
-                      >
-                        {busyBootstrap ? (
-                          <CircularProgress size={20} />
-                        ) : (
-                          "Create admin"
-                        )}
-                      </Button>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Collapse>
-            </Stack>
+            <Button onClick={() => navigate("/signup")}>
+              Register your account
+            </Button>
           </Stack>
         </CardContent>
       </Card>

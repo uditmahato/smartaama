@@ -1,5 +1,5 @@
 // frontend/src/pages/PatientSearch.tsx
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   Box,
@@ -13,9 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { api } from "../services/api";
-import LogoutIcon from "@mui/icons-material/Logout";
-import { tokenStore } from "../services/api";
+import { api, getErrorMessage } from "../services/api";
 import Navbar, { navLinks } from "../components/Navbar";
 
 type PatientOut = {
@@ -51,16 +49,12 @@ export default function PatientSearch() {
         params: { q: q.trim(), limit: 50 },
       });
       setPatients(resp.data);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail ?? "Search failed");
+    } catch (err) {
+      setError(getErrorMessage(err, "Search failed"));
     } finally {
       setBusy(false);
     }
   }
-
-  useEffect(() => {
-    // intentionally no auto-search on load
-  }, []);
 
   return (
     <Box
