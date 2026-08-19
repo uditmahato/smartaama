@@ -12,6 +12,7 @@
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-14%2B-4169E1?logo=postgresql&logoColor=white">
   <img alt="React 18" src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black">
   <img alt="TypeScript strict" src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
 </p>
 
 SmartAama ("smart mother" in Nepali) lets a primary health centre (PHC) register pregnant
@@ -181,7 +182,7 @@ Only what is actually used and installed:
 
 ```
 smartaama/
-├── README.md · CONTRIBUTING.md · .gitignore
+├── README.md · LICENSE (MIT) · CONTRIBUTING.md · .gitignore
 ├── .github/workflows/ci.yml       # backend (SQLite + PostgreSQL), frontend, E2E
 ├── backend/
 │   ├── requirements.txt · .env.example · pytest.ini · alembic.ini
@@ -389,9 +390,9 @@ repository:
 
 ## License
 
-No `LICENSE` file is present yet, so by default all rights are reserved by the authors. If you
-intend this repository to be reused, add a licence file (for example MIT or Apache-2.0) at the
-repository root before publishing.
+Released under the [MIT License](LICENSE) — Copyright (c) 2026 Udit Kumar Mahato and the
+SmartAama contributors. The advisory engine's outputs are provided as-is and are not medical
+advice (see the disclaimer below).
 
 ---
 

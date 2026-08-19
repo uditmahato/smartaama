@@ -57,6 +57,11 @@ If you change the database schema:
 - Commits are authored by humans under their own identity.
 - Do not commit `.env`, uploads, databases, or build output (see `.gitignore`).
 
+## Licence
+
+By contributing you agree that your contributions are licensed under the repository's
+[MIT License](LICENSE).
+
 ## Reporting security issues
 
 Please do **not** open a public issue for a vulnerability. Contact the maintainers listed
